@@ -1,6 +1,65 @@
 // === ESTADO GLOBAL ===
 window.produtosGlobais = [];
 
+// === CORREÇÃO CSS AUTOMÁTICA PARA BOTÕES E HOVER ===
+(function injetarEstilosBotoes() {
+  if (document.getElementById('jr-btn-fix-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'jr-btn-fix-styles';
+  style.innerHTML = `
+    .btn, button.btn, button.brand {
+      transition: all 0.2s ease-in-out !important;
+    }
+    .btn-primary {
+      background-color: #0284c7 !important;
+      color: #ffffff !important;
+      border: 1px solid #0284c7 !important;
+    }
+    .btn-primary:hover,
+    button.btn-primary:hover,
+    .btn-comprar:hover {
+      background-color: #0369a1 !important;
+      color: #ffffff !important;
+      filter: brightness(1.05);
+      cursor: pointer;
+    }
+    .btn-ghost:hover {
+      background-color: rgba(255, 255, 255, 0.15) !important;
+      color: #ffffff !important;
+    }
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      min-width: 280px;
+      max-width: 420px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      animation: fadeInToast 0.3s ease-in-out;
+    }
+    .toast.sucesso { background-color: #15803d; border-left: 5px solid #052e16; }
+    .toast.erro { background-color: #b91c1c; border-left: 5px solid #450a0a; }
+    .toast.aviso { background-color: #b45309; border-left: 5px solid #451a03; }
+    @keyframes fadeInToast {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
 // === FUNÇÕES DE RENDERIZAÇÃO ===
 function renderHeader() {
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
@@ -92,7 +151,6 @@ async function carregarProdutos() {
       
       return `
       <article class="product-card" data-name="${(p.nome || '').toLowerCase()}" style="animation-delay:${i*45}ms; display: flex; flex-direction: column; justify-content: space-between;">
-        
         <div style="height: 220px; width: 100%; background-image: url('${imagemProduto}'); background-size: cover; background-position: center; border-bottom: 1px solid #eee;">
         </div>
         
@@ -153,7 +211,7 @@ function renderLogin() {
           <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
         </div>
 
-        <button type="button" onclick="loginComGoogle()" class="btn full" style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: 'Poppins', sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.2s;">
+        <button type="button" onclick="loginComGoogle()" class="btn full" style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: 'Poppins', sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
             <svg width="18" height="18" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -356,7 +414,6 @@ function adicionarAoCarrinho(id) {
 
   if (!window.produtosGlobais || window.produtosGlobais.length === 0) {
     if (typeof exibirMensagem === 'function') exibirMensagem("Erro: Produtos não carregados.", "erro");
-    else alert("Erro: Produtos não carregados.");
     return;
   }
 
@@ -455,7 +512,6 @@ function renderizarItensCarrinho() {
   
   modal.innerHTML = html;
 
-  // Máscaras de validação
   const inputTelefone = document.getElementById('cart-telefone');
   if (inputTelefone) {
       inputTelefone.addEventListener('input', function(e) {
@@ -497,7 +553,6 @@ window.finalizarPedido = async function() {
 
     if (!telefone || !cep || !cidade || !endereco) {
         if (typeof exibirMensagem === 'function') exibirMensagem("Por favor, preencha todos os dados de entrega antes de finalizar.", "aviso");
-        else alert("Por favor, preencha todos os dados de entrega antes de finalizar.");
         return; 
     }
 
@@ -529,21 +584,23 @@ window.finalizarPedido = async function() {
 
         if (res && res.sucesso) {
             localStorage.removeItem('carrinho');
-            
-            if (typeof exibirMensagem === 'function') {
-                exibirMensagem(`Compra realizada com sucesso! Pedido enviado para ${cidade}.`, 'sucesso');
-            } else {
-                alert(`Compra realizada com sucesso!\n\nO seu pedido será entregue em:\n${endereco}, ${cidade}\n\nAguarde o contacto através do nº ${telefone}.`);
-            }
-            
             fecharCarrinho();
             renderHeader();
-            navegar('home');
+
+            // Exibe a mensagem de sucesso e aguarda 3,5 segundos antes de redirecionar para a home
+            if (typeof exibirMensagem === 'function') {
+                exibirMensagem(`✓ Compra realizada com sucesso! Pedido enviado para ${cidade}.`, 'sucesso');
+            }
+            
+            setTimeout(() => {
+                navegar('home');
+            }, 3500);
         } else {
-            if (typeof exibirMensagem === 'function') exibirMensagem("Erro do servidor: " + (res.erro || "Falha na compra"), "erro");
+            if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + (res.erro || "Falha na compra"), "erro");
         }
     } catch (erro) {
         console.error("Erro no checkout:", erro);
+        if (typeof exibirMensagem === 'function') exibirMensagem("Erro ao comunicar com a API.", "erro");
     } finally {
         if (typeof mostrarLoading === 'function') mostrarLoading(false);
     }
@@ -559,34 +616,37 @@ function feedbackCompra(botao, idProduto) {
 
     adicionarAoCarrinho(idProduto);
     const textoOriginal = botao.innerHTML;
-    const corOriginal = botao.style.background;
     
     botao.innerHTML = "✓ Adicionado";
-    botao.style.background = "#2E7D32"; 
+    botao.style.backgroundColor = "#15803d"; 
     botao.style.color = "#ffffff";
     botao.style.pointerEvents = "none";
     
     setTimeout(() => {
         botao.innerHTML = textoOriginal;
-        botao.style.background = corOriginal;
+        botao.style.backgroundColor = "";
+        botao.style.color = "";
         botao.style.pointerEvents = "auto";
     }, 1500);
 }
 
-// Fallbacks de segurança para UI (caso o index.html não tenha injetado)
-if (!window.exibirMensagem) {
-    window.exibirMensagem = function(msg, tipo = 'sucesso') {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            document.body.appendChild(container);
-        }
-        let icone = tipo === 'sucesso' ? '✅' : (tipo === 'erro' ? '❌' : '⚠️');
-        const toast = document.createElement('div');
-        toast.className = `toast ${tipo}`;
-        toast.innerHTML = `<span>${icone}</span> <div>${msg}</div>`;
-        container.appendChild(toast);
-        setTimeout(() => { if (toast.parentNode) toast.remove(); }, 8000);
-    };
-}
+// Fallback universal para notificações na tela (6 segundos de visibilidade)
+window.exibirMensagem = function(msg, tipo = 'sucesso') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+    let icone = tipo === 'sucesso' ? '✓' : (tipo === 'erro' ? '✕' : '⚠');
+    const toast = document.createElement('div');
+    toast.className = `toast ${tipo}`;
+    toast.innerHTML = `<strong>${icone}</strong> <div>${msg}</div>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.transition = 'opacity 0.4s ease-out';
+        toast.style.opacity = '0';
+        setTimeout(() => { if (toast.parentNode) toast.remove(); }, 400);
+    }, 6000);
+};
