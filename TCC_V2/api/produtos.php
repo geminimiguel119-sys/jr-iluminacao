@@ -2,9 +2,9 @@
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
-// Conexão direta com Supabase via Pooler IPv4
-$host = 'aws-0-sa-east-1.pooler.supabase.com';
-$port = '6543';
+// Host exato da região do seu projeto (us-west-2)
+$host = 'aws-0-us-west-2.pooler.supabase.com';
+$port = '5432'; // Session pooler porta 5432
 $dbname = 'postgres';
 $user = 'postgres.bfppcxnxqagpesuyjlhe';
 $password = 'An1bal_19691910@';
@@ -14,28 +14,27 @@ try {
     $pdo = new PDO($dsn, $user, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_TIMEOUT => 10
+        PDO::ATTR_TIMEOUT => 15
     ]);
 } catch (PDOException $e) {
-    // Fallback: tenta a conexão direta caso o pooler da região seja diferente
+    // Caso a porta 5432 falhe, tenta a 6543 no mesmo host
     try {
-        $hostDireto = 'db.bfppcxnxqagpesuyjlhe.supabase.co';
-        $dsnDireto = "pgsql:host={$hostDireto};port=5432;dbname={$dbname};sslmode=require";
-        $pdo = new PDO($dsnDireto, 'postgres', $password, [
+        $dsn2 = "pgsql:host={$host};port=6543;dbname={$dbname};sslmode=require";
+        $pdo = new PDO($dsn2, $user, $password, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_TIMEOUT => 10
+            PDO::ATTR_TIMEOUT => 15
         ]);
     } catch (PDOException $e2) {
         echo json_encode([
             'sucesso' => false,
-            'erro' => 'Erro conexao: ' . $e->getMessage() . ' | Fallback: ' . $e2->getMessage()
+            'erro' => 'Erro conexao (5432): ' . $e->getMessage() . ' | Erro (6543): ' . $e2->getMessage()
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 }
 
-// Busca os produtos
+// Busca os produtos cadastrados
 try {
     $stmt = $pdo->query("SELECT * FROM produtos ORDER BY id ASC");
     $produtos = $stmt->fetchAll();
