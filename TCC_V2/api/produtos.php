@@ -1,72 +1,52 @@
 <?php
-// api/produtos.php
-header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
 
-// Ligação à Base de Dados Supabase (PostgreSQL)
-$host = "db.bfppcxnxqagpesuyjlhe.supabase.co";
-$dbName = "postgres";
-$usuario = "postgres";
-$senha = "An1bal_19691910@";
+// Conexão direta com Supabase via Pooler IPv4
+$host = 'aws-0-sa-east-1.pooler.supabase.com';
+$port = '6543';
+$dbname = 'postgres';
+$user = 'postgres.bfppcxnxqagpesuyjlhe';
+$password = 'An1bal_19691910@';
 
 try {
-    $pdo = new PDO("pgsql:host=$host;port=5432;dbname=$dbName", $usuario, $senha, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $dsn = "pgsql:host={$host};port={$port};dbname={$dbname};sslmode=require";
+    $pdo = new PDO($dsn, $user, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_TIMEOUT => 10
+    ]);
 } catch (PDOException $e) {
-    echo json_encode(['sucesso' => false, 'erro' => 'Falha na ligação à base de dados.']);
-    exit;
-}
-
-$metodo = $_SERVER['REQUEST_METHOD'];
-
-// LÓGICA DE ESCRITA, ATUALIZAÇÃO E EXCLUSÃO (POST)
-if ($metodo === 'POST') {
-    $dados = json_decode(file_get_contents("php://input"), true);
-    
-    // Ação: Excluir Produto
-    if (isset($dados['acao']) && $dados['acao'] === 'excluir') {
-        try {
-            $stmt = $pdo->prepare("DELETE FROM produtos WHERE id = ?");
-            $stmt->execute([$dados['id']]);
-            echo json_encode(['sucesso' => true]);
-            exit;
-        } catch (PDOException $e) {
-            echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()]);
-            exit;
-        }
-    }
-
-    // Ação: Salvar (Inserir ou Atualizar Produto)
-    if (isset($dados['acao']) && $dados['acao'] === 'salvar') {
-        try {
-            // Se tem um ID válido, é uma atualização
-            if (!empty($dados['id'])) {
-                $stmt = $pdo->prepare("UPDATE produtos SET nome = ?, descricao = ?, preco = ?, quantidade = ?, imagem = ? WHERE id = ?");
-                $stmt->execute([$dados['nome'], $dados['descricao'], $dados['preco'], $dados['quantidade'], $dados['imagem'], $dados['id']]);
-            } 
-            // Se não tem ID, é um produto novo
-            else {
-                $stmt = $pdo->prepare("INSERT INTO produtos (nome, descricao, preco, quantidade, imagem) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$dados['nome'], $dados['descricao'], $dados['preco'], $dados['quantidade'], $dados['imagem']]);
-            }
-            echo json_encode(['sucesso' => true]);
-            exit;
-        } catch (PDOException $e) {
-            echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()]);
-            exit;
-        }
-    }
-}
-
-// LÓGICA DE LEITURA (GET) - Usada para carregar a tabela e a vitrine
-if ($metodo === 'GET') {
+    // Fallback: tenta a conexão direta caso o pooler da região seja diferente
     try {
-        $stmt = $pdo->query("SELECT * FROM produtos ORDER BY id DESC");
-        $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode(['sucesso' => true, 'dados' => $produtos]);
-        exit;
-    } catch (PDOException $e) {
-        echo json_encode(['sucesso' => false, 'erro' => 'Erro ao carregar produtos da base de dados.']);
+        $hostDireto = 'db.bfppcxnxqagpesuyjlhe.supabase.co';
+        $dsnDireto = "pgsql:host={$hostDireto};port=5432;dbname={$dbname};sslmode=require";
+        $pdo = new PDO($dsnDireto, 'postgres', $password, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_TIMEOUT => 10
+        ]);
+    } catch (PDOException $e2) {
+        echo json_encode([
+            'sucesso' => false,
+            'erro' => 'Erro conexao: ' . $e->getMessage() . ' | Fallback: ' . $e2->getMessage()
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 }
-?>
+
+// Busca os produtos
+try {
+    $stmt = $pdo->query("SELECT * FROM produtos ORDER BY id ASC");
+    $produtos = $stmt->fetchAll();
+
+    echo json_encode([
+        'sucesso' => true,
+        'dados' => $produtos
+    ], JSON_UNESCAPED_UNICODE);
+} catch (PDOException $e) {
+    echo json_encode([
+        'sucesso' => false,
+        'erro' => 'Erro ao buscar produtos: ' . $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
+}
