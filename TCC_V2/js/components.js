@@ -1,7 +1,7 @@
 // === ESTADO GLOBAL ===
 window.produtosGlobais = [];
 
-// === CORREÇÃO CSS AUTOMÁTICA PARA BOTÕES E HOVER ===
+// === INJEÇÃO DE ESTILOS CSS ===
 (function injetarEstilosBotoes() {
   if (document.getElementById('jr-btn-fix-styles')) return;
   const style = document.createElement('style');
@@ -23,9 +23,31 @@ window.produtosGlobais = [];
       filter: brightness(1.05);
       cursor: pointer;
     }
+    .btn-disabled {
+      background-color: #94a3b8 !important;
+      color: #ffffff !important;
+      border: 1px solid #94a3b8 !important;
+      cursor: not-allowed !important;
+      opacity: 0.7;
+    }
     .btn-ghost:hover {
       background-color: rgba(255, 255, 255, 0.15) !important;
       color: #ffffff !important;
+    }
+    .btn-qtd {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      width: 26px;
+      height: 26px;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-qtd:hover {
+      background: #e2e8f0;
     }
     #toast-container {
       position: fixed;
@@ -60,7 +82,7 @@ window.produtosGlobais = [];
   document.head.appendChild(style);
 })();
 
-// === FUNÇÕES DE RENDERIZAÇÃO ===
+// === CABEÇALHO ===
 function renderHeader() {
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
   const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
@@ -86,7 +108,6 @@ function renderHeader() {
         
         ${user?.role === 'admin' ? '<a href="#" class="nav-link" onclick="navegar(\'admin/dashboard\');return false">Painel</a>' : ''}
         
-        <!-- MENU DE PERFIL (POR CLIQUE) -->
         ${user ? `
           <div class="user-dropdown" style="position: relative; display: inline-block;">
               <div class="user-chip" onclick="const menu = document.getElementById('user-menu'); menu.style.display = menu.style.display === 'block' ? 'none' : 'block';" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
@@ -125,6 +146,7 @@ function renderProdutos() {
   setTimeout(carregarProdutos, 80);
 }
 
+// === CATÁLOGO COM BLOQUEIO DE STOCK ESGOTADO ===
 async function carregarProdutos() {
   const grid = document.getElementById('produtos-grid');
   if (!grid) {
@@ -144,6 +166,7 @@ async function carregarProdutos() {
     grid.innerHTML = window.produtosGlobais.map((p, i) => {
       const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
       const qtd = Number(p.quantidade || 0);
+      const disponivel = qtd > 0;
       
       const imagemProduto = (p.imagem && p.imagem.trim() !== '') 
           ? p.imagem 
@@ -155,8 +178,8 @@ async function carregarProdutos() {
         </div>
         
         <div class="product-body" style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
-          <div class="product-stock ${qtd < 10 ? 'low' : ''}" style="margin-bottom: 10px; font-size: 0.8rem; font-weight: 600;">
-              ${qtd > 0 ? '✓ Em estoque' : '✕ Indisponível'}
+          <div class="product-stock ${!disponivel ? 'low' : (qtd < 5 ? 'low' : '')}" style="margin-bottom: 10px; font-size: 0.8rem; font-weight: 600;">
+              ${disponivel ? `✓ Em estoque (${qtd} un.)` : '✕ Esgotado'}
           </div>
           
           <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #1e293b;">${p.nome || 'Produto sem nome'}</h3>
@@ -164,7 +187,10 @@ async function carregarProdutos() {
           
           <div class="product-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 15px;">
             <strong style="font-size: 1.25rem; color: #0f172a;">R$ ${preco}</strong>
-            <button class="btn btn-primary btn-comprar" style="padding: 8px 16px; border: none; cursor: pointer;" onclick="feedbackCompra(this, '${p.id}')">Comprar</button>
+            ${disponivel 
+              ? `<button class="btn btn-primary btn-comprar" style="padding: 8px 16px; border: none; cursor: pointer;" onclick="feedbackCompra(this, '${p.id}')">Comprar</button>`
+              : `<button class="btn btn-disabled" style="padding: 8px 16px;" disabled>Indisponível</button>`
+            }
           </div>
         </div>
       </article>`;
@@ -204,7 +230,6 @@ function renderLogin() {
           <button class="btn btn-primary btn-lg full" type="submit">Entrar <span>→</span></button>
         </form>
 
-        <!-- INTEGRAÇÃO LOGIN GOOGLE -->
         <div style="display: flex; align-items: center; margin: 18px 0; gap: 10px;">
           <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
           <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 500;">ou</span>
@@ -274,7 +299,7 @@ async function realizarRegistro(event) {
   }
 }
 
-// === TELA E FUNÇÃO DE PERFIL DO CLIENTE ===
+// === PERFIL DO CLIENTE ===
 window.renderPerfil = async function() {
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
     if (!user) {
@@ -402,7 +427,7 @@ function renderSkeletonGrid(n) {
   return Array.from({ length: n }, () => '<div class="skeleton-card"><div></div><span></span><span></span></div>').join('');
 }
 
-// === SISTEMA DE CARRINHO ===
+// === CARRINHO COM AJUSTE DE QUANTIDADE (+ / -) ===
 function adicionarAoCarrinho(id) {
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
   
@@ -434,12 +459,26 @@ function adicionarAoCarrinho(id) {
   abrirCarrinho();
 }
 
+function alterarQtdCarrinho(index, delta) {
+  let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+  if (!carrinho[index]) return;
+
+  carrinho[index].quantidade += delta;
+  if (carrinho[index].quantidade <= 0) {
+    carrinho.splice(index, 1);
+  }
+
+  localStorage.setItem('carrinho', JSON.stringify(carrinho));
+  renderHeader();
+  renderizarItensCarrinho();
+}
+
 function abrirCarrinho() {
   let modal = document.getElementById('modal-carrinho');
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'modal-carrinho';
-    modal.style.cssText = 'position:fixed; top:0; right:0; width:100%; max-width:380px; height:100%; background:#fff; box-shadow:-5px 0 15px rgba(0,0,0,0.3); z-index:99999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: 0.3s;';
+    modal.style.cssText = 'position:fixed; top:0; right:0; width:100%; max-width:390px; height:100%; background:#fff; box-shadow:-5px 0 15px rgba(0,0,0,0.3); z-index:99999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: 0.3s;';
     document.body.appendChild(modal);
   }
   renderizarItensCarrinho();
@@ -451,6 +490,7 @@ function fecharCarrinho() {
   if (modal) modal.style.display = 'none';
 }
 
+// === RENDERIZAÇÃO DO CARRINHO E AUTO-COMPLETE VIACEP ===
 function renderizarItensCarrinho() {
   const modal = document.getElementById('modal-carrinho');
   if (!modal) return;
@@ -470,15 +510,21 @@ function renderizarItensCarrinho() {
     html += `<p style="color:#666; text-align:center; margin-top:40px;">Seu carrinho está vazio.</p>`;
   } else {
     carrinho.forEach((item, index) => {
-      total += item.preco * item.quantidade;
+      const subtotal = item.preco * item.quantidade;
+      total += subtotal;
       html += `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:15px;">
           <div>
             <strong style="display:block; margin-bottom:5px; font-size: 0.95rem;">${item.nome}</strong>
-            <small style="color:#666;">Qtd: ${item.quantidade} x R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</small>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+              <button class="btn-qtd" onclick="alterarQtdCarrinho(${index}, -1)">−</button>
+              <span style="font-weight:600; font-size:0.9rem;">${item.quantidade}</span>
+              <button class="btn-qtd" onclick="alterarQtdCarrinho(${index}, 1)">+</button>
+              <small style="color:#666; margin-left: 5px;">x R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</small>
+            </div>
           </div>
           <div style="text-align:right;">
-            <strong style="display:block; margin-bottom:5px; font-size: 0.95rem;">R$ ${(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</strong>
+            <strong style="display:block; margin-bottom:5px; font-size: 0.95rem;">R$ ${subtotal.toFixed(2).replace('.', ',')}</strong>
             <button onclick="removerDoCarrinho(${index})" style="color:#dc3545; background:none; border:none; cursor:pointer; font-size:12px; font-weight:bold;">Remover</button>
           </div>
         </div>
@@ -496,14 +542,14 @@ function renderizarItensCarrinho() {
       <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #e2e8f0;">
           <h4 style="margin: 0 0 10px 0; font-size: 0.95rem; color: #475569;">📍 Dados de Entrega</h4>
           
-          <input type="text" id="cart-telefone" placeholder="Seu Telefone/WhatsApp (Apenas Números)" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
+          <input type="text" id="cart-telefone" placeholder="Seu Telefone/WhatsApp" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
           
           <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-              <input type="text" id="cart-cep" placeholder="CEP" style="width:40%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
-              <input type="text" id="cart-cidade" placeholder="Cidade / Estado" style="width:60%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
+              <input type="text" id="cart-cep" placeholder="CEP (Auto)" maxlength="9" style="width:45%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
+              <input type="text" id="cart-cidade" placeholder="Cidade / UF" style="width:55%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
           </div>
           
-          <input type="text" id="cart-endereco" placeholder="Endereço completo (Rua, Número, Bairro)" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
+          <input type="text" id="cart-endereco" placeholder="Endereço (Rua, Nº, Bairro)" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
       </div>
 
       <button onclick="finalizarPedido()" class="btn btn-primary btn-lg full" style="width:100%; cursor:pointer;">Confirmar e Finalizar Compra</button>
@@ -512,6 +558,7 @@ function renderizarItensCarrinho() {
   
   modal.innerHTML = html;
 
+  // Formatação do telefone
   const inputTelefone = document.getElementById('cart-telefone');
   if (inputTelefone) {
       inputTelefone.addEventListener('input', function(e) {
@@ -520,11 +567,36 @@ function renderizarItensCarrinho() {
       });
   }
 
+  // Preenchimento automático via ViaCEP
   const inputCep = document.getElementById('cart-cep');
   if (inputCep) {
-      inputCep.addEventListener('input', function(e) {
-          let x = e.target.value.replace(/\D/g, '').match(/(\d{0,5})(\d{0,3})/);
+      inputCep.addEventListener('input', async function(e) {
+          let v = e.target.value.replace(/\D/g, '');
+          let x = v.match(/(\d{0,5})(\d{0,3})/);
           e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2];
+
+          if (v.length === 8) {
+              const inputCidade = document.getElementById('cart-cidade');
+              const inputEnd = document.getElementById('cart-endereco');
+              if (inputCidade) inputCidade.value = "Consultando...";
+
+              try {
+                  const res = await fetch(`https://viacep.com.br/ws/${v}/json/`);
+                  const data = await res.json();
+                  if (!data.erro) {
+                      if (inputCidade) inputCidade.value = `${data.localidade} / ${data.uf}`;
+                      if (inputEnd && !inputEnd.value) {
+                          inputEnd.value = data.logradouro ? `${data.logradouro}, ${data.bairro}` : '';
+                      }
+                      inputEnd?.focus();
+                  } else {
+                      if (inputCidade) inputCidade.value = "";
+                      if (typeof exibirMensagem === 'function') exibirMensagem("CEP não encontrado.", "aviso");
+                  }
+              } catch (err) {
+                  if (inputCidade) inputCidade.value = "";
+              }
+          }
       });
   }
 }
@@ -537,6 +609,43 @@ function removerDoCarrinho(index) {
   renderizarItensCarrinho();
 }
 
+// === COMPROVATIVO VISUAL DE ENCOMENDA ===
+function exibirComprovantePedido(pedidoId, total, cidade, endereco) {
+  let modalRecibo = document.getElementById('modal-recibo-pedido');
+  if (modalRecibo) modalRecibo.remove();
+
+  modalRecibo = document.createElement('div');
+  modalRecibo.id = 'modal-recibo-pedido';
+  modalRecibo.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(15, 23, 42, 0.7); z-index: 1000000;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  `;
+
+  modalRecibo.innerHTML = `
+    <div style="background: #fff; border-radius: 12px; max-width: 440px; width: 100%; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: fadeInToast 0.3s ease;">
+      <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
+      <h2 style="margin: 0 0 10px 0; color: #0f172a; font-size: 1.5rem;">Encomenda Concluída!</h2>
+      <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;">O seu pedido foi registado com sucesso na base de dados.</p>
+      
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: left; margin-bottom: 25px; font-size: 0.9rem;">
+        <p style="margin: 0 0 8px 0;"><strong>Nº do Pedido:</strong> <span style="color: #0284c7; font-weight: bold;">#${pedidoId || 'REGISTADO'}</span></p>
+        <p style="margin: 0 0 8px 0;"><strong>Valor Total:</strong> R$ ${total.toFixed(2).replace('.', ',')}</p>
+        <p style="margin: 0 0 8px 0;"><strong>Destino:</strong> ${cidade}</p>
+        <p style="margin: 0;"><strong>Morada:</strong> ${endereco}</p>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" style="flex: 1; padding: 12px;" onclick="document.getElementById('modal-recibo-pedido').remove(); navegar('perfil');">Ver Encomendas</button>
+        <button class="btn" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; background: #fff; color: #334155;" onclick="document.getElementById('modal-recibo-pedido').remove(); navegar('produtos');">Continuar</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modalRecibo);
+}
+
+// === FINALIZAÇÃO DO PEDIDO ===
 window.finalizarPedido = async function() {
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
     
@@ -587,14 +696,8 @@ window.finalizarPedido = async function() {
             fecharCarrinho();
             renderHeader();
 
-            // Exibe a mensagem de sucesso e aguarda 3,5 segundos antes de redirecionar para a home
-            if (typeof exibirMensagem === 'function') {
-                exibirMensagem(`✓ Compra realizada com sucesso! Pedido enviado para ${cidade}.`, 'sucesso');
-            }
-            
-            setTimeout(() => {
-                navegar('home');
-            }, 3500);
+            // Apresenta o comprovativo visual com os dados reais
+            exibirComprovantePedido(res.pedido_id, total, cidade, endereco);
         } else {
             if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + (res.erro || "Falha na compra"), "erro");
         }
@@ -630,7 +733,7 @@ function feedbackCompra(botao, idProduto) {
     }, 1500);
 }
 
-// Fallback universal para notificações na tela (6 segundos de visibilidade)
+// Fallback de notificações (6 segundos)
 window.exibirMensagem = function(msg, tipo = 'sucesso') {
     let container = document.getElementById('toast-container');
     if (!container) {
