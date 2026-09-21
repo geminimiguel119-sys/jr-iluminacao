@@ -4,7 +4,15 @@
 const SUPABASE_URL = 'https://bfppcxnxqagpesuyjlhe.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_idrD2ABOskkGike5BuOqPA_fMjbbw6y';
 
-const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+// Inicialização com storage local explícito para evitar bloqueios de navegador
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage
+    }
+}) : null;
 
 // Disparado ao clicar no botão do Google
 async function loginComGoogle() {
@@ -35,41 +43,43 @@ async function loginComGoogle() {
     }
 }
 
-// Verifica o retorno da autenticação ao recarregar a página
-async function verificarRetornoGoogle() {
-    if (!supabaseClient) return;
+// Escuta ativamente o retorno do login do Google
+if (supabaseClient) {
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (session && session.user) {
+            const user = session.user;
+            const usuarioFormatado = {
+                id: user.id,
+                nome: user.user_metadata?.full_name || user.email.split('@')[0],
+                email: user.email,
+                role: 'cliente'
+            };
 
-    const { data: { session } } = await supabaseClient.auth.getSession();
+            // Salva na chave nativa utilizada pela aplicação
+            localStorage.setItem('jr_user', JSON.stringify(usuarioFormatado));
 
-    if (session && session.user) {
-        const user = session.user;
-        const usuarioFormatado = {
-            id: user.id,
-            nome: user.user_metadata.full_name || user.email.split('@')[0],
-            email: user.email,
-            role: 'cliente'
-        };
+            if (typeof renderHeader === 'function') renderHeader();
 
-        // Salva a sessão no formato nativo da loja
-        localStorage.setItem('jr_user', JSON.stringify(usuarioFormatado));
-
-        if (typeof renderHeader === 'function') renderHeader();
-
-        if (window.location.hash.includes('login') || window.location.hash === '') {
-            if (typeof navegar === 'function') navegar('home');
+            if (window.location.hash.includes('login') || window.location.hash.includes('access_token')) {
+                window.location.hash = ''; // Limpa os parâmetros de hash da URL
+                if (typeof navegar === 'function') navegar('home');
+            }
         }
-    }
+    });
 }
 
-document.addEventListener('DOMContentLoaded', verificarRetornoGoogle);
-
-
+// Login tradicional (E-mail e Senha)
 async function realizarLogin(event) {
-    event.preventDefault();
-    const email = document.getElementById('login-email').value.trim();
-    const senha = document.getElementById('login-senha').value;
+    if (event) event.preventDefault();
+    const emailInput = document.getElementById('login-email');
+    const senhaInput = document.getElementById('login-senha');
+
+    if (!emailInput || !senhaInput) return;
+
+    const email = emailInput.value.trim();
+    const senha = senhaInput.value;
     
-    if(!email || !senha) {
+    if (!email || !senha) {
         if (typeof exibirMensagem === 'function') exibirMensagem('Preencha e-mail e senha.', 'erro');
         return;
     }
@@ -83,8 +93,7 @@ async function realizarLogin(event) {
         });
         const data = await res.json();
         
-        if(data.sucesso) {
-            // CORREÇÃO: Guardar o ID na memória para o carrinho poder usar
+        if (data.sucesso) {
             const user = { 
                 id: data.dados.id, 
                 nome: data.dados.nome, 
@@ -94,8 +103,8 @@ async function realizarLogin(event) {
             localStorage.setItem('jr_user', JSON.stringify(user));
             
             if (typeof exibirMensagem === 'function') exibirMensagem(`Bem-vindo, ${user.nome.split(' ')[0]}!`);
-            renderHeader();
-            navegar(user.role === 'admin' ? 'admin/dashboard' : 'home');
+            if (typeof renderHeader === 'function') renderHeader();
+            if (typeof navegar === 'function') navegar(user.role === 'admin' ? 'admin/dashboard' : 'home');
         } else {
             if (typeof exibirMensagem === 'function') exibirMensagem(data.mensagem || 'Credenciais inválidas.', 'erro');
         }
@@ -106,9 +115,12 @@ async function realizarLogin(event) {
     }
 }
 
-function fazerLogout(){
+async function fazerLogout() {
+    if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+    }
     localStorage.removeItem('jr_user');
-    exibirMensagem('Sessão encerrada com segurança.');
-    renderHeader();
-    navegar('home');
+    if (typeof exibirMensagem === 'function') exibirMensagem('Sessão encerrada com segurança.');
+    if (typeof renderHeader === 'function') renderHeader();
+    if (typeof navegar === 'function') navegar('home');
 }
