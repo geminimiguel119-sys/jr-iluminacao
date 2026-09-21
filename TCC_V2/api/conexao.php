@@ -1,19 +1,29 @@
 <?php
-$host = "db.bfppcxnxqagpesuyjlhe.supabase.co";
-$porta = "5432";
-$dbName = "postgres";
-$usuario = "postgres";
-$senha = "An1bal_19691910@";
+header('Content-Type: application/json; charset=utf-8');
+
+// Dados de conexão Supabase
+$host = 'aws-0-sa-east-1.pooler.supabase.com'; // Pooler IPv4 recomendado para Render
+$port = '6543'; // Porta padrão do pooler (ou 5432 se usar Session mode)
+$dbname = 'postgres';
+$user = 'postgres.bfppcxnxqagpesuyjlhe'; // Usuário com Project Ref para o pooler
+$password = 'An1bal_19691910@'; // Coloque aqui a senha real que você criou no Supabase
+
+// Fallback: se preferir usar a conexão direta informada:
+// $host = 'db.bfppcxnxqagpesuyjlhe.supabase.co';
+// $port = '5432';
+// $user = 'postgres';
 
 try {
-    $dsn = "pgsql:host=$host;port=$porta;dbname=$dbName;";
-    $pdo = new PDO($dsn, $usuario, $senha, [
+    $dsn = "pgsql:host={$host};port={$port};dbname={$dbname};sslmode=require";
+    $pdo = new PDO($dsn, $user, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_TIMEOUT => 5
     ]);
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['sucesso' => false, 'mensagem' => 'Erro na conexão com o banco de dados.']);
+    echo json_encode([
+        'sucesso' => false,
+        'erro' => 'Falha na conexão: ' . $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
-?>
