@@ -1,0 +1,254 @@
+/* Responsividade Avançada */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+    .admin-sidebar {
+        width: 200px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+/* Tablet Pequeno (600px - 768px) */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .main-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .admin-layout {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        padding: 10px;
+    }
+
+    .sidebar-nav {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+    }
+
+    .sidebar-link {
+        padding: 8px 12px;
+        white-space: nowrap;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+
+    .hero-content h2 {
+        font-size: 1.8rem;
+    }
+
+    .admin-table {
+        font-size: 0.9rem;
+    }
+
+    .admin-table th, .admin-table td {
+        padding: 8px;
+    }
+
+    .form-row {
+        flex-direction: column;
+    }
+
+    .form-group {
+        width: 100%;
+    }
+}
+
+/* Mobile (até 600px) */
+@media (max-width: 600px) {
+    body {
+        font-size: 14px;
+    }
+
+    header {
+        padding: 0.5rem 0;
+    }
+
+    .logo h1 {
+        font-size: 1.2rem;
+    }
+
+    .main-nav {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .nav-link {
+        font-size: 0.9rem;
+    }
+
+    .hero {
+        height: 250px;
+    }
+
+    .hero-content h2 {
+        font-size: 1.3rem;
+    }
+
+    .features {
+        grid-template-columns: 1fr;
+        margin: -30px 10px 30px;
+    }
+
+    .admin-sidebar {
+        grid-template-columns: 1fr;
+        padding: 10px 0;
+    }
+
+    .sidebar-nav {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .sidebar-link {
+        padding: 10px 15px;
+        white-space: normal;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .admin-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-card {
+        display: flex;
+        gap: 15px;
+    }
+
+    .card-img {
+        min-width: 100px;
+    }
+
+    .card-img img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .card-body {
+        flex: 1;
+    }
+
+    .admin-table {
+        font-size: 0.8rem;
+        display: block;
+        overflow-x: auto;
+    }
+
+    .admin-table thead {
+        display: none;
+    }
+
+    .admin-table tbody, .admin-table tr, .admin-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .admin-table tr {
+        margin-bottom: 15px;
+        border: 1px solid #eee;
+        padding: 10px;
+        border-radius: 4px;
+    }
+
+    .admin-table td {
+        padding: 5px 0;
+        text-align: right;
+    }
+
+    .admin-table td:before {
+        content: attr(data-label);
+        float: left;
+        font-weight: bold;
+    }
+
+    .form-card {
+        padding: 15px;
+    }
+
+    .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .btn-icon {
+        padding: 5px 10px;
+        font-size: 0.9rem;
+    }
+
+    .toast {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+    }
+}
+
+/* Ultra-mobile (até 400px) */
+@media (max-width: 400px) {
+    .logo h1 {
+        display: none;
+    }
+
+    .logo .icon {
+        font-size: 1.5rem;
+    }
+
+    .hero-content h2 {
+        font-size: 1rem;
+    }
+
+    .feature-card {
+        padding: 15px;
+    }
+
+    .btn-primary, .btn-login {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Modo Escuro (opcional) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --light: #1e1e1e;
+        --white: #2d2d2d;
+        --dark: #f0f0f0;
+        --gray: #a0a0a0;
+    }
+
+    .admin-table th {
+        background: #3d3d3d;
+    }
+}

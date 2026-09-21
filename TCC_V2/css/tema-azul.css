@@ -1,0 +1,126 @@
+/* Forçar o rodapé para o fundo do ecrã */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main#app {
+    flex: 1; /* Faz o conteúdo principal esticar e empurrar o rodapé para baixo */
+}
+
+/* Polimento das imagens caso não tenham foto e caiam no fundo azul */
+.card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* css/tema-azul.css - Transforma o polished.css no Tema Azul Corporativo */
+
+:root {
+    --primary: #1E88E5;      /* Azul claro principal */
+    --primary-2: #0F4C81;    /* Azul profundo (hover) */
+    --ink: #182126;          /* Texto principal */
+    --ink-2: #263238;        /* Texto secundário */
+    --muted: #6f7b81;        /* Texto secundário/mutado */
+    --bg: #F4F6F9;           /* Fundo claro da página */
+    --card: #ffffff;         /* Fundo dos cartões */
+    --line: #e6eaec;         /* Linhas e bordas */
+    --green: #2E7D32;        /* Sucesso */
+    --red: #D32F2F;          /* Erro */
+    --orange: #F57C00;       /* Aviso */
+    --blue: #1976D2;         /* Informação */
+    --shadow: 0 16px 40px rgba(15, 76, 129, 0.08); /* Sombra suave azulada */
+}
+
+/* 1. Correção do Banner Principal (Hero) */
+.hero {
+    background: radial-gradient(circle at 75% 35%, rgba(30, 136, 229, 0.18), transparent 28%),
+                linear-gradient(120deg, #0F4C81 0%, #1565C0 58%, #1E88E5 100%) !important;
+}
+
+/* 2. Brilho de fundo no Hero */
+.hero-glow {
+    background: radial-gradient(circle, rgba(30, 136, 229, 0.16), transparent 65%) !important;
+}
+
+/* 3. Botões Primários */
+.btn-primary {
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(30, 136, 229, 0.25) !important;
+}
+
+/* 4. Textos de Destaque (Eyebrow) e Logo */
+.eyebrow {
+    color: #FFC107 !important; /* Contraste amarelo dourado sobre o azul */
+}
+.eyebrow.dark {
+    color: #1E88E5 !important;
+}
+.brand-mark {
+    background: #FFC107 !important;
+    color: #0F4C81 !important;
+}
+
+/* 5. Ícones de Funcionalidades e Painel Admin */
+.feature-icon, .stat-icon, .empty-icon {
+    background: #E3F2FD !important;
+    color: #1E88E5 !important;
+}
+
+/* 6. Cores de Fundo das Imagens de Produtos */
+.product-v1 { background: linear-gradient(135deg, #1E88E5, #0F4C81) !important; }
+.product-v2 { background: linear-gradient(135deg, #42A5F5, #1976D2) !important; }
+.product-v3 { background: linear-gradient(135deg, #e9edf0, #cfd7da) !important; }
+
+/* 7. Menu Lateral do Painel Administrativo */
+.admin-sidebar {
+    background: #0F4C81 !important;
+}
+
+/* 8. Links do Header ativos */
+.nav-link.active {
+    color: #FFC107 !important;
+}
+
+/* =========================================
+   CORREÇÃO DE CONTRASTE DO CABEÇALHO (HEADER)
+   ========================================= */
+
+/* Fundo do cabeçalho */
+header {
+    background-color: #ffffff !important;
+    border-bottom: 2px solid #f0f0f0 !important;
+}
+
+/* Cor do texto do Logótipo */
+.brand strong, 
+.brand > span:not(.brand-mark) {
+    color: #0F4C81 !important; /* Azul corporativo escuro */
+}
+.brand small {
+    color: #757575 !important; /* Cinza médio para o subtítulo */
+}
+
+/* Cor dos links de navegação (Abas) */
+.nav-link, 
+.main-nav a, 
+.nav-links a {
+    color: #263238 !important; /* Cinza bem escuro / Grafite */
+    font-weight: 600 !important;
+}
+
+/* Cor dos links ao passar o rato (Hover) */
+.nav-link:hover, 
+.main-nav a:hover, 
+.nav-links a:hover {
+    color: #1E88E5 !important; /* Azul de destaque */
+}
+
+/* Cor da aba ativa (ex: Início) */
+.nav-link.active, 
+.main-nav a.active, 
+.nav-links a.active {
+    color: #F57C00 !important; /* Laranja/Amarelo escuro para maior contraste */
+}
