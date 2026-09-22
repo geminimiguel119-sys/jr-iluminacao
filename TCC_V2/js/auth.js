@@ -1,5 +1,5 @@
 // ==========================================
-// INTEGRAÇÃO SUPABASE & GOOGLE OAUTH
+// INTEGRAÇÃO SUPABASE & GOOGLE OAUTH E SEGURANÇA
 // ==========================================
 const SUPABASE_URL = 'https://bfppcxnxqagpesuyjlhe.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_idrD2ABOskkGike5BuOqPA_fMjbbw6y';
@@ -58,6 +58,9 @@ if (supabaseClient) {
             // Salva na chave nativa utilizada pela aplicação
             localStorage.setItem('jr_user', JSON.stringify(usuarioFormatado));
 
+            // EXIGÊNCIA DO PROFESSOR: Confirmação de segurança clara em popup (Google)
+            alert(`✅ Acesso Confirmado!\n\nBem-vindo(a) de volta, ${usuarioFormatado.nome}.\nA sua sessão foi iniciada com segurança.`);
+
             if (typeof renderHeader === 'function') renderHeader();
 
             if (window.location.hash.includes('login') || window.location.hash.includes('access_token')) {
@@ -102,11 +105,13 @@ async function realizarLogin(event) {
             };
             localStorage.setItem('jr_user', JSON.stringify(user));
             
-            if (typeof exibirMensagem === 'function') exibirMensagem(`Bem-vindo, ${user.nome.split(' ')[0]}!`);
+            // EXIGÊNCIA DO PROFESSOR: Confirmação de segurança clara em popup (Tradicional)
+            alert(`✅ Acesso Confirmado!\n\nBem-vindo(a) de volta, ${user.nome}.\nA sua sessão foi iniciada com segurança.`);
+            
             if (typeof renderHeader === 'function') renderHeader();
             if (typeof navegar === 'function') navegar(user.role === 'admin' ? 'admin/dashboard' : 'home');
         } else {
-            if (typeof exibirMensagem === 'function') exibirMensagem(data.mensagem || 'Credenciais inválidas.', 'erro');
+            if (typeof exibirMensagem === 'function') exibirMensagem(data.erro || data.mensagem || 'Credenciais inválidas.', 'erro');
         }
     } catch(e) {
         if (typeof exibirMensagem === 'function') exibirMensagem('Erro de conexão ao servidor.', 'erro');
@@ -115,12 +120,36 @@ async function realizarLogin(event) {
     }
 }
 
+// Logout
 async function fazerLogout() {
     if (supabaseClient) {
         await supabaseClient.auth.signOut();
     }
     localStorage.removeItem('jr_user');
-    if (typeof exibirMensagem === 'function') exibirMensagem('Sessão encerrada com segurança.');
+    
+    // EXIGÊNCIA DO PROFESSOR: Alerta de logout
+    alert("🔒 Sessão encerrada com segurança.");
+    
     if (typeof renderHeader === 'function') renderHeader();
     if (typeof navegar === 'function') navegar('home');
+}
+
+// ==========================================
+// EXIGÊNCIA DO PROFESSOR: VALIDAÇÃO NO CHECKOUT
+// ==========================================
+function validarFinalizacaoCompra() {
+    const userStr = localStorage.getItem('jr_user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    
+    // Bloqueia e redireciona se não houver utilizador autenticado
+    if (!user) {
+        alert("⚠️ Segurança JR Iluminação:\n\nÉ obrigatório iniciar sessão (fazer login) para finalizar a compra e proteger os seus dados.");
+        if (typeof navegar === 'function') navegar('login');
+        return false;
+    }
+    
+    // Confirmação explícita do titular da compra
+    const confirma = confirm(`🔐 Verificação de Segurança:\n\nConfirmar a finalização deste pedido no nome de:\n👤 ${user.nome}\n✉️ ${user.email}?`);
+    
+    return confirma; // Retorna true se clicar OK, false se Cancelar
 }
