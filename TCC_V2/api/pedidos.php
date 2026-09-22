@@ -10,216 +10,173 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// === FUNÇÃO DE NOTIFICAÇÃO VIA TELEGRAM ===
-function notificarAdminTelegram($mensagem) {
-    $botToken = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
-    $chatId   = "5034813131";
-    
-    $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
-    $dados = [
-        'chat_id'    => $chatId,
-        'text'       => $mensagem,
-        'parse_mode' => 'HTML'
-    ];
+require_once 'config.php';
+require_once 'conexao.php';
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($dados));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    curl_exec($ch);
-    curl_close($ch);
-}
+$pdo->exec("SET TIME ZONE 'America/Sao_Paulo'");
 
-$host = 'aws-0-us-west-2.pooler.supabase.com';
-$port = '5432';
-$dbName = 'postgres';
-$usuario = 'postgres.bfppcxnxqagpesuyjlhe';
-$senha = 'An1bal_19691910@';
+$telegramToken = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
+$telegramChatId = "5034813131";
 
-try {
-    $dsn = "pgsql:host={$host};port={$port};dbname={$dbName};sslmode=require";
-    $pdo = new PDO($dsn, $usuario, $senha, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_TIMEOUT => 15
+function notificarTelegram($msg, $token, $chatId) {
+    if (empty($token)) return;
+    $url = "https://api.telegram.org/bot{$token}/sendMessage";
+    $context = stream_context_create([
+        'http' => [
+            'method'  => 'POST',
+            'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
+            'content' => http_build_query([
+                'chat_id'    => $chatId,
+                'text'       => $msg,
+                'parse_mode' => 'Markdown'
+            ]),
+            'timeout' => 4
+        ]
     ]);
-} catch (PDOException $e) {
-    echo json_encode(['sucesso' => false, 'erro' => 'Falha no banco: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
-    exit;
+    @file_get_contents($url, false, $context);
 }
 
-$metodo = $_SERVER['REQUEST_METHOD'];
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $email = $_GET['email'] ?? null;
+    try {
+        if ($email) {
+            $stmt = $pdo->prepare("
+                SELECT p.id, p.total, p.status, p.data_pedido 
+                FROM pedidos p 
+                JOIN clientes c ON p.cliente_id = c.id 
+                WHERE LOWER(c.email) = LOWER(?) 
+                ORDER BY p.id DESC
+            ");
+            $stmt->execute([$email]);
+            $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-if ($metodo === 'POST') {
-    $dados = json_decode(file_get_contents("php://input"), true) ?: $_POST;
+            foreach ($pedidos as &$ped) {
+                $stmtItens = $pdo->prepare("
+                    SELECT pr.nome, ip.quantidade, ip.preco_unitario as preco 
+                    FROM itens_pedido ip 
+                    JOIN produtos pr ON ip.produto_id = pr.id 
+                    WHERE ip.pedido_id = ?
+                ");
+                $stmtItens->execute([$ped['id']]);
+                $ped['itens'] = $stmtItens->fetchAll(PDO::FETCH_ASSOC);
+            }
+            echo json_encode(['sucesso' => true, 'dados' => $pedidos], JSON_UNESCAPED_UNICODE);
+        } else {
+            $stmt = $pdo->query("
+                SELECT p.id, c.nome as cliente_nome, p.total, p.status, p.data_pedido 
+                FROM pedidos p 
+                LEFT JOIN clientes c ON p.cliente_id = c.id 
+                ORDER BY p.id DESC
+            ");
+            echo json_encode(['sucesso' => true, 'dados' => $stmt->fetchAll(PDO::FETCH_ASSOC)], JSON_UNESCAPED_UNICODE);
+        }
+    } catch (PDOException $e) {
+        echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $dados = json_decode(file_get_contents("php://input"), true);
     $acao = $dados['acao'] ?? '';
-    
+
     if ($acao === 'criar') {
+        $email = sanitizar($dados['email'] ?? '');
+        $nome = sanitizar($dados['nome'] ?? '');
+        $telefone = sanitizar($dados['telefone'] ?? '');
+        $total = floatval($dados['total'] ?? 0);
+        $itens = $dados['itens'] ?? [];
+
+        if (empty($email) || empty($itens)) {
+            erro('Dados da encomenda incompletos.', 400);
+        }
+
         try {
             $pdo->beginTransaction();
 
-            $email = trim($dados['email'] ?? '');
-            $nome = trim($dados['nome'] ?? '');
-            $telefone = trim($dados['telefone'] ?? 'Não informado');
-            $cep = trim($dados['cep'] ?? 'Não informado');
-            $cidade = trim($dados['cidade'] ?? 'Não informada');
-            $endereco = trim($dados['endereco'] ?? 'Não informado');
-            $forma_pagamento = trim($dados['forma_pagamento'] ?? 'Não informada');
-            $prazo_entrega = trim($dados['prazo_entrega'] ?? 'A combinar');
-            $total = floatval($dados['total'] ?? 0);
-            
-            if (empty($email) || empty($nome)) {
-                throw new Exception("Nome e e-mail do cliente são obrigatórios.");
-            }
-            
-            $stmtBusca = $pdo->prepare("SELECT id FROM clientes WHERE LOWER(email) = LOWER(?)");
-            $stmtBusca->execute([$email]);
-            $cliente_id = $stmtBusca->fetchColumn();
-            
+            // 1. Identificar ou registar o cliente
+            $stmtCli = $pdo->prepare("SELECT id FROM clientes WHERE LOWER(email) = LOWER(?)");
+            $stmtCli->execute([$email]);
+            $cliente_id = $stmtCli->fetchColumn();
+
             if (!$cliente_id) {
-                $stmtNovoCli = $pdo->prepare("INSERT INTO clientes (nome, email, status) VALUES (?, ?, 'Ativo') RETURNING id");
-                $stmtNovoCli->execute([$nome, $email]);
-                $cliente_id = $stmtNovoCli->fetchColumn();
+                $stmtInsCli = $pdo->prepare("INSERT INTO clientes (nome, email, telefone) VALUES (?, ?, ?) RETURNING id");
+                $stmtInsCli->execute([$nome, $email, $telefone]);
+                $cliente_id = $stmtInsCli->fetchColumn();
+            } else {
+                $stmtUpdCli = $pdo->prepare("UPDATE clientes SET telefone = COALESCE(NULLIF(?, ''), telefone) WHERE id = ?");
+                $stmtUpdCli->execute([$telefone, $cliente_id]);
             }
-            
-            $stmtPedido = $pdo->prepare("INSERT INTO pedidos (cliente_id, total, status) VALUES (?, ?, 'Pendente') RETURNING id");
-            $stmtPedido->execute([$cliente_id, $total]);
-            $pedido_id = $stmtPedido->fetchColumn();
-            
-            $alertasEstoque = [];
-            $listaItensMsg = "";
 
-            if (!empty($dados['itens']) && is_array($dados['itens'])) {
-                $stmtItem = $pdo->prepare("INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)");
-                $stmtEstoque = $pdo->prepare("UPDATE produtos SET quantidade = quantidade - ? WHERE id = ? RETURNING nome, quantidade");
-                
-                foreach ($dados['itens'] as $item) {
-                    $qtd = intval($item['quantidade'] ?? 1);
-                    $prodId = intval($item['id'] ?? 0);
-                    $precoUnit = floatval($item['preco'] ?? 0);
-                    $nomeItem = $item['nome'] ?? 'Produto';
+            // 2. Verificar e baixar o stock de cada item
+            foreach ($itens as $item) {
+                $prodId = intval($item['id']);
+                $qtdPedida = intval($item['quantidade']);
 
-                    $stmtItem->execute([$pedido_id, $prodId, $qtd, $precoUnit]);
-                    
-                    $stmtEstoque->execute([$qtd, $prodId]);
-                    $prodAtualizado = $stmtEstoque->fetch(PDO::FETCH_ASSOC);
+                $stmtEstoque = $pdo->prepare("SELECT nome, quantidade FROM produtos WHERE id = ? FOR UPDATE");
+                $stmtEstoque->execute([$prodId]);
+                $prodAtual = $stmtEstoque->fetch(PDO::FETCH_ASSOC);
 
-                    $subTotalItem = number_format($precoUnit * $qtd, 2, ',', '.');
-                    $listaItensMsg .= "• {$qtd}x {$nomeItem} (R$ {$subTotalItem})\n";
-
-                    if ($prodAtualizado) {
-                        $novoEstoque = intval($prodAtualizado['quantidade']);
-                        if ($novoEstoque <= 5) {
-                            $alertasEstoque[] = [
-                                'nome' => $prodAtualizado['nome'],
-                                'restante' => $novoEstoque
-                            ];
-                        }
-                    }
+                if (!$prodAtual) {
+                    throw new Exception("Produto ID {$prodId} não encontrado no catálogo.");
                 }
+
+                if ($prodAtual['quantidade'] < $qtdPedida) {
+                    throw new Exception("Stock insuficiente para '{$prodAtual['nome']}'. Disponível: {$prodAtual['quantidade']} un.");
+                }
+
+                // Deduz a quantidade vendida
+                $stmtBaixa = $pdo->prepare("UPDATE produtos SET quantidade = quantidade - ? WHERE id = ?");
+                $stmtBaixa->execute([$qtdPedida, $prodId]);
             }
-            
+
+            // 3. Registar o Pedido
+            $stmtPed = $pdo->prepare("INSERT INTO pedidos (cliente_id, total, status) VALUES (?, ?, 'Pendente') RETURNING id");
+            $stmtPed->execute([$cliente_id, $total]);
+            $pedido_id = $stmtPed->fetchColumn();
+
+            // 4. Registar Itens da Encomenda
+            $stmtItem = $pdo->prepare("INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)");
+            $resumoItens = "";
+            foreach ($itens as $item) {
+                $stmtItem->execute([$pedido_id, intval($item['id']), intval($item['quantidade']), floatval($item['preco'])]);
+                $resumoItens .= "• {$item['quantidade']}x {$item['nome']}\n";
+            }
+
             $pdo->commit();
 
-            // === NOTIFICAÇÃO COMPLETA DE NOVO PEDIDO ===
-            $totalFormatado = number_format($total, 2, ',', '.');
-            $dataHora = date('d/m/Y H:i');
-
-            $msgNovoPedido  = "🎉 <b>NOVO PEDIDO RECEBIDO!</b>\n\n";
-            $msgNovoPedido .= "🆔 <b>Pedido:</b> #{$pedido_id}\n";
-            $msgNovoPedido .= "💰 <b>Valor Total:</b> R$ {$totalFormatado}\n";
-            $msgNovoPedido .= "💳 <b>Pagamento:</b> " . htmlspecialchars($forma_pagamento) . "\n\n";
-            $msgNovoPedido .= "👤 <b>DADOS DO CLIENTE:</b>\n";
-            $msgNovoPedido .= "Nome: <i>" . htmlspecialchars($nome) . "</i>\n";
-            $msgNovoPedido .= "Tel: <i>" . htmlspecialchars($telefone) . "</i>\n\n";
-            $msgNovoPedido .= "📍 <b>ENDEREÇO DE ENTREGA:</b>\n";
-            $msgNovoPedido .= htmlspecialchars($endereco) . " | " . htmlspecialchars($cidade) . " - CEP: " . htmlspecialchars($cep) . "\n";
-            $msgNovoPedido .= "🚚 <b>Prazo Previsto:</b> " . htmlspecialchars($prazo_entrega) . "\n\n";
-            $msgNovoPedido .= "🛒 <b>ITENS DA COMPRA:</b>\n{$listaItensMsg}\n";
-
-            notificarAdminTelegram($msgNovoPedido);
-
-            foreach ($alertasEstoque as $alerta) {
-                $msgEstoque  = "⚠️ <b>ALERTA DE ESTOQUE CRÍTICO!</b>\n\n";
-                $msgEstoque .= "📦 <b>Produto:</b> " . htmlspecialchars($alerta['nome']) . "\n";
-                $msgEstoque .= "📉 <b>Estoque Restante:</b> {$alerta['restante']} un.\n";
-                notificarAdminTelegram($msgEstoque);
-            }
+            // 5. Notificação de Nova Venda no Telegram
+            $msgTG = "🛒 *Nova Encomenda Registada! (#{$pedido_id})*\n\n";
+            $msgTG .= "👤 *Cliente:* {$nome}\n";
+            $msgTG .= "📧 *E-mail:* {$email}\n";
+            $msgTG .= "💰 *Valor Total:* R$ " . number_format($total, 2, ',', '.') . "\n\n";
+            $msgTG .= "*Itens Comprados:*\n" . $resumoItens;
+            notificarTelegram($msgTG, $telegramToken, $telegramChatId);
 
             echo json_encode(['sucesso' => true, 'pedido_id' => $pedido_id], JSON_UNESCAPED_UNICODE);
-            exit;
         } catch (Exception $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
-            echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-            exit;
+            erro($e->getMessage(), 400);
         }
-    }
-    
-    if ($acao === 'atualizar_status') {
+    } elseif ($acao === 'atualizar_status') {
+        $id = intval($dados['id'] ?? 0);
+        $status = sanitizar($dados['status'] ?? '');
         try {
             $stmt = $pdo->prepare("UPDATE pedidos SET status = ? WHERE id = ?");
-            $stmt->execute([$dados['status'], $dados['id']]);
+            $stmt->execute([$status, $id]);
             echo json_encode(['sucesso' => true], JSON_UNESCAPED_UNICODE);
-            exit;
         } catch (PDOException $e) {
-            echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-            exit;
+            erro($e->getMessage(), 400);
         }
-    }
-
-    if ($acao === 'excluir') {
+    } elseif ($acao === 'excluir') {
+        $id = intval($dados['id'] ?? 0);
         try {
-            $stmtItens = $pdo->prepare("DELETE FROM itens_pedido WHERE pedido_id = ?");
-            $stmtItens->execute([$dados['id']]);
-            $stmt = $pdo->prepare("DELETE FROM pedidos WHERE id = ?");
-            $stmt->execute([$dados['id']]);
+            $pdo->beginTransaction();
+            $pdo->prepare("DELETE FROM itens_pedido WHERE pedido_id = ?")->execute([$id]);
+            $pdo->prepare("DELETE FROM pedidos WHERE id = ?")->execute([$id]);
+            $pdo->commit();
             echo json_encode(['sucesso' => true], JSON_UNESCAPED_UNICODE);
-            exit;
         } catch (PDOException $e) {
-            echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-            exit;
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            erro($e->getMessage(), 400);
         }
-    }
-}
-
-if ($metodo === 'GET') {
-    try {
-        $baseQuery = "SELECT p.id, p.total, p.status, p.data_pedido, c.nome as cliente_nome, 
-                             COALESCE((
-                                 SELECT json_agg(json_build_object(
-                                     'nome', COALESCE(pr.nome, 'Produto Excluído'), 
-                                     'quantidade', ip.quantidade, 
-                                     'preco', ip.preco_unitario
-                                 )) 
-                                 FROM itens_pedido ip 
-                                 LEFT JOIN produtos pr ON ip.produto_id = pr.id 
-                                 WHERE ip.pedido_id = p.id
-                             ), '[]'::json) as itens_json 
-                      FROM pedidos p 
-                      LEFT JOIN clientes c ON p.cliente_id = c.id ";
-                      
-        if (isset($_GET['email'])) {
-            $stmt = $pdo->prepare($baseQuery . "WHERE LOWER(c.email) = LOWER(?) ORDER BY p.data_pedido DESC");
-            $stmt->execute([$_GET['email']]);
-        } else {
-            $stmt = $pdo->query($baseQuery . "ORDER BY p.data_pedido DESC");
-        }
-        
-        $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        foreach ($pedidos as &$p) {
-            $p['itens'] = json_decode($p['itens_json'], true) ?: [];
-            unset($p['itens_json']);
-        }
-        
-        echo json_encode(['sucesso' => true, 'dados' => $pedidos], JSON_UNESCAPED_UNICODE);
-        exit;
-    } catch (PDOException $e) {
-        echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-        exit;
     }
 }
 ?>
