@@ -1,5 +1,7 @@
 // === ESTADO GLOBAL ===
 window.produtosGlobais = [];
+window.categoriaAtual = 'todas';
+window.ordemAtual = 'padrao';
 
 // === INJEÇÃO DE ESTILOS CSS AUXILIARES ===
 (function injetarEstilosBotoes() {
@@ -78,8 +80,6 @@ window.produtosGlobais = [];
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    /* Regras de perfil e menu mobile */
     .mobile-user-links { display: none; }
     .desktop-user-dropdown { display: inline-block; }
     @media (max-width: 768px) {
@@ -201,74 +201,150 @@ function renderHome() {
   app.innerHTML = `<section class="hero"><div class="hero-inner"><span class="eyebrow">ILUMINAÇÃO • TECNOLOGIA • DESIGN</span><h1>Ilumine ambientes.<br><span>Transforme espaços.</span></h1><p>Soluções em LED para projetos residenciais e comerciais, com qualidade, economia e estilo.</p><div class="hero-actions"><button class="btn btn-primary btn-lg" onclick="navegar('produtos')">Explorar produtos <span>→</span></button><button class="btn btn-ghost btn-lg" onclick="document.getElementById('diferenciais').scrollIntoView({behavior:'smooth'})">Conheça a JR</button></div><div class="hero-trust"><span>✓ Qualidade garantida</span><span>✓ Atendimento especializado</span><span>✓ Economia de energia</span></div></div><div class="hero-glow"></div></section><section id="diferenciais" class="section"><div class="section-heading"><div><span class="eyebrow dark">POR QUE ESCOLHER A JR?</span><h2>Iluminação pensada para você.</h2></div><p>Produtos selecionados para unir desempenho, durabilidade e um visual moderno em cada projeto.</p></div><div class="feature-grid"><article><div class="feature-icon">✦</div><h3>Alta eficiência</h3><p>Tecnologia LED que entrega mais luminosidade consumindo menos energia.</p></article><article><div class="feature-icon">◇</div><h3>Design moderno</h3><p>Peças que valorizam ambientes residenciais, comerciais e corporativos.</p></article><article><div class="feature-icon">✓</div><h3>Compra segura</h3><p>Processo simples, atendimento próximo e informações claras.</p></article></div></section><section class="cta"><div><span class="eyebrow">CATÁLOGO JR</span><h2>Encontre a iluminação ideal.</h2><p>Veja nosso catálogo e escolha a solução certa para o seu projeto.</p></div><button class="btn btn-primary btn-lg" onclick="navegar('produtos')">Ver catálogo →</button></section>`;
 }
 
+// === CATÁLOGO COM FILTROS DE CATEGORIA, ORDENAÇÃO E BUSCA ===
 function renderProdutos() {
   const app = document.getElementById('app');
   if (!app) return;
   app.className = 'page-shell';
-  app.innerHTML = `<div class="page-header"><div><span class="eyebrow dark">CATÁLOGO</span><h1>Nossos produtos</h1><p>Escolha entre soluções de iluminação para todos os ambientes.</p></div><div class="search-wrap"><span>⌕</span><input id="busca-produtos" placeholder="Buscar produto..." oninput="filtrarProdutos(this.value)"></div></div><div id="produtos-grid" class="product-grid">${renderSkeletonGrid(6)}</div>`;
+  app.innerHTML = `
+    <div class="page-header" style="margin-bottom: 20px;">
+      <div>
+        <span class="eyebrow dark">CATÁLOGO</span>
+        <h1>Nossos produtos</h1>
+        <p>Escolha entre soluções de iluminação para todos os ambientes.</p>
+      </div>
+      <div class="search-wrap">
+        <span>⌕</span>
+        <input id="busca-produtos" placeholder="Buscar produto..." oninput="aplicarFiltrosCatalog()">
+      </div>
+    </div>
+
+    <!-- Barra de Filtros e Ordenação -->
+    <div class="catalog-controls" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
+      <!-- Pílulas de Categoria -->
+      <div style="display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px;">
+        <button class="btn btn-filtro active" data-cat="todas" onclick="selecionarCategoria('todas', this)" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 20px; border: 1px solid #cbd5e1; background: #0284c7; color: #fff; cursor: pointer;">Todos</button>
+        <button class="btn btn-filtro" data-cat="fita" onclick="selecionarCategoria('fita', this)" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 20px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer;">Fitas LED</button>
+        <button class="btn btn-filtro" data-cat="spot" onclick="selecionarCategoria('spot', this)" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 20px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer;">Spots & Embutidos</button>
+        <button class="btn btn-filtro" data-cat="lampada" onclick="selecionarCategoria('lampada', this)" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 20px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer;">Lâmpadas</button>
+        <button class="btn btn-filtro" data-cat="painel" onclick="selecionarCategoria('painel', this)" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 20px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer;">Painéis Plafon</button>
+      </div>
+
+      <!-- Ordenação de Preço -->
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <label for="select-ordem" style="font-size: 0.85rem; color: #64748b; font-weight: 500;">Ordenar:</label>
+        <select id="select-ordem" onchange="selecionarOrdem(this.value)" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; color: #334155; font-size: 0.85rem; cursor: pointer;">
+          <option value="padrao">Padrão</option>
+          <option value="menor_preco">Menor Preço</option>
+          <option value="maior_preco">Maior Preço</option>
+          <option value="nome_az">Nome (A - Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="produtos-grid" class="product-grid">${renderSkeletonGrid(6)}</div>
+  `;
   setTimeout(carregarProdutos, 80);
 }
 
-// === CATÁLOGO COM BLOQUEIO DE STOCK ESGOTADO ===
-async function carregarProdutos() {
+function selecionarCategoria(cat, btn) {
+  window.categoriaAtual = cat;
+  document.querySelectorAll('.btn-filtro').forEach(b => {
+    b.style.background = '#fff';
+    b.style.color = '#475569';
+  });
+  if (btn) {
+    btn.style.background = '#0284c7';
+    btn.style.color = '#fff';
+  }
+  aplicarFiltrosCatalog();
+}
+
+function selecionarOrdem(ordem) {
+  window.ordemAtual = ordem;
+  aplicarFiltrosCatalog();
+}
+
+function aplicarFiltrosCatalog() {
+  const buscaInput = document.getElementById('busca-produtos');
+  const termo = String(buscaInput ? buscaInput.value : '').toLowerCase().trim();
   const grid = document.getElementById('produtos-grid');
-  if (!grid) {
-    if (typeof mostrarLoading === 'function') mostrarLoading(false);
+  if (!grid || !window.produtosGlobais) return;
+
+  let filtrados = window.produtosGlobais.filter(p => {
+    const nome = String(p.nome || '').toLowerCase();
+    const desc = String(p.descricao || '').toLowerCase();
+    const bateTexto = nome.includes(termo) || desc.includes(termo);
+
+    if (window.categoriaAtual === 'todas') return bateTexto;
+    const bateCat = nome.includes(window.categoriaAtual) || desc.includes(window.categoriaAtual);
+    return bateTexto && bateCat;
+  });
+
+  if (window.ordemAtual === 'menor_preco') {
+    filtrados.sort((a, b) => Number(a.preco) - Number(b.preco));
+  } else if (window.ordemAtual === 'maior_preco') {
+    filtrados.sort((a, b) => Number(b.preco) - Number(a.preco));
+  } else if (window.ordemAtual === 'nome_az') {
+    filtrados.sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
+  }
+
+  renderizarListaProdutosNaGrid(filtrados);
+}
+
+function renderizarListaProdutosNaGrid(lista) {
+  const grid = document.getElementById('produtos-grid');
+  if (!grid) return;
+
+  if (lista.length === 0) {
+    grid.innerHTML = renderEmptyState('◈', 'Nenhum produto encontrado', 'Tente outro termo de busca ou selecione outra categoria.');
     return;
   }
 
+  grid.innerHTML = lista.map((p, i) => {
+    const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
+    const qtd = Number(p.quantidade || 0);
+    const disponivel = qtd > 0;
+    
+    const imagemProduto = (p.imagem && p.imagem.trim() !== '') 
+        ? p.imagem 
+        : 'https://images.unsplash.com/photo-1565814329452-e1efa11c5e89?auto=format&fit=crop&w=600&q=80'; 
+    
+    return `
+    <article class="product-card" data-name="${(p.nome || '').toLowerCase()}" style="animation-delay:${i*45}ms; display: flex; flex-direction: column; justify-content: space-between;">
+      <div style="height: 220px; width: 100%; background-image: url('${imagemProduto}'); background-size: cover; background-position: center; border-bottom: 1px solid #eee;"></div>
+      <div class="product-body" style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
+        <div class="product-stock ${!disponivel ? 'low' : (qtd <= 5 ? 'low' : '')}" style="margin-bottom: 10px; font-size: 0.8rem; font-weight: 600;">
+            ${disponivel ? `✓ Em estoque (${qtd} un.)` : '✕ Esgotado'}
+        </div>
+        <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #1e293b;">${p.nome || 'Produto sem nome'}</h3>
+        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px; flex: 1;">${p.descricao || 'Solução de iluminação LED.'}</p>
+        <div class="product-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+          <strong style="font-size: 1.25rem; color: #0f172a;">R$ ${preco}</strong>
+          ${disponivel 
+            ? `<button class="btn btn-primary btn-comprar" style="padding: 8px 16px; border: none; cursor: pointer;" onclick="feedbackCompra(this, '${p.id}')">Comprar</button>`
+            : `<button class="btn btn-disabled" style="padding: 8px 16px;" disabled>Indisponível</button>`
+          }
+        </div>
+      </div>
+    </article>`;
+  }).join('');
+}
+
+async function carregarProdutos() {
   try {
     const r = await apiFetch('api/produtos.php'); 
     window.produtosGlobais = (r && r.dados) ? r.dados : []; 
-
-    if (window.produtosGlobais.length === 0) {
-      grid.innerHTML = renderEmptyState('◈','Catálogo vazio','Nenhum produto disponível no momento.');
-      return;
-    }
-
-    grid.innerHTML = window.produtosGlobais.map((p, i) => {
-      const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
-      const qtd = Number(p.quantidade || 0);
-      const disponivel = qtd > 0;
-      
-      const imagemProduto = (p.imagem && p.imagem.trim() !== '') 
-          ? p.imagem 
-          : 'https://images.unsplash.com/photo-1565814329452-e1efa11c5e89?auto=format&fit=crop&w=600&q=80'; 
-      
-      return `
-      <article class="product-card" data-name="${(p.nome || '').toLowerCase()}" style="animation-delay:${i*45}ms; display: flex; flex-direction: column; justify-content: space-between;">
-        <div style="height: 220px; width: 100%; background-image: url('${imagemProduto}'); background-size: cover; background-position: center; border-bottom: 1px solid #eee;"></div>
-        <div class="product-body" style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
-          <div class="product-stock ${!disponivel ? 'low' : (qtd < 5 ? 'low' : '')}" style="margin-bottom: 10px; font-size: 0.8rem; font-weight: 600;">
-              ${disponivel ? `✓ Em estoque (${qtd} un.)` : '✕ Esgotado'}
-          </div>
-          <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #1e293b;">${p.nome || 'Produto sem nome'}</h3>
-          <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px; flex: 1;">${p.descricao || 'Solução de iluminação LED.'}</p>
-          <div class="product-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 15px;">
-            <strong style="font-size: 1.25rem; color: #0f172a;">R$ ${preco}</strong>
-            ${disponivel 
-              ? `<button class="btn btn-primary btn-comprar" style="padding: 8px 16px; border: none; cursor: pointer;" onclick="feedbackCompra(this, '${p.id}')">Comprar</button>`
-              : `<button class="btn btn-disabled" style="padding: 8px 16px;" disabled>Indisponível</button>`
-            }
-          </div>
-        </div>
-      </article>`;
-    }).join('');
-
+    aplicarFiltrosCatalog();
   } catch(e) {
-    grid.innerHTML = renderEmptyState('!','Não foi possível carregar','Confira a sua ligação.', "carregarProdutos()");
+    const grid = document.getElementById('produtos-grid');
+    if (grid) grid.innerHTML = renderEmptyState('!', 'Não foi possível carregar', 'Confira a sua ligação.', "carregarProdutos()");
   } finally {
     if (typeof mostrarLoading === 'function') mostrarLoading(false);
   }
 }
 
-function filtrarProdutos(termo) {
-  const t = String(termo || '').toLowerCase();
-  document.querySelectorAll('.product-card').forEach(c => {
-    c.style.display = c.dataset.name.includes(t) ? '' : 'none';
-  });
-}
-
+// === LOGIN E REGISTRO ===
 function renderLogin() {
   const app = document.getElementById('app');
   if (!app) return;
@@ -505,7 +581,6 @@ function adicionarAoCarrinho(id) {
   let item = carrinho.find(x => String(x.id) === String(p.id));
   let qtdAtual = item ? item.quantidade : 0;
 
-  // TRAVA DE ESTOQUE: Impede adicionar se passar do limite
   if (qtdAtual + 1 > p.quantidade) {
       if (typeof exibirMensagem === 'function') exibirMensagem(`Limite atingido! Apenas ${p.quantidade} unidades em stock.`, "aviso");
       return;
@@ -526,7 +601,6 @@ function alterarQtdCarrinho(index, delta) {
   let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
   if (!carrinho[index]) return;
 
-  // Busca o produto real para ver o limite
   const p = window.produtosGlobais.find(x => String(x.id) === String(carrinho[index].id));
   
   if (delta > 0 && p && (carrinho[index].quantidade + delta > p.quantidade)) {
@@ -552,7 +626,7 @@ function abrirCarrinho() {
     modal.style.cssText = 'position:fixed; top:0; right:0; width:100%; max-width:420px; height:100%; background:#fff; box-shadow:-5px 0 25px rgba(0,0,0,0.3); z-index:99999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: 0.3s;';
     document.body.appendChild(modal);
   }
-  renderizarItensCarrinho(); // Mostra o passo 1
+  renderizarItensCarrinho(); 
   modal.style.display = 'flex';
 }
 
@@ -711,7 +785,7 @@ window.renderizarCheckout = function() {
   }
 }
 
-// === FINALIZAÇÃO DO PEDIDO (COM TRAVA ANTI-DUPLO CLIQUE) ===
+// === FINALIZAÇÃO DO PEDIDO ===
 window.finalizarPedido = async function(btnElement) {
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
     if (!user) return navegar('login');
@@ -733,7 +807,6 @@ window.finalizarPedido = async function(btnElement) {
     let total = 0;
     carrinho.forEach(item => total += (parseFloat(item.preco) * parseInt(item.quantidade)));
 
-    // TRAVA ANTI-DUPLO CLIQUE: Desativa o botão de imediato
     if (btnElement) {
         btnElement.disabled = true;
         btnElement.innerHTML = '⏳ A processar encomenda...';
@@ -765,7 +838,6 @@ window.finalizarPedido = async function(btnElement) {
             exibirComprovantePedido(res.pedido_id, total, cidade, endereco);
         } else {
             if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + (res.erro || "Falha na compra"), "erro");
-            // Se falhou, reativa o botão para tentar de novo
             if (btnElement) {
                 btnElement.disabled = false;
                 btnElement.innerHTML = '✅ Confirmar e Finalizar Compra';
@@ -785,7 +857,6 @@ window.finalizarPedido = async function(btnElement) {
     }
 };
 
-// COMPROVATIVO E FEEDBACK MANTÉM-SE...
 function exibirComprovantePedido(pedidoId, total, cidade, endereco) {
   let modalRecibo = document.getElementById('modal-recibo-pedido');
   if (modalRecibo) modalRecibo.remove();
