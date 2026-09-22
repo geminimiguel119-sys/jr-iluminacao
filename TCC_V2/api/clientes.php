@@ -1,75 +1,96 @@
 <?php
 // api/clientes.php
 header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Content-Type: application/json; charset=utf-8');
 
-$host = "db.bfppcxnxqagpesuyjlhe.supabase.co";
-$dbName = "postgres";
-$usuario = "postgres";
-$senha = "An1bal_19691910@";
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+$host = 'aws-0-us-west-2.pooler.supabase.com';
+$port = '5432';
+$dbName = 'postgres';
+$usuario = 'postgres.bfppcxnxqagpesuyjlhe';
+$senha = 'An1bal_19691910@';
 
 try {
-    $pdo = new PDO("pgsql:host=$host;port=5432;dbname=$dbName", $usuario, $senha, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $dsn = "pgsql:host={$host};port={$port};dbname={$dbName};sslmode=require";
+    $pdo = new PDO($dsn, $usuario, $senha, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_TIMEOUT => 15
+    ]);
 } catch (PDOException $e) {
-    echo json_encode(['sucesso' => false, 'erro' => 'Falha na ligação à base de dados.']);
+    echo json_encode(['sucesso' => false, 'erro' => 'Falha no banco: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 if ($metodo === 'POST') {
-    $dados = json_decode(file_get_contents("php://input"), true);
-    
-    // EXCLUIR CLIENTE
-    if (isset($dados['acao']) && $dados['acao'] === 'excluir') {
+    $dados = json_decode(file_get_contents("php://input"), true) ?: $_POST;
+    $acao = $dados['acao'] ?? '';
+
+    if ($acao === 'salvar') {
         try {
-            $stmtAuth = $pdo->prepare("DELETE FROM autenticacao WHERE usuario_id = ?");
-            $stmtAuth->execute([$dados['id']]);
-            
-            $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = ?");
-            $stmt->execute([$dados['id']]);
-            
-            echo json_encode(['sucesso' => true]);
+            $id = $dados['id'] ?? null;
+            $nome = trim($dados['nome'] ?? '');
+            $email = trim($dados['email'] ?? '');
+            $role = trim($dados['role'] ?? 'cliente');
+
+            if (empty($nome) || empty($email)) {
+                echo json_encode(['sucesso' => false, 'erro' => 'Nome e e-mail são obrigatórios.'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            if ($id) {
+                // Atualizar cliente existente
+                $stmt = $pdo->prepare("UPDATE clientes SET nome = ?, email = ?, role = ? WHERE id = ?");
+                $stmt->execute([$nome, $email, $role, $id]);
+            } else {
+                // Criar novo cliente (com senha padrão 123456)
+                $senhaHash = password_hash('123456', PASSWORD_DEFAULT);
+                $stmt = $pdo->prepare("INSERT INTO clientes (nome, email, senha, role, status) VALUES (?, ?, ?, ?, 'Ativo')");
+                $stmt->execute([$nome, $email, $senhaHash, $role]);
+            }
+
+            echo json_encode(['sucesso' => true], JSON_UNESCAPED_UNICODE);
             exit;
         } catch (PDOException $e) {
-            echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()]);
+            echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
             exit;
         }
     }
 
-    // SALVAR CLIENTE (Inserir ou Atualizar)
-    if (isset($dados['acao']) && $dados['acao'] === 'salvar') {
+    if ($acao === 'excluir') {
         try {
-            if (!empty($dados['id'])) {
-                $stmt = $pdo->prepare("UPDATE usuarios SET nome = ?, email = ?, role = ? WHERE id = ?");
-                $stmt->execute([$dados['nome'], $dados['email'], $dados['role'], $dados['id']]);
-            } else {
-                $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, role) VALUES (?, ?, ?) RETURNING id");
-                $stmt->execute([$dados['nome'], $dados['email'], $dados['role']]);
-                $novoId = $stmt->fetchColumn();
-                
-                $senhaHash = password_hash('123456', PASSWORD_DEFAULT);
-                $stmtAuth = $pdo->prepare("INSERT INTO autenticacao (usuario_id, senha) VALUES (?, ?)");
-                $stmtAuth->execute([$novoId, $senhaHash]);
+            $id = $dados['id'] ?? null;
+            if ($id) {
+                $stmt = $pdo->prepare("DELETE FROM clientes WHERE id = ?");
+                $stmt->execute([$id]);
+                echo json_encode(['sucesso' => true], JSON_UNESCAPED_UNICODE);
+                exit;
             }
-            echo json_encode(['sucesso' => true]);
-            exit;
         } catch (PDOException $e) {
-            echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()]);
+            echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
             exit;
         }
     }
 }
 
-// LISTAR CLIENTES
 if ($metodo === 'GET') {
     try {
-        $stmt = $pdo->query("SELECT id, nome, email, role FROM usuarios ORDER BY id DESC");
+        // Garante que a coluna role exista ou seleciona com fallback
+        $stmt = $pdo->query("SELECT id, nome, email, COALESCE(role, 'cliente') as role, status FROM clientes ORDER BY id DESC");
         $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode(['sucesso' => true, 'dados' => $clientes]);
+
+        echo json_encode(['sucesso' => true, 'dados' => $clientes], JSON_UNESCAPED_UNICODE);
         exit;
     } catch (PDOException $e) {
-        echo json_encode(['sucesso' => false, 'erro' => 'Erro ao carregar clientes.']);
+        echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
         exit;
     }
 }
