@@ -18,7 +18,7 @@ $pdo->exec("SET TIME ZONE 'America/Sao_Paulo'");
 $telegramToken = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
 $telegramChatId = "5034813131";
 
-function notificarTelegram($msg, $token, $chatId) {
+function notificarTelegramHTML($msg, $token, $chatId) {
     if (empty($token)) return;
     $url = "https://api.telegram.org/bot{$token}/sendMessage";
     $context = stream_context_create([
@@ -28,7 +28,7 @@ function notificarTelegram($msg, $token, $chatId) {
             'content' => http_build_query([
                 'chat_id'    => $chatId,
                 'text'       => $msg,
-                'parse_mode' => 'Markdown'
+                'parse_mode' => 'HTML'
             ]),
             'timeout' => 4
         ]
@@ -81,6 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $email = sanitizar($dados['email'] ?? '');
         $nome = sanitizar($dados['nome'] ?? '');
         $telefone = sanitizar($dados['telefone'] ?? '');
+        $cidade = sanitizar($dados['cidade'] ?? '');
+        $endereco = sanitizar($dados['endereco'] ?? '');
         $total = floatval($dados['total'] ?? 0);
         $itens = $dados['itens'] ?? [];
 
@@ -91,7 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         try {
             $pdo->beginTransaction();
 
-            // 1. Identificar ou registar o cliente
             $stmtCli = $pdo->prepare("SELECT id FROM clientes WHERE LOWER(email) = LOWER(?)");
             $stmtCli->execute([$email]);
             $cliente_id = $stmtCli->fetchColumn();
@@ -105,7 +106,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $stmtUpdCli->execute([$telefone, $cliente_id]);
             }
 
-            // 2. Verificar e baixar o stock de cada item
             foreach ($itens as $item) {
                 $prodId = intval($item['id']);
                 $qtdPedida = intval($item['quantidade']);
@@ -122,33 +122,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     throw new Exception("Stock insuficiente para '{$prodAtual['nome']}'. Disponível: {$prodAtual['quantidade']} un.");
                 }
 
-                // Deduz a quantidade vendida
                 $stmtBaixa = $pdo->prepare("UPDATE produtos SET quantidade = quantidade - ? WHERE id = ?");
                 $stmtBaixa->execute([$qtdPedida, $prodId]);
             }
 
-            // 3. Registar o Pedido
             $stmtPed = $pdo->prepare("INSERT INTO pedidos (cliente_id, total, status) VALUES (?, ?, 'Pendente') RETURNING id");
             $stmtPed->execute([$cliente_id, $total]);
             $pedido_id = $stmtPed->fetchColumn();
 
-            // 4. Registar Itens da Encomenda
             $stmtItem = $pdo->prepare("INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)");
             $resumoItens = "";
             foreach ($itens as $item) {
                 $stmtItem->execute([$pedido_id, intval($item['id']), intval($item['quantidade']), floatval($item['preco'])]);
-                $resumoItens .= "• {$item['quantidade']}x {$item['nome']}\n";
+                $resumoItens .= "• " . htmlspecialchars($item['quantidade']) . "x " . htmlspecialchars($item['nome']) . "\n";
             }
 
             $pdo->commit();
 
-            // 5. Notificação de Nova Venda no Telegram
-            $msgTG = "🛒 *Nova Encomenda Registada! (#{$pedido_id})*\n\n";
-            $msgTG .= "👤 *Cliente:* {$nome}\n";
-            $msgTG .= "📧 *E-mail:* {$email}\n";
-            $msgTG .= "💰 *Valor Total:* R$ " . number_format($total, 2, ',', '.') . "\n\n";
-            $msgTG .= "*Itens Comprados:*\n" . $resumoItens;
-            notificarTelegram($msgTG, $telegramToken, $telegramChatId);
+            // Mensagem completa em formato HTML
+            $msgTG = "🛒 <b>Nova Encomenda Registada! (#{$pedido_id})</b>\n\n";
+            $msgTG .= "👤 <b>Cliente:</b> " . htmlspecialchars($nome) . "\n";
+            $msgTG .= "📧 <b>E-mail:</b> " . htmlspecialchars($email) . "\n";
+            if (!empty($telefone)) $msgTG .= "📞 <b>Telefone:</b> " . htmlspecialchars($telefone) . "\n";
+            if (!empty($cidade)) $msgTG .= "📍 <b>Destino:</b> " . htmlspecialchars($cidade) . " - " . htmlspecialchars($endereco) . "\n";
+            $msgTG .= "💰 <b>Valor Total:</b> R$ " . number_format($total, 2, ',', '.') . "\n\n";
+            $msgTG .= "<b>Itens Comprados:</b>\n" . $resumoItens;
+
+            notificarTelegramHTML($msgTG, $telegramToken, $telegramChatId);
 
             echo json_encode(['sucesso' => true, 'pedido_id' => $pedido_id], JSON_UNESCAPED_UNICODE);
         } catch (Exception $e) {
