@@ -2,7 +2,7 @@
 // INTEGRAÇÃO SUPABASE & GOOGLE OAUTH E SEGURANÇA
 // ==========================================
 
-// OBS 2: Injetor Dinâmico do SweetAlert2 (Mensagens Estilizadas)
+// Injetor Dinâmico do SweetAlert2
 if (!document.getElementById('swal-script')) {
     const script = document.createElement('script');
     script.id = 'swal-script';
@@ -10,10 +10,9 @@ if (!document.getElementById('swal-script')) {
     document.head.appendChild(script);
 }
 
-// Função Auxiliar de Alertas Bonitos
 function mostrarAlertaModerno(titulo, texto, icone) {
     if (typeof Swal !== 'undefined') {
-        return Swal.fire({ title: titulo, text: texto, icon: icone, confirmButtonColor: '#0284c7' });
+        return Swal.fire({ title: titulo, text: texto, icon: icone, confirmButtonColor: '#000000' });
     } else {
         alert(titulo + "\n" + texto);
         return Promise.resolve();
@@ -34,19 +33,64 @@ async function loginComGoogle() {
     if (error) mostrarAlertaModerno('Aviso', 'Erro no login Google: ' + error.message, 'error');
 }
 
+// Intercepta e valida via backend antes de permitir a sessão
 if (supabaseClient) {
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        if (session && session.user) {
+        if (event === 'SIGNED_IN' && session && session.user) {
             const user = session.user;
-            const usuarioFormatado = { id: user.id, nome: user.user_metadata?.full_name || user.email.split('@')[0], email: user.email, role: 'cliente' };
-            localStorage.setItem('jr_user', JSON.stringify(usuarioFormatado));
+            const nomeGoogle = user.user_metadata?.full_name || user.email.split('@')[0];
 
-            await mostrarAlertaModerno('Acesso Confirmado!', `Bem-vindo(a) de volta, ${usuarioFormatado.nome}.\nA sua sessão foi iniciada.`, 'success');
+            try {
+                const res = await fetch('api/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tipo: 'google',
+                        email: user.email,
+                        nome: nomeGoogle
+                    })
+                });
 
-            if (typeof renderHeader === 'function') renderHeader();
-            if (window.location.hash.includes('login') || window.location.hash.includes('access_token')) {
-                window.location.hash = ''; 
-                if (typeof navegar === 'function') navegar('home');
+                const data = await res.json();
+
+                if (!data.sucesso) {
+                    // Limpa sessão pendente do Supabase e storage
+                    await supabaseClient.auth.signOut();
+                    localStorage.removeItem('jr_user');
+
+                    await Swal.fire({
+                        title: 'Acesso em Análise',
+                        text: data.mensagem || 'A sua conta precisa ser aprovada pelo administrador antes do primeiro acesso.',
+                        icon: 'warning',
+                        confirmButtonColor: '#000000'
+                    });
+
+                    window.location.hash = '#home';
+                    if (typeof navegar === 'function') navegar('home');
+                    return;
+                }
+
+                // Usuário aprovado: grava dados validados pelo backend
+                const usuarioFormatado = {
+                    id: data.dados.id,
+                    nome: data.dados.nome,
+                    email: data.dados.email,
+                    role: data.dados.role
+                };
+                localStorage.setItem('jr_user', JSON.stringify(usuarioFormatado));
+
+                await mostrarAlertaModerno('Acesso Confirmado!', `Bem-vindo(a) de volta, ${usuarioFormatado.nome}.`, 'success');
+
+                if (typeof renderHeader === 'function') renderHeader();
+                if (window.location.hash.includes('login') || window.location.hash.includes('access_token')) {
+                    window.location.hash = ''; 
+                    if (typeof navegar === 'function') navegar('home');
+                }
+
+            } catch (err) {
+                await supabaseClient.auth.signOut();
+                localStorage.removeItem('jr_user');
+                mostrarAlertaModerno('Erro de Conexão', 'Não foi possível validar o acesso Google.', 'error');
             }
         }
     });
@@ -63,7 +107,9 @@ async function realizarLogin(event) {
     if (typeof mostrarLoading === 'function') mostrarLoading(true, "Autenticando...");
     try {
         const res = await fetch('api/login.php', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipo: 'tradicional', email, senha })
         });
         const data = await res.json();
         
@@ -95,7 +141,7 @@ async function fazerLogout() {
     if (typeof navegar === 'function') navegar('home');
 }
 
-// VALIDAÇÃO NO CHECKOUT (Modernizada)
+// Validação no checkout
 async function validarFinalizacaoCompra() {
     const userStr = localStorage.getItem('jr_user');
     const user = userStr ? JSON.parse(userStr) : null;
@@ -112,8 +158,8 @@ async function validarFinalizacaoCompra() {
             html: `Confirmar pedido no nome de:<br><b>👤 ${user.nome}</b><br><b>✉️ ${user.email}</b>?`,
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#15803d',
-            cancelButtonColor: '#dc2626',
+            confirmButtonColor: '#000000',
+            cancelButtonColor: '#71717a',
             confirmButtonText: 'Sim, Confirmar',
             cancelButtonText: 'Cancelar'
         });
