@@ -1,7 +1,7 @@
 // === ESTADO GLOBAL ===
 window.produtosGlobais = [];
 
-// === INJEÇÃO DE ESTILOS CSS ===
+// === INJEÇÃO DE ESTILOS CSS AUXILIARES ===
 (function injetarEstilosBotoes() {
   if (document.getElementById('jr-btn-fix-styles')) return;
   const style = document.createElement('style');
@@ -78,9 +78,67 @@ window.produtosGlobais = [];
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Regras de perfil e menu mobile */
+    .mobile-user-links {
+      display: none;
+    }
+    .desktop-user-dropdown {
+      display: inline-block;
+    }
+    @media (max-width: 768px) {
+      .desktop-user-dropdown {
+        display: none !important;
+      }
+      .mobile-user-links {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        padding-top: 12px !important;
+        margin-top: 8px !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+      }
+      .mobile-user-links a {
+        font-size: 1rem !important;
+        font-weight: 500 !important;
+      }
+    }
   `;
   document.head.appendChild(style);
 })();
+
+// === FUNÇÕES DE CONTROLE DO MENU MOBILE ===
+function alternarMenuMobile() {
+  const nav = document.querySelector('.main-nav');
+  if (nav) nav.classList.toggle('open');
+}
+
+function fecharMenuMobile() {
+  const nav = document.querySelector('.main-nav');
+  if (nav) nav.classList.remove('open');
+}
+
+function alternarUserMenu(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById('user-menu');
+  if (menu) {
+    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+  }
+}
+
+function fecharUserMenu() {
+  const menu = document.getElementById('user-menu');
+  if (menu) menu.style.display = 'none';
+}
+
+// Fecha o menu de usuário ao clicar fora dele
+document.addEventListener('click', (e) => {
+  const userMenu = document.getElementById('user-menu');
+  const userChip = document.querySelector('.user-chip');
+  if (userMenu && userChip && !userChip.contains(e.target) && !userMenu.contains(e.target)) {
+    userMenu.style.display = 'none';
+  }
+});
 
 // === CABEÇALHO ===
 function renderHeader() {
@@ -93,36 +151,56 @@ function renderHeader() {
 
   header.innerHTML = `
     <div class="header-container">
-      <button class="brand" onclick="navegar('home')" style="display: flex; align-items: center; gap: 10px; background: transparent; border: none; cursor: pointer; padding: 0;">
-        <img src="img/logo.jpg" alt="JR Iluminação" style="height: 42px; width: 42px; object-fit: contain; border-radius: 8px; background: #ffffff; padding: 2px;">
-        <span><strong style="color: #fff; font-size: 1.05rem;">JR Iluminação</strong><small style="color: #94a3b8; font-size: 0.75rem; display: block;">e Leds</small></span>
+      <button class="brand" onclick="fecharMenuMobile(); navegar('home');">
+        <img src="img/logo.jpg" alt="JR Iluminação">
+        <span><strong>JR Iluminação</strong><small>e Leds</small></span>
       </button>
+
       <nav class="main-nav">
-        <a href="#" class="nav-link" onclick="navegar('home');return false">Início</a>
-        <a href="#" class="nav-link" onclick="navegar('produtos');return false">Produtos</a>
+        <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('home'); return false;">Início</a>
+        <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('produtos'); return false;">Produtos</a>
         
         ${user ? `
-        <a href="#" class="nav-link" onclick="abrirCarrinho();return false" style="color: #00d2ff; font-weight: bold;">
-          🛒 Carrinho (<span id="cart-count">${qtdCarrinho}</span>)
-        </a>` : ''}
+          <a href="#" class="nav-link" onclick="fecharMenuMobile(); abrirCarrinho(); return false;" style="color: #38bdf8; font-weight: 600;">
+            🛒 Carrinho (<span id="cart-count">${qtdCarrinho}</span>)
+          </a>
+        ` : ''}
         
-        ${user?.role === 'admin' ? '<a href="#" class="nav-link" onclick="navegar(\'admin/dashboard\');return false">Painel</a>' : ''}
+        ${user?.role === 'admin' ? `
+          <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('admin/dashboard'); return false;">Painel</a>
+        ` : ''}
         
         ${user ? `
-          <div class="user-dropdown" style="position: relative; display: inline-block;">
-              <div class="user-chip" onclick="const menu = document.getElementById('user-menu'); menu.style.display = menu.style.display === 'block' ? 'none' : 'block';" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                  <span class="avatar">${user.nome.charAt(0)}</span>
-                  <span>${user.nome.split(' ')[0]}</span>
-                  <span style="font-size: 0.8rem;">▼</span>
-              </div>
-              <div id="user-menu" style="display: none; position: absolute; top: 100%; right: 0; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; width: 160px; overflow: hidden; z-index: 1000; margin-top: 5px;">
-                  <a href="#" onclick="document.getElementById('user-menu').style.display='none'; navegar('perfil'); return false;" style="display: block; padding: 12px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">👤 Meu Perfil</a>
-                  <a href="#" onclick="fazerLogout(); return false;" style="display: block; padding: 12px 15px; color: #dc3545; text-decoration: none;">🚪 Sair</a>
-              </div>
+          <!-- Links para visualização em celular -->
+          <div class="mobile-user-links">
+            <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('perfil'); return false;" style="color: #e2e8f0;">
+              👤 Meu Perfil (${user.nome.split(' ')[0]})
+            </a>
+            <a href="#" class="nav-link" onclick="fecharMenuMobile(); fazerLogout(); return false;" style="color: #f87171 !important;">
+              🚪 Sair da Conta
+            </a>
           </div>
-        ` : '<button class="btn btn-primary btn-login" onclick="navegar(\'login\')">Entrar</button>'}
+
+          <!-- Dropdown para computadores -->
+          <div class="desktop-user-dropdown" style="position: relative;">
+            <div class="user-chip" onclick="alternarUserMenu(event)" style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
+              <span class="avatar" style="background: #0284c7; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff;">
+                ${user.nome.charAt(0).toUpperCase()}
+              </span>
+              <span>${user.nome.split(' ')[0]}</span>
+              <span style="font-size: 0.8rem;">▼</span>
+            </div>
+            <div id="user-menu" style="display: none; position: absolute; top: 115%; right: 0; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.18); border-radius: 8px; width: 165px; overflow: hidden; z-index: 100002;">
+              <a href="#" onclick="fecharUserMenu(); navegar('perfil'); return false;" style="display: block; padding: 12px 15px; color: #1e293b; text-decoration: none; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem;">👤 Meu Perfil</a>
+              <a href="#" onclick="fecharUserMenu(); fazerLogout(); return false;" style="display: block; padding: 12px 15px; color: #dc2626; text-decoration: none; font-size: 0.9rem;">🚪 Sair</a>
+            </div>
+          </div>
+        ` : `
+          <button class="btn btn-primary btn-login" onclick="fecharMenuMobile(); navegar('login');">Entrar</button>
+        `}
       </nav>
-      <button class="mobile-menu" onclick="document.querySelector('.main-nav').classList.toggle('open')">☰</button>
+
+      <button class="mobile-menu" aria-label="Abrir menu" onclick="alternarMenuMobile()">☰</button>
     </div>
   `;
 }
@@ -331,8 +409,8 @@ window.renderPerfil = async function() {
             };
 
             pedidosHTML = `
-                <div class="table-responsive" style="margin-top: 15px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                <div class="table-responsive" style="margin-top: 15px; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table style="width: 100%; min-width: 480px; border-collapse: collapse; font-size: 0.95rem;">
                         <thead>
                             <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6; text-align: left;">
                                 <th style="padding: 12px;">Nº Pedido</th>
@@ -364,10 +442,10 @@ window.renderPerfil = async function() {
     }
 
     main.innerHTML = `
-    <div class="container" style="max-width: 800px; margin: 40px auto; padding: 20px;">
+    <div class="container" style="max-width: 800px; margin: 30px auto; padding: 15px;">
         <h2 style="margin-bottom: 20px; color: #1e293b;">Área do Cliente</h2>
         
-        <div style="background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border: 1px solid #e2e8f0;">
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #e2e8f0;">
             <h3 style="margin-top: 0; margin-bottom: 15px; color: #334155; border-bottom: 1px solid #eee; padding-bottom: 10px;">Dados Pessoais</h3>
             <form onsubmit="atualizarMeuPerfil(event, ${user.id})">
                 <div style="margin-bottom: 15px;">
@@ -378,11 +456,11 @@ window.renderPerfil = async function() {
                     <label style="display: block; margin-bottom: 5px; color: #64748b; font-size: 0.9rem;">E-mail (Usado para Login)</label>
                     <input type="email" id="perfil-email" value="${user.email}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;" required>
                 </div>
-                <button type="submit" class="btn btn-primary" style="padding: 10px 20px; cursor: pointer;">Guardar Alterações</button>
+                <button type="submit" class="btn btn-primary" style="padding: 10px 20px; cursor: pointer; width: 100%; max-width: 220px;">Guardar Alterações</button>
             </form>
         </div>
 
-        <div style="background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
             <h3 style="margin-top: 0; margin-bottom: 15px; color: #334155; border-bottom: 1px solid #eee; padding-bottom: 10px;">O Meu Histórico de Compras</h3>
             ${pedidosHTML}
         </div>
