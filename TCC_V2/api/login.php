@@ -24,11 +24,11 @@ try {
         PDO::ATTR_TIMEOUT => 10
     ]);
     
-    // Fuso Horário do Brasil para registrar a Auditoria corretamente (Teste 4)
+    // TESTE 4: Fuso Horário de Brasília para registrar Auditoria corretamente
     $pdo->exec("SET TIME ZONE 'America/Sao_Paulo'");
     
 } catch (PDOException $e) {
-    echo json_encode(['sucesso' => false, 'erro' => 'Falha na conexão com o banco: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['sucesso' => false, 'erro' => 'Falha na conexão: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -53,13 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($user && password_verify($senhaInput, $user['senha'])) {
             
-            // TESTE 2: Impede clientes pendentes de entrar
+            // TESTE 2: Impede clientes não aprovados de entrar
             if ($user['role'] !== 'admin' && $user['status'] === 'Pendente') {
                 echo json_encode(['sucesso' => false, 'mensagem' => 'A sua conta está em análise. Aguarde a aprovação do administrador para aceder à loja.'], JSON_UNESCAPED_UNICODE);
                 exit;
             }
 
-            // Atualiza a data/hora do último login no fuso do Brasil
+            // Grava o horário oficial do Brasil no momento exato do clique
             $updateStmt = $pdo->prepare("UPDATE autenticacao SET ultimo_login = CURRENT_TIMESTAMP WHERE usuario_id = ?");
             $updateStmt->execute([$user['id']]);
 
