@@ -124,33 +124,19 @@ function aplicarFiltrosCatalog() {
   const grid = document.getElementById('produtos-grid');
   if (!grid || !window.produtosGlobais) return;
 
-  // Função interna para remover acentos (Obs 4 - resolve "Lâmpadas" vs "Lampadas")
-  const normalizar = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
   let filtrados = window.produtosGlobais.filter(p => {
-    const nomeNorm = normalizar(String(p.nome || ''));
-    const descNorm = normalizar(String(p.descricao || ''));
-    const catDbNorm = normalizar(String(p.categoria || ''));
-    const termoNorm = normalizar(termo);
-    const catSelectNorm = normalizar(window.categoriaAtual);
-
-    const bateTexto = nomeNorm.includes(termoNorm) || descNorm.includes(termoNorm);
-    
+    const nome = String(p.nome || '').toLowerCase();
+    const desc = String(p.descricao || '').toLowerCase();
+    const bateTexto = nome.includes(termo) || desc.includes(termo);
     if (window.categoriaAtual === 'todas') return bateTexto;
-    
-    // Confere se bate com a categoria salva no BD, senão procura no nome
-    if (catDbNorm.includes(catSelectNorm)) {
-        return bateTexto;
-    } else {
-        return bateTexto && (nomeNorm.includes(catSelectNorm) || descNorm.includes(catSelectNorm));
-    }
+    return bateTexto && (nome.includes(window.categoriaAtual) || desc.includes(window.categoriaAtual));
   });
 
   if (window.ordemAtual === 'menor_preco') filtrados.sort((a, b) => Number(a.preco) - Number(b.preco));
   else if (window.ordemAtual === 'maior_preco') filtrados.sort((a, b) => Number(b.preco) - Number(a.preco));
   else if (window.ordemAtual === 'nome_az') filtrados.sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
 
-  if (filtrados.length === 0) grid.innerHTML = renderEmptyState('◈', 'Nenhum produto encontrado', 'Tente outro termo ou categoria.');
+  if (filtrados.length === 0) grid.innerHTML = renderEmptyState('◈', 'Nenhum produto encontrado', 'Tente outro termo de busca ou selecione outra categoria.');
   else grid.innerHTML = filtrados.map((p, i) => {
     const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
     const disponivel = Number(p.quantidade || 0) > 0;
@@ -172,13 +158,14 @@ function aplicarFiltrosCatalog() {
     </article>`;
   }).join('');
 }
+
 async function carregarProdutos() {
   try { const r = await apiFetch('api/produtos.php'); window.produtosGlobais = (r && r.dados) ? r.dados : []; aplicarFiltrosCatalog(); } 
   catch(e) { const grid = document.getElementById('produtos-grid'); if (grid) grid.innerHTML = renderEmptyState('!', 'Erro', 'Confira a sua ligação.', "carregarProdutos()"); } 
   finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
 }
 
-// === LOGIN, REGISTO E RECUPERAÇÃO DE PALAVRA-PASSE ===
+// === LOGIN E REGISTRO ===
 function renderLogin() {
   const app = document.getElementById('app');
   if (!app) return;
@@ -196,9 +183,6 @@ function renderLogin() {
         <form onsubmit="realizarLogin(event)">
           <label>E-mail<input type="email" id="login-email" placeholder="seu@email.com" required></label>
           <label>Senha<input type="password" id="login-senha" placeholder="••••••••" required></label>
-          <div style="text-align: right; margin-bottom: 12px;">
-            <a href="#" onclick="solicitarRecuperacaoSenha(); return false;" style="font-size: 0.82rem; color: #0284c7; text-decoration: none;">Esqueceu a sua senha?</a>
-          </div>
           <button class="btn btn-primary btn-lg full" type="submit">Entrar <span>→</span></button>
         </form>
 
@@ -225,8 +209,8 @@ function renderLogin() {
         <span class="eyebrow dark">NOVA CONTA</span>
         <h1>Crie seu acesso.</h1>
         <form onsubmit="realizarRegistro(event)">
-          <label>Nome Completo<input type="text" id="reg-nome" placeholder="Carlos Eduardo Ramos" required></label>
-          <label>E-mail<input type="email" id="reg-email" placeholder="carlos.ramos@email.com" required></label>
+          <label>Nome Completo<input type="text" id="reg-nome" placeholder="João da Silva" required></label>
+          <label>E-mail<input type="email" id="reg-email" placeholder="seu@email.com" required></label>
           <label>Senha<input type="password" id="reg-senha" placeholder="••••••••" required></label>
           <button class="btn btn-primary btn-lg full" type="submit">Cadastrar <span>→</span></button>
         </form>
@@ -235,31 +219,6 @@ function renderLogin() {
       <button class="back-link" onclick="navegar('home')">← Voltar para a loja</button>
     </div>`;
 }
-
-// Modal de Recuperação de Palavra-passe
-window.solicitarRecuperacaoSenha = async function() {
-    if (typeof Swal === 'undefined') return alert("Funcionalidade temporariamente indisponível.");
-    const { value: email } = await Swal.fire({
-        title: 'Recuperar Senha',
-        input: 'email',
-        inputLabel: 'Introduza o seu e-mail cadastrado',
-        inputPlaceholder: 'seu@email.com',
-        confirmButtonText: 'Enviar Link',
-        cancelButtonText: 'Cancelar',
-        showCancelButton: true,
-        confirmButtonColor: '#0284c7'
-    });
-
-    if (email) {
-        Swal.fire({
-            title: 'Verificação Enviada',
-            text: `Se o e-mail ${email} estiver registado na JR Iluminação, enviámos um código temporário de redefinição.`,
-            icon: 'info',
-            confirmButtonColor: '#0284c7'
-        });
-    }
-};
-
 function alternarFormulario(tipo) {
   document.getElementById('form-login-area').style.display = tipo === 'registro' ? 'none' : 'block';
   document.getElementById('form-registro-area').style.display = tipo === 'registro' ? 'block' : 'none';
@@ -267,67 +226,14 @@ function alternarFormulario(tipo) {
 
 async function realizarRegistro(event) {
   event.preventDefault();
-  
-  const nome = document.getElementById('reg-nome').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const senha = document.getElementById('reg-senha').value;
-
-  if (!nome || !email || !senha) {
-    if (typeof Swal !== 'undefined') {
-      Swal.fire({ title: 'Atenção', text: 'Preencha todos os campos.', icon: 'warning', confirmButtonColor: '#0284c7' });
-    } else {
-      alert('Preencha todos os campos.');
-    }
-    return;
-  }
-
-  if (typeof mostrarLoading === 'function') mostrarLoading(true, 'A criar conta...');
-
   try {
-    const res = await fetch('api/registro.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, email, senha })
-    });
-    
+    const res = await fetch('api/registro.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: document.getElementById('reg-nome').value, email: document.getElementById('reg-email').value, senha: document.getElementById('reg-senha').value }) });
     const data = await res.json();
-
-    if (data.sucesso) {
-      if (typeof Swal !== 'undefined') {
-        await Swal.fire({
-          title: 'Registo Concluído!',
-          text: data.mensagem || 'Conta criada com sucesso! O seu registo está em análise.',
-          icon: 'success',
-          confirmButtonColor: '#0284c7'
-        });
-      } else {
-        alert(data.mensagem);
-      }
-      alternarFormulario('login');
-      const loginEmailInput = document.getElementById('login-email');
-      if (loginEmailInput) loginEmailInput.value = email;
-    } else {
-      if (typeof Swal !== 'undefined') {
-        Swal.fire({
-          title: 'Não foi possível registar',
-          text: data.erro || data.mensagem || 'Verifique os dados informados.',
-          icon: 'error',
-          confirmButtonColor: '#0284c7'
-        });
-      } else {
-        alert(data.erro || data.mensagem);
-      }
-    }
-  } catch (e) {
-    if (typeof Swal !== 'undefined') {
-      Swal.fire({ title: 'Erro de Comunicação', text: 'Falha ao ligar à API de registo.', icon: 'error', confirmButtonColor: '#0284c7' });
-    } else {
-      alert('Erro ao ligar ao servidor.');
-    }
-  } finally {
-    if (typeof mostrarLoading === 'function') mostrarLoading(false);
-  }
+    if (data.sucesso) { if (typeof exibirMensagem === 'function') exibirMensagem("Conta criada!", "sucesso"); alternarFormulario('login'); } 
+    else { if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + data.erro, "erro"); }
+  } catch(e) { if (typeof exibirMensagem === 'function') exibirMensagem("Erro de conexão.", "erro"); }
 }
+
 // === PERFIL DO CLIENTE ===
 window.renderPerfil = async function() {
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
@@ -452,19 +358,25 @@ function alterarQtdCarrinho(index, delta) {
   localStorage.setItem('carrinho', JSON.stringify(carrinho)); renderHeader(); renderizarItensCarrinho();
 }
 
+// === ABRE/FECHA CARRINHO (Controlo da classe "carrinho-aberto") ===
 function abrirCarrinho() {
   let modal = document.getElementById('modal-carrinho');
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'modal-carrinho';
-    modal.style.cssText = 'position:fixed; top:0; right:0; width:100%; max-width:420px; height:100%; background:#fff; box-shadow:-5px 0 25px rgba(0,0,0,0.3); z-index:99999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: 0.3s;';
+    modal.style.cssText = 'position:fixed; top:0; right:0; width:100%; max-width:420px; height:100%; background:#fff; box-shadow:-5px 0 25px rgba(0,0,0,0.3); z-index:9999999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: 0.3s;';
     document.body.appendChild(modal);
   }
+  document.body.classList.add('carrinho-aberto');
   renderizarItensCarrinho(); 
   modal.style.display = 'flex';
 }
 
-function fecharCarrinho() { const modal = document.getElementById('modal-carrinho'); if (modal) modal.style.display = 'none'; }
+function fecharCarrinho() { 
+  const modal = document.getElementById('modal-carrinho'); 
+  if (modal) modal.style.display = 'none'; 
+  document.body.classList.remove('carrinho-aberto');
+}
 
 function renderizarItensCarrinho() {
   const modal = document.getElementById('modal-carrinho');
@@ -485,7 +397,7 @@ function renderizarItensCarrinho() {
           <div style="text-align:right;"><strong style="display:block; margin-bottom:5px; font-size: 0.95rem;">R$ ${subtotal.toFixed(2).replace('.', ',')}</strong><button onclick="removerDoCarrinho(${index})" style="color:#dc3545; background:none; border:none; cursor:pointer; font-size:12px; font-weight:bold;">Remover</button></div>
         </div>`;
     });
-    html += `</div><div style="margin-top:15px; border-top:2px solid #eee; padding-top:15px;"><h3 style="display:flex; justify-content:space-between; margin-bottom:15px; color: #1e293b;"><span>Total:</span> <span>R$ ${total.toFixed(2).replace('.', ',')}</span></h3><button onclick="renderizarCheckout()" class="btn btn-primary btn-lg full" style="width:100%; cursor:pointer; padding: 14px;">Avançar para Entrega ➔</button></div>`;
+    html += `</div><div style="margin-top:15px; border-top:2px solid #eee; padding-top:15px;"><h3 style="display:flex; justify-content:space-between; margin-bottom:15px; color: #1e293b;"><span>Total:</span> <span>R$ ${total.toFixed(2).replace('.', ',')}</span></h3><button onclick="renderizarCheckout()" class="btn btn-primary btn-lg full" style="width:100%; cursor:pointer; padding: 14px; touch-action: manipulation !important; -webkit-tap-highlight-color: transparent;">Avançar para Entrega ➔</button></div>`;
   }
   modal.innerHTML = html;
 }
@@ -558,7 +470,7 @@ window.renderizarCheckout = function() {
     </div>
 
     <div style="margin-top:10px; border-top:2px solid #eee; padding-top:15px;">
-        <button id="btn-finalizar" onclick="finalizarPedido(this)" class="btn btn-primary btn-lg full" style="width:100%; cursor:pointer; padding: 14px; font-weight: bold; background: #15803d; border-color: #15803d;">✅ Confirmar Compra</button>
+        <button id="btn-finalizar" onclick="finalizarPedido(this)" class="btn btn-primary btn-lg full" style="width:100%; cursor:pointer; padding: 14px; font-weight: bold; background: #15803d; border-color: #15803d; touch-action: manipulation !important; -webkit-tap-highlight-color: transparent;">✅ Confirmar Compra</button>
     </div>
   `;
   modal.innerHTML = html;
@@ -599,48 +511,109 @@ window.renderizarCheckout = function() {
   }
 }
 
-// === EXIGÊNCIA DO PROFESSOR: BLINDAGEM DO PEDIDO ===
+// === FINALIZAÇÃO BLINDADA PARA DESKTOP E MOBILE ===
 window.finalizarPedido = async function(btnElement) {
-    if (typeof validarFinalizacaoCompra === 'function') {
-        const aprovado = await validarFinalizacaoCompra();
-        if (!aprovado) return; 
+    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
+    
+    // 1. Verificação de sessão rigorosa mas amigável (sem bloqueio de prompt)
+    if (!user) {
+        if (typeof exibirMensagem === 'function') {
+            exibirMensagem("É obrigatório iniciar sessão (fazer login) para finalizar a compra e proteger os seus dados.", "aviso");
+        } else {
+            alert("⚠️ Segurança JR Iluminação:\n\nÉ obrigatório iniciar sessão (fazer login) para finalizar a compra.");
+        }
+        fecharCarrinho();
+        return navegar('login');
     }
 
-    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
-    const nome = document.getElementById('chk-nome').value.trim();
-    const telefone = document.getElementById('chk-telefone').value.trim();
-    const cep = document.getElementById('chk-cep').value.trim();
-    const cidade = document.getElementById('chk-cidade').value.trim();
-    const endereco = document.getElementById('chk-endereco').value.trim();
-    const pagamento = document.getElementById('chk-pagamento').value;
+    // 2. Coleta dos dados do formulário de checkout
+    const nomeEl = document.getElementById('chk-nome');
+    const telEl = document.getElementById('chk-telefone');
+    const cepEl = document.getElementById('chk-cep');
+    const cidEl = document.getElementById('chk-cidade');
+    const endEl = document.getElementById('chk-endereco');
+    const pagEl = document.getElementById('chk-pagamento');
+
+    const nome = nomeEl ? nomeEl.value.trim() : '';
+    const telefone = telEl ? telEl.value.trim() : '';
+    const cep = cepEl ? cepEl.value.trim() : '';
+    const cidade = cidEl ? cidEl.value.trim() : '';
+    const endereco = endEl ? endEl.value.trim() : '';
+    const pagamento = pagEl ? pagEl.value : 'PIX';
 
     if (!nome || !telefone || !cep || !cidade || !endereco) {
-        if (typeof Swal !== 'undefined') Swal.fire('Aviso', 'Preencha todos os campos do endereço.', 'warning');
+        if (typeof exibirMensagem === 'function') {
+            exibirMensagem("Preencha todos os campos do endereço e contacto.", "aviso");
+        }
         return; 
     }
 
     const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
-    if (carrinho.length === 0) return;
-    let total = 0; carrinho.forEach(item => total += (parseFloat(item.preco) * parseInt(item.quantidade)));
+    if (carrinho.length === 0) {
+        if (typeof exibirMensagem === 'function') {
+            exibirMensagem("O seu carrinho está vazio.", "aviso");
+        }
+        return;
+    }
 
-    if (btnElement) { btnElement.disabled = true; btnElement.innerHTML = '⏳ A processar...'; btnElement.style.opacity = '0.7'; }
+    let total = 0; 
+    carrinho.forEach(item => total += (parseFloat(item.preco) * parseInt(item.quantidade)));
 
+    // 3. Feedback visual imediato e desativação para evitar cliques duplos/duplicação de encomendas
+    if (btnElement) { 
+        btnElement.disabled = true; 
+        btnElement.innerHTML = '⏳ A processar encomenda...'; 
+        btnElement.style.opacity = '0.7'; 
+        btnElement.style.cursor = 'not-allowed'; 
+    }
+
+    // 4. Envio do pedido à API
     try {
         const res = await apiFetch('api/pedidos.php', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ acao: 'criar', email: user.email, nome: nome, telefone: telefone, cep: cep, cidade: cidade, endereco: endereco, forma_pagamento: pagamento, prazo_entrega: window.prazoEntregaAtual, total: total, itens: carrinho })
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                acao: 'criar', 
+                email: user.email, 
+                nome: nome, 
+                telefone: telefone, 
+                cep: cep, 
+                cidade: cidade, 
+                endereco: endereco, 
+                forma_pagamento: pagamento, 
+                prazo_entrega: window.prazoEntregaAtual || 'A combinar', 
+                total: total, 
+                itens: carrinho 
+            })
         });
 
         if (res && res.sucesso) {
-            localStorage.removeItem('carrinho'); fecharCarrinho(); renderHeader();
+            localStorage.removeItem('carrinho'); 
+            fecharCarrinho(); 
+            renderHeader();
             exibirComprovantePedido(res.pedido_id, total, cidade, endereco, pagamento);
         } else {
-            if (typeof Swal !== 'undefined') Swal.fire('Erro', res.erro || 'Falha na compra', 'error');
-            if (btnElement) { btnElement.disabled = false; btnElement.innerHTML = '✅ Confirmar Compra'; btnElement.style.opacity = '1'; }
+            if (typeof exibirMensagem === 'function') {
+                exibirMensagem("Erro: " + (res.erro || "Falha ao gravar encomenda."), "erro");
+            }
+            if (btnElement) { 
+                btnElement.disabled = false; 
+                btnElement.innerHTML = '✅ Confirmar Compra'; 
+                btnElement.style.opacity = '1'; 
+                btnElement.style.cursor = 'pointer'; 
+            }
         }
     } catch (erro) {
-        if (typeof Swal !== 'undefined') Swal.fire('Erro', 'Erro ao comunicar com o servidor.', 'error');
-        if (btnElement) { btnElement.disabled = false; btnElement.innerHTML = '✅ Confirmar Compra'; btnElement.style.opacity = '1'; }
+        console.error("Erro no checkout mobile:", erro);
+        if (typeof exibirMensagem === 'function') {
+            exibirMensagem("Erro ao comunicar com o servidor.", "erro");
+        }
+        if (btnElement) { 
+            btnElement.disabled = false; 
+            btnElement.innerHTML = '✅ Confirmar Compra'; 
+            btnElement.style.opacity = '1'; 
+            btnElement.style.cursor = 'pointer'; 
+        }
     }
 };
 
@@ -651,7 +624,7 @@ window.exibirComprovantePedido = function(pedidoId, total, cidade, endereco, pag
 
   modalRecibo = document.createElement('div');
   modalRecibo.id = 'modal-recibo-pedido';
-  modalRecibo.style.cssText = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); z-index: 1000000; display: flex; align-items: center; justify-content: center; padding: 20px;`;
+  modalRecibo.style.cssText = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); z-index: 10000000; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;`;
 
   let infoPagamentoHTML = '';
 
@@ -702,7 +675,7 @@ window.exibirComprovantePedido = function(pedidoId, total, cidade, endereco, pag
   }
 
   modalRecibo.innerHTML = `
-    <div style="background: #fff; border-radius: 12px; max-width: 440px; width: 100%; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: fadeInToast 0.3s ease;">
+    <div style="background: #fff; border-radius: 12px; max-width: 440px; width: 100%; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: fadeInToast 0.3s ease; margin: auto;">
       <h2 style="margin: 0 0 10px 0; color: #0f172a; font-size: 1.5rem;">🎉 Pedido Registado!</h2>
       <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;">Pedido <strong>#${pedidoId}</strong> gerado com sucesso.</p>
       
@@ -715,7 +688,7 @@ window.exibirComprovantePedido = function(pedidoId, total, cidade, endereco, pag
 
       <div style="display: flex; gap: 10px;">
         <button class="btn btn-primary" style="flex: 1; padding: 12px;" onclick="document.getElementById('modal-recibo-pedido').remove(); navegar('perfil');">Ver no Perfil</button>
-        <button class="btn" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; background: #fff; color: #334155;" onclick="document.getElementById('modal-recibo-pedido').remove(); navegar('produtos');">Continuar</button>
+        <button class="btn" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; background: #fff; color: #334155;" onclick="document.getElementById('modal-recibo-pedido').remove(); navegar('produtos');">Continuar a Comprar</button>
       </div>
     </div>
   `;
@@ -757,7 +730,7 @@ window.exibirMensagem = function(msg, tipo = 'sucesso') {
     if (!container) {
         container = document.createElement('div');
         container.id = 'toast-container';
-        container.style.cssText = 'position:fixed; top:20px; right:20px; z-index:9999999; display:flex; flex-direction:column; gap:10px;';
+        container.style.cssText = 'position:fixed; top:20px; right:20px; z-index:99999999; display:flex; flex-direction:column; gap:10px; pointer-events: none;';
         document.body.appendChild(container);
     }
     
@@ -769,7 +742,7 @@ window.exibirMensagem = function(msg, tipo = 'sucesso') {
     toast.style.cssText = `
         min-width: 250px; max-width: 400px; padding: 14px 18px; border-radius: 8px; 
         box-shadow: 0 4px 14px rgba(0,0,0,0.3); color: #fff; display: flex; align-items: center; 
-        gap: 12px; font-size: 0.95rem; font-family: sans-serif;
+        gap: 12px; font-size: 0.95rem; font-family: sans-serif; pointer-events: auto;
         background-color: ${corFundo}; border-left: 5px solid ${corBorda};
         transition: opacity 0.3s ease-out; opacity: 1;
     `;
