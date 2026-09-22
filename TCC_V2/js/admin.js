@@ -82,7 +82,7 @@ window.renderDashboard = function() {
 };
 
 // ==========================================
-// RELATÓRIOS AVANÇADOS
+// RELATÓRIOS AVANÇADOS COM EXPORTAÇÃO
 // ==========================================
 window.renderAdminRelatorios = async function() {
     if (typeof mostrarLoading === 'function') mostrarLoading(true, "A gerar relatório detalhado...");
@@ -93,6 +93,9 @@ window.renderAdminRelatorios = async function() {
         const pedidos = resPedidos.dados || [];
         const produtos = resProdutos.dados || [];
         
+        // Guardado no estado global para o botão de exportar
+        window.dadosRelatorioAtual = { pedidos, produtos };
+
         let totalFaturado = 0;
         let contagemStatus = { 'Pendente': 0, 'Em processamento': 0, 'Enviado': 0, 'Concluído': 0 };
         
@@ -107,7 +110,7 @@ window.renderAdminRelatorios = async function() {
             .filter(p => parseInt(p.quantidade) <= 5)
             .sort((a, b) => parseInt(a.quantidade) - parseInt(b.quantidade));
 
-        const ultimosPedidos = pedidos.slice(0, 5);
+        const ultimosPedidos = pedidos.slice(0, 8);
 
         const getStatusColor = (status) => {
             switch(status) {
@@ -121,7 +124,17 @@ window.renderAdminRelatorios = async function() {
 
         const html = `
         <div class="panel" style="padding: 20px;">
-            <h3 style="margin-bottom: 20px; color: #1e293b; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">Visão Geral de Desempenho</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">
+                <h3 style="margin: 0; color: #1e293b;">Visão Geral de Desempenho</h3>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="exportarRelatorioCSV()" style="padding: 8px 14px; font-size: 0.85rem; background: #0284c7; color: #fff; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        📥 Exportar CSV
+                    </button>
+                    <button class="btn" onclick="imprimirRelatorio()" style="padding: 8px 14px; font-size: 0.85rem; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        🖨️ Imprimir
+                    </button>
+                </div>
+            </div>
             
             <div class="stat-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
                 <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #10b981; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
@@ -164,7 +177,7 @@ window.renderAdminRelatorios = async function() {
                 </div>
             </div>
 
-            <h4 style="color: #334155; margin-bottom: 10px;">Últimas 5 Vendas</h4>
+            <h4 style="color: #334155; margin-bottom: 10px;">Vendas Recentes</h4>
             <div class="table-responsive">
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                     <thead>
@@ -197,6 +210,34 @@ window.renderAdminRelatorios = async function() {
     } finally {
         if (typeof mostrarLoading === 'function') mostrarLoading(false);
     }
+};
+
+window.exportarRelatorioCSV = function() {
+    if (!window.dadosRelatorioAtual || !window.dadosRelatorioAtual.pedidos) {
+        return alert("Nenhum dado carregado para exportação.");
+    }
+    const pedidos = window.dadosRelatorioAtual.pedidos;
+    
+    let csv = "ID Pedido;Data;Cliente;Total (R$);Status\n";
+    pedidos.forEach(p => {
+        const data = new Date(p.data_pedido).toLocaleDateString('pt-BR');
+        const valor = parseFloat(p.total).toFixed(2).replace('.', ',');
+        const cliente = (p.cliente_nome || 'Desconhecido').replace(/;/g, ' ');
+        csv += `${p.id};${data};"${cliente}";${valor};${p.status}\n`;
+    });
+
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `relatorio_vendas_jr_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+window.imprimirRelatorio = function() {
+    window.print();
 };
 
 // ==========================================
@@ -281,7 +322,7 @@ window.renderAdminProdutoForm = async function(params = {}) {
                 <div style="flex: 1;"><label>Quantidade em Estoque</label><input type="number" id="prod-quantidade" value="${produto.quantidade}" required style="width:100%; padding:10px;"></div>
             </div>
             <div style="margin-bottom: 25px;">
-                <label>Nome da Imagem (opcional, ex: produto1.jpg)</label>
+                <label>Nome da Imagem ou URL</label>
                 <input type="text" id="prod-imagem" value="${escapeHtml(produto.imagem)}" style="width:100%; padding:10px;">
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
