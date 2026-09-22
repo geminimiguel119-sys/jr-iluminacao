@@ -239,14 +239,67 @@ function alternarFormulario(tipo) {
 
 async function realizarRegistro(event) {
   event.preventDefault();
-  try {
-    const res = await fetch('api/registro.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: document.getElementById('reg-nome').value, email: document.getElementById('reg-email').value, senha: document.getElementById('reg-senha').value }) });
-    const data = await res.json();
-    if (data.sucesso) { if (typeof exibirMensagem === 'function') exibirMensagem("Conta criada!", "sucesso"); alternarFormulario('login'); } 
-    else { if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + data.erro, "erro"); }
-  } catch(e) { if (typeof exibirMensagem === 'function') exibirMensagem("Erro de conexão.", "erro"); }
-}
+  
+  const nome = document.getElementById('reg-nome').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const senha = document.getElementById('reg-senha').value;
 
+  if (!nome || !email || !senha) {
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({ title: 'Atenção', text: 'Preencha todos os campos.', icon: 'warning', confirmButtonColor: '#0284c7' });
+    } else {
+      alert('Preencha todos os campos.');
+    }
+    return;
+  }
+
+  if (typeof mostrarLoading === 'function') mostrarLoading(true, 'A criar conta...');
+
+  try {
+    const res = await fetch('api/registro.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, email, senha })
+    });
+    
+    const data = await res.json();
+
+    if (data.sucesso) {
+      if (typeof Swal !== 'undefined') {
+        await Swal.fire({
+          title: 'Registo Concluído!',
+          text: data.mensagem || 'Conta criada com sucesso! O seu registo está em análise.',
+          icon: 'success',
+          confirmButtonColor: '#0284c7'
+        });
+      } else {
+        alert(data.mensagem);
+      }
+      alternarFormulario('login');
+      const loginEmailInput = document.getElementById('login-email');
+      if (loginEmailInput) loginEmailInput.value = email;
+    } else {
+      if (typeof Swal !== 'undefined') {
+        Swal.fire({
+          title: 'Não foi possível registar',
+          text: data.erro || data.mensagem || 'Verifique os dados informados.',
+          icon: 'error',
+          confirmButtonColor: '#0284c7'
+        });
+      } else {
+        alert(data.erro || data.mensagem);
+      }
+    }
+  } catch (e) {
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({ title: 'Erro de Comunicação', text: 'Falha ao ligar à API de registo.', icon: 'error', confirmButtonColor: '#0284c7' });
+    } else {
+      alert('Erro ao ligar ao servidor.');
+    }
+  } finally {
+    if (typeof mostrarLoading === 'function') mostrarLoading(false);
+  }
+}
 // === PERFIL DO CLIENTE ===
 window.renderPerfil = async function() {
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
