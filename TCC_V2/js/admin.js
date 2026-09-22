@@ -336,6 +336,11 @@ window.renderAdminProdutoForm = async function(params = {}) {
 
 window.salvarProduto = async function(event, id) {
     event.preventDefault();
+    
+    // Bloqueia o botão durante o salvamento (Teste 6 - Clique rápido duplo)
+    const btnSubmit = event.target.querySelector('button[type="submit"]');
+    if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.innerHTML = 'A guardar...'; }
+
     const dados = {
         acao: 'salvar',
         id: id || null,
@@ -348,9 +353,19 @@ window.salvarProduto = async function(event, id) {
     if (typeof mostrarLoading === 'function') mostrarLoading(true, "A guardar...");
     try {
         const res = await apiFetch('api/produtos.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
-        if (res && res.sucesso) { exibirMensagem("Sucesso!", "sucesso"); navegar('admin/produtos'); } 
-        else { exibirMensagem("Erro: " + (res.erro || "Falha ao guardar"), "erro"); }
-    } catch (erro) { console.error(erro); } finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
+        if (res && res.sucesso) { 
+            if (typeof Swal !== 'undefined') Swal.fire('Feito!', 'Produto salvo com sucesso.', 'success'); 
+            navegar('admin/produtos'); 
+        } else { 
+            if (typeof Swal !== 'undefined') Swal.fire('Aviso', res.erro || 'Falha ao guardar.', 'warning'); 
+            if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Guardar Novo Produto'; }
+        }
+    } catch (erro) { 
+        console.error(erro); 
+        if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Guardar Novo Produto'; }
+    } finally { 
+        if (typeof mostrarLoading === 'function') mostrarLoading(false); 
+    }
 };
 
 window.excluirProduto = async function(id) {
@@ -395,11 +410,12 @@ window.renderAdminClientes = async function() {
                                 <td style="padding: 12px;"><strong>${escapeHtml(c.nome)}</strong></td>
                                 <td style="padding: 12px; color: #555;">${escapeHtml(c.email)}</td>
                                 <td style="padding: 12px;">
-                                    <span class="badge" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: ${c.role === 'admin' ? '#e3f2fd; color: #0d47a1;' : '#e8f5e9; color: #1b5e20;'}">
-                                        ${c.role === 'admin' ? 'Administrador' : 'Cliente'}
+                                    <span class="badge" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: ${c.status === 'Pendente' ? '#fef08a; color: #854d0e;' : '#e8f5e9; color: #1b5e20;'}">
+                                        ${c.status || (c.role === 'admin' ? 'Administrador' : 'Aprovado')}
                                     </span>
                                 </td>
                                 <td style="padding: 12px; text-align: right;">
+                                    ${c.status === 'Pendente' ? `<button class="btn" style="padding: 6px 12px; font-size: 0.85rem; margin-right: 5px; background: #15803d; color: #fff; border: none; border-radius: 4px; cursor: pointer;" onclick="aprovarClienteWeb(${c.id})">✅ Aprovar</button>` : ''}
                                     <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem; margin-right: 5px;" onclick="navegar('admin/clientes/editar', {id: ${c.id}})">Editar</button>
                                     <button class="btn" style="padding: 6px 12px; font-size: 0.85rem; background: #dc3545; color: white; border: none; border-radius: 4px;" onclick="excluirCliente(${c.id})">Excluir</button>
                                 </td>
@@ -409,10 +425,17 @@ window.renderAdminClientes = async function() {
                 </table>
             </div>
         </div>`;
-        adminLayout('Clientes', 'Gerencie os usuários do sistema e permissões.', html);
-    } catch (e) { exibirMensagem("Falha ao carregar clientes.", 'erro'); } finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
+        adminLayout('Clientes', 'Gerencie aprovações e permissões (Igual ao App).', html);
+    } catch (e) { console.error(e); } finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
 };
 
+window.aprovarClienteWeb = async function(id) {
+    if (typeof mostrarLoading === 'function') mostrarLoading(true, "A aprovar cliente...");
+    try {
+        const res = await apiFetch('api/clientes.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ acao: 'aprovar', id: id }) });
+        if (res && res.sucesso) { if (typeof Swal !== 'undefined') Swal.fire('Sucesso', 'Cliente Aprovado!', 'success'); renderAdminClientes(); } 
+    } catch (erro) { console.error(erro); } finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
+};
 window.renderAdminClienteForm = async function(params = {}) {
     const id = params.id || null;
     const isEdit = !!id;
