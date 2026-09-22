@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JR Iluminação e Leds</title>
 
+    <!-- Favicon Oficial -->
+    <link rel="icon" type="image/jpeg" href="img/logo.jpg">
+
     <!-- SDK do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
@@ -80,6 +83,18 @@
 
         .btn:active {
             transform: scale(0.97);
+        }
+
+        /* Estilo para Logo na Barra */
+        .brand img {
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease;
+        }
+
+        .brand:hover img {
+            transform: scale(1.05);
         }
 
         /* Modo Noturno */
@@ -191,7 +206,6 @@
                 padding: 18px;
             }
 
-            /* No celular, o botão de apagar a luz fica compacto e não tampa o carrinho */
             #btn-dark-mode {
                 bottom: 16px;
                 right: 16px;
