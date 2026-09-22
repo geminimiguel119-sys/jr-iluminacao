@@ -51,6 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Valida se o utilizador existe e se a senha confere
         if ($user && password_verify($senhaInput, $user['senha'])) {
+            
+            // EXIGÊNCIA DO PROFESSOR: Atualizar a data/hora do último login
+            $updateStmt = $pdo->prepare("UPDATE autenticacao SET ultimo_login = CURRENT_TIMESTAMP WHERE usuario_id = ?");
+            $updateStmt->execute([$user['id']]);
+
             unset($user['senha']); // Remove hash antes de retornar
             echo json_encode(['sucesso' => true, 'dados' => $user], JSON_UNESCAPED_UNICODE);
         } else {
