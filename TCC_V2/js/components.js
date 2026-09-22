@@ -35,7 +35,7 @@ function alternarUserMenu(e) { if (e) e.stopPropagation(); const menu = document
 function fecharUserMenu() { const menu = document.getElementById('user-menu'); if (menu) menu.style.display = 'none'; }
 document.addEventListener('click', (e) => { const userMenu = document.getElementById('user-menu'); const userChip = document.querySelector('.user-chip'); if (userMenu && userChip && !userChip.contains(e.target) && !userMenu.contains(e.target)) { userMenu.style.display = 'none'; } });
 
-// === CABEÇALHO ===
+// === CABEÇALHO (COM CONFIRMAÇÃO VISUAL DE LOGIN - EXIGÊNCIA PROFESSOR) ===
 function renderHeader() {
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
   const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
@@ -52,23 +52,31 @@ function renderHeader() {
         <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('home'); return false;">Início</a>
         <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('produtos'); return false;">Produtos</a>
         ${user ? `<a href="#" class="nav-link" onclick="fecharMenuMobile(); abrirCarrinho(); return false;" style="color: #38bdf8; font-weight: 600;">🛒 Carrinho (<span id="cart-count">${qtdCarrinho}</span>)</a>` : ''}
-        ${user?.role === 'admin' ? `<a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('admin/dashboard'); return false;">Painel</a>` : ''}
+        ${user?.role === 'admin' ? `<a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('admin/dashboard'); return false;">Painel Admin</a>` : ''}
+        
         ${user ? `
           <div class="mobile-user-links">
-            <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('perfil'); return false;" style="color: #e2e8f0;">👤 Meu Perfil (${user.nome.split(' ')[0]})</a>
-            <a href="#" class="nav-link" onclick="fecharMenuMobile(); fazerLogout(); return false;" style="color: #f87171 !important;">🚪 Sair da Conta</a>
+            <a href="#" class="nav-link" style="color: #10b981; font-weight: bold; pointer-events: none;">✅ Sessão Ativa: ${user.nome.split(' ')[0]}</a>
+            <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('perfil'); return false;" style="color: #e2e8f0;">👤 Histórico de Compras</a>
+            <a href="#" class="nav-link" onclick="fecharMenuMobile(); fazerLogout(); return false;" style="color: #f87171 !important;">🚪 Encerrar Sessão</a>
           </div>
+          
           <div class="desktop-user-dropdown" style="position: relative;">
-            <div class="user-chip" onclick="alternarUserMenu(event)" style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
-              <span class="avatar" style="background: #0284c7; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff;">${user.nome.charAt(0).toUpperCase()}</span>
-              <span>${user.nome.split(' ')[0]}</span><span style="font-size: 0.8rem;">▼</span>
+            <div class="user-chip" onclick="alternarUserMenu(event)" style="cursor: pointer; display: flex; align-items: center; gap: 8px; background: #dcfce7; padding: 6px 14px; border-radius: 20px; border: 1px solid #bbf7d0;">
+                <span style="color: #166534; font-size: 0.9em;">✅ Logado como:</span>
+                <strong style="color: #14532d;">${user.nome.split(' ')[0]}</strong>
+                <span style="font-size: 0.8rem; color: #14532d;">▼</span>
             </div>
-            <div id="user-menu" style="display: none; position: absolute; top: 115%; right: 0; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.18); border-radius: 8px; width: 165px; overflow: hidden; z-index: 100002;">
-              <a href="#" onclick="fecharUserMenu(); navegar('perfil'); return false;" style="display: block; padding: 12px 15px; color: #1e293b; text-decoration: none; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem;">👤 Meu Perfil</a>
-              <a href="#" onclick="fecharUserMenu(); fazerLogout(); return false;" style="display: block; padding: 12px 15px; color: #dc2626; text-decoration: none; font-size: 0.9rem;">🚪 Sair</a>
+            <div id="user-menu" style="display: none; position: absolute; top: 115%; right: 0; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.18); border-radius: 8px; width: 220px; overflow: hidden; z-index: 100002;">
+                <div style="padding: 12px 15px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; color: #475569; word-break: break-all;">
+                    <strong style="color: #1e293b; display:block; margin-bottom: 4px;">Titular da Conta:</strong>
+                    ${user.email}
+                </div>
+              <a href="#" onclick="fecharUserMenu(); navegar('perfil'); return false;" style="display: block; padding: 12px 15px; color: #1e293b; text-decoration: none; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem;">👤 Histórico de Compras</a>
+              <a href="#" onclick="fecharUserMenu(); fazerLogout(); return false;" style="display: block; padding: 12px 15px; color: #dc2626; text-decoration: none; font-size: 0.9rem;">🚪 Encerrar Sessão</a>
             </div>
           </div>
-        ` : `<button class="btn btn-primary btn-login" onclick="fecharMenuMobile(); navegar('login');">Entrar</button>`}
+        ` : `<button class="btn btn-primary btn-login" onclick="fecharMenuMobile(); navegar('login');">Entrar na Loja</button>`}
       </nav>
       <button class="mobile-menu" aria-label="Abrir menu" onclick="alternarMenuMobile()">☰</button>
     </div>
@@ -132,7 +140,7 @@ function aplicarFiltrosCatalog() {
   else grid.innerHTML = filtrados.map((p, i) => {
     const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
     const disponivel = Number(p.quantidade || 0) > 0;
-    const img = (p.imagem && p.imagem.trim() !== '') ? p.imagem : 'https://images.unsplash.com/photo-1565814329452-e1efa11c5e89?auto=format&fit=crop&w=600&q=80'; 
+    const img = (p.imagem && p.imagem.trim() !== '' && p.imagem !== 'placeholder.jpg') ? p.imagem : 'https://images.unsplash.com/photo-1565814329452-e1efa11c5e89?auto=format&fit=crop&w=600&q=80'; 
     return `
     <article class="product-card" style="animation-delay:${i*45}ms; display: flex; flex-direction: column; justify-content: space-between;">
       <div style="height: 220px; width: 100%; background-image: url('${img}'); background-size: cover; background-position: center; border-bottom: 1px solid #eee;"></div>
@@ -248,6 +256,7 @@ window.renderPerfil = async function() {
                     case 'Em processamento': return 'background: #cce5ff; color: #004085;';
                     case 'Enviado': return 'background: #e2e3e5; color: #383d41;';
                     case 'Concluído': return 'background: #d4edda; color: #155724;';
+                    case 'Entregue': return 'background: #d4edda; color: #155724;';
                     default: return 'background: #e2e8f0; color: #475569;';
                 }
             };
@@ -496,10 +505,17 @@ window.renderizarCheckout = function() {
   }
 }
 
+// === EXIGÊNCIA DO PROFESSOR: BLINDAGEM DO PEDIDO ===
 window.finalizarPedido = async function(btnElement) {
-    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
-    if (!user) return navegar('login');
+    // 1. Validação de Segurança Rigorosa (Criada no auth.js)
+    if (typeof validarFinalizacaoCompra === 'function') {
+        if (!validarFinalizacaoCompra()) return; // Aborta se o utilizador recusar ou não estiver logado
+    } else {
+        const userCheck = JSON.parse(localStorage.getItem('jr_user') || 'null');
+        if (!userCheck) return navegar('login');
+    }
 
+    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
     const nome = document.getElementById('chk-nome').value.trim();
     const telefone = document.getElementById('chk-telefone').value.trim();
     const cep = document.getElementById('chk-cep').value.trim();
