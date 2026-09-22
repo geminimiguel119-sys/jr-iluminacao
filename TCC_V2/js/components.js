@@ -124,19 +124,33 @@ function aplicarFiltrosCatalog() {
   const grid = document.getElementById('produtos-grid');
   if (!grid || !window.produtosGlobais) return;
 
+  // Função interna para remover acentos (Obs 4 - resolve "Lâmpadas" vs "Lampadas")
+  const normalizar = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
   let filtrados = window.produtosGlobais.filter(p => {
-    const nome = String(p.nome || '').toLowerCase();
-    const desc = String(p.descricao || '').toLowerCase();
-    const bateTexto = nome.includes(termo) || desc.includes(termo);
+    const nomeNorm = normalizar(String(p.nome || ''));
+    const descNorm = normalizar(String(p.descricao || ''));
+    const catDbNorm = normalizar(String(p.categoria || ''));
+    const termoNorm = normalizar(termo);
+    const catSelectNorm = normalizar(window.categoriaAtual);
+
+    const bateTexto = nomeNorm.includes(termoNorm) || descNorm.includes(termoNorm);
+    
     if (window.categoriaAtual === 'todas') return bateTexto;
-    return bateTexto && (nome.includes(window.categoriaAtual) || desc.includes(window.categoriaAtual));
+    
+    // Confere se bate com a categoria salva no BD, senão procura no nome
+    if (catDbNorm.includes(catSelectNorm)) {
+        return bateTexto;
+    } else {
+        return bateTexto && (nomeNorm.includes(catSelectNorm) || descNorm.includes(catSelectNorm));
+    }
   });
 
   if (window.ordemAtual === 'menor_preco') filtrados.sort((a, b) => Number(a.preco) - Number(b.preco));
   else if (window.ordemAtual === 'maior_preco') filtrados.sort((a, b) => Number(b.preco) - Number(a.preco));
   else if (window.ordemAtual === 'nome_az') filtrados.sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
 
-  if (filtrados.length === 0) grid.innerHTML = renderEmptyState('◈', 'Nenhum produto encontrado', 'Tente outro termo de busca ou selecione outra categoria.');
+  if (filtrados.length === 0) grid.innerHTML = renderEmptyState('◈', 'Nenhum produto encontrado', 'Tente outro termo ou categoria.');
   else grid.innerHTML = filtrados.map((p, i) => {
     const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
     const disponivel = Number(p.quantidade || 0) > 0;
@@ -158,7 +172,6 @@ function aplicarFiltrosCatalog() {
     </article>`;
   }).join('');
 }
-
 async function carregarProdutos() {
   try { const r = await apiFetch('api/produtos.php'); window.produtosGlobais = (r && r.dados) ? r.dados : []; aplicarFiltrosCatalog(); } 
   catch(e) { const grid = document.getElementById('produtos-grid'); if (grid) grid.innerHTML = renderEmptyState('!', 'Erro', 'Confira a sua ligação.', "carregarProdutos()"); } 
@@ -507,12 +520,9 @@ window.renderizarCheckout = function() {
 
 // === EXIGÊNCIA DO PROFESSOR: BLINDAGEM DO PEDIDO ===
 window.finalizarPedido = async function(btnElement) {
-    // 1. Validação de Segurança Rigorosa (Criada no auth.js)
     if (typeof validarFinalizacaoCompra === 'function') {
-        if (!validarFinalizacaoCompra()) return; // Aborta se o utilizador recusar ou não estiver logado
-    } else {
-        const userCheck = JSON.parse(localStorage.getItem('jr_user') || 'null');
-        if (!userCheck) return navegar('login');
+        const aprovado = await validarFinalizacaoCompra();
+        if (!aprovado) return; 
     }
 
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
@@ -524,16 +534,15 @@ window.finalizarPedido = async function(btnElement) {
     const pagamento = document.getElementById('chk-pagamento').value;
 
     if (!nome || !telefone || !cep || !cidade || !endereco) {
-        if (typeof exibirMensagem === 'function') exibirMensagem("Preencha todos os campos do endereço e contato.", "aviso");
+        if (typeof Swal !== 'undefined') Swal.fire('Aviso', 'Preencha todos os campos do endereço.', 'warning');
         return; 
     }
 
     const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
     if (carrinho.length === 0) return;
-
     let total = 0; carrinho.forEach(item => total += (parseFloat(item.preco) * parseInt(item.quantidade)));
 
-    if (btnElement) { btnElement.disabled = true; btnElement.innerHTML = '⏳ A processar encomenda...'; btnElement.style.opacity = '0.7'; btnElement.style.cursor = 'not-allowed'; }
+    if (btnElement) { btnElement.disabled = true; btnElement.innerHTML = '⏳ A processar...'; btnElement.style.opacity = '0.7'; }
 
     try {
         const res = await apiFetch('api/pedidos.php', {
@@ -545,12 +554,12 @@ window.finalizarPedido = async function(btnElement) {
             localStorage.removeItem('carrinho'); fecharCarrinho(); renderHeader();
             exibirComprovantePedido(res.pedido_id, total, cidade, endereco, pagamento);
         } else {
-            if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + (res.erro || "Falha na compra"), "erro");
-            if (btnElement) { btnElement.disabled = false; btnElement.innerHTML = '✅ Confirmar Compra'; btnElement.style.opacity = '1'; btnElement.style.cursor = 'pointer'; }
+            if (typeof Swal !== 'undefined') Swal.fire('Erro', res.erro || 'Falha na compra', 'error');
+            if (btnElement) { btnElement.disabled = false; btnElement.innerHTML = '✅ Confirmar Compra'; btnElement.style.opacity = '1'; }
         }
     } catch (erro) {
-        if (typeof exibirMensagem === 'function') exibirMensagem("Erro ao comunicar com o servidor.", "erro");
-        if (btnElement) { btnElement.disabled = false; btnElement.innerHTML = '✅ Confirmar Compra'; btnElement.style.opacity = '1'; btnElement.style.cursor = 'pointer'; }
+        if (typeof Swal !== 'undefined') Swal.fire('Erro', 'Erro ao comunicar com o servidor.', 'error');
+        if (btnElement) { btnElement.disabled = false; btnElement.innerHTML = '✅ Confirmar Compra'; btnElement.style.opacity = '1'; }
     }
 };
 
