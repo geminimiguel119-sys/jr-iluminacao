@@ -10,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Configurações alinhadas com a região us-west-2 do Supabase
 $host = 'aws-0-us-west-2.pooler.supabase.com';
 $port = '5432';
 $dbName = 'postgres';
@@ -29,7 +28,6 @@ try {
     exit;
 }
 
-// Aceita requisições POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dados = json_decode(file_get_contents("php://input"), true) ?: $_POST;
     
@@ -42,17 +40,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $stmt = $pdo->prepare("SELECT u.id, u.nome, u.email, u.role, a.senha 
+        // Busca o utilizador incluindo a coluna de status
+        $stmt = $pdo->prepare("SELECT u.id, u.nome, u.email, u.role, u.status, a.senha 
                                FROM usuarios u 
                                JOIN autenticacao a ON u.id = a.usuario_id 
                                WHERE LOWER(u.email) = LOWER(?)");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Valida se o utilizador existe e se a senha confere
         if ($user && password_verify($senhaInput, $user['senha'])) {
             
-            // EXIGÊNCIA DO PROFESSOR: Atualizar a data/hora do último login
+            // VERIFICAÇÃO DE SEGURANÇA: Impede clientes pendentes de entrar
+            if ($user['role'] !== 'admin' && $user['status'] === 'Pendente') {
+                echo json_encode(['sucesso' => false, 'mensagem' => 'A sua conta está em análise. Aguarde a aprovação do administrador para aceder à loja.'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            // Atualiza a data/hora do último login
             $updateStmt = $pdo->prepare("UPDATE autenticacao SET ultimo_login = CURRENT_TIMESTAMP WHERE usuario_id = ?");
             $updateStmt->execute([$user['id']]);
 
