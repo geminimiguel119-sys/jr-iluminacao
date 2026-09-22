@@ -93,9 +93,9 @@ function renderHeader() {
 
   header.innerHTML = `
     <div class="header-container">
-      <button class="brand" onclick="navegar('home')">
-        <span class="brand-mark">JR</span>
-        <span><strong>JR Iluminação</strong><small>e Leds</small></span>
+      <button class="brand" onclick="navegar('home')" style="display: flex; align-items: center; gap: 10px; background: transparent; border: none; cursor: pointer; padding: 0;">
+        <img src="img/logo.jpg" alt="JR Iluminação" style="height: 42px; width: 42px; object-fit: contain; border-radius: 8px; background: #ffffff; padding: 2px;">
+        <span><strong style="color: #fff; font-size: 1.05rem;">JR Iluminação</strong><small style="color: #94a3b8; font-size: 0.75rem; display: block;">e Leds</small></span>
       </button>
       <nav class="main-nav">
         <a href="#" class="nav-link" onclick="navegar('home');return false">Início</a>
@@ -216,9 +216,9 @@ function renderLogin() {
   app.className = 'login-page';
   app.innerHTML = `
     <div class="login-panel">
-      <div class="login-brand">
-        <span class="brand-mark">JR</span>
-        <div><strong>JR Iluminação</strong><small>e Leds</small></div>
+      <div class="login-brand" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+        <img src="img/logo.jpg" alt="JR Iluminação" style="height: 52px; width: 52px; object-fit: contain; border-radius: 10px; background: #ffffff; padding: 2px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <div><strong style="font-size: 1.2rem; color: #0f172a; display: block;">JR Iluminação</strong><small style="color: #64748b; font-size: 0.85rem;">e Leds</small></div>
       </div>
       
       <div id="form-login-area">
@@ -696,7 +696,6 @@ window.finalizarPedido = async function() {
             fecharCarrinho();
             renderHeader();
 
-            // Apresenta o comprovativo visual com os dados reais
             exibirComprovantePedido(res.pedido_id, total, cidade, endereco);
         } else {
             if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + (res.erro || "Falha na compra"), "erro");
