@@ -68,6 +68,7 @@ if ($metodo === 'POST') {
             $cidade = trim($dados['cidade'] ?? 'Não informada');
             $endereco = trim($dados['endereco'] ?? 'Não informado');
             $forma_pagamento = trim($dados['forma_pagamento'] ?? 'Não informada');
+            $prazo_entrega = trim($dados['prazo_entrega'] ?? 'A combinar');
             $total = floatval($dados['total'] ?? 0);
             
             if (empty($email) || empty($nome)) {
@@ -135,7 +136,8 @@ if ($metodo === 'POST') {
             $msgNovoPedido .= "Nome: <i>" . htmlspecialchars($nome) . "</i>\n";
             $msgNovoPedido .= "Tel: <i>" . htmlspecialchars($telefone) . "</i>\n\n";
             $msgNovoPedido .= "📍 <b>ENDEREÇO DE ENTREGA:</b>\n";
-            $msgNovoPedido .= htmlspecialchars($endereco) . " | " . htmlspecialchars($cidade) . " - CEP: " . htmlspecialchars($cep) . "\n\n";
+            $msgNovoPedido .= htmlspecialchars($endereco) . " | " . htmlspecialchars($cidade) . " - CEP: " . htmlspecialchars($cep) . "\n";
+            $msgNovoPedido .= "🚚 <b>Prazo Previsto:</b> " . htmlspecialchars($prazo_entrega) . "\n\n";
             $msgNovoPedido .= "🛒 <b>ITENS DA COMPRA:</b>\n{$listaItensMsg}\n";
 
             notificarAdminTelegram($msgNovoPedido);
@@ -183,7 +185,6 @@ if ($metodo === 'POST') {
     }
 }
 
-// 4. LER OS PEDIDOS (AGORA COM OS ITENS EMBUTIDOS VIA JSON_AGG DO POSTGRES)
 if ($metodo === 'GET') {
     try {
         $baseQuery = "SELECT p.id, p.total, p.status, p.data_pedido, c.nome as cliente_nome, 
@@ -209,7 +210,6 @@ if ($metodo === 'GET') {
         
         $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Decodifica o JSON gerado pelo banco para enviar como array limpo ao front
         foreach ($pedidos as &$p) {
             $p['itens'] = json_decode($p['itens_json'], true) ?: [];
             unset($p['itens_json']);
