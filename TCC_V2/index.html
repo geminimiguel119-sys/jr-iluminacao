@@ -2,16 +2,18 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JR Iluminação e Leds</title>
-    <!-- SDK do Supabase para Login Social -->
+
+    <!-- SDK do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Fontes do Google: Inter e Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Fontes do Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Seus Ficheiros CSS Originais -->
-    <link rel="stylesheet" href="css/polished.css"> 
+    <!-- Folhas de Estilo -->
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/forms.css">
     <link rel="stylesheet" href="css/validations.css">
@@ -19,114 +21,193 @@
     <link rel="stylesheet" href="css/ui-advanced.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/tema-azul.css">
+    <link rel="stylesheet" href="css/polished.css">
 
-    <!-- ==========================================
-         PACOTE PREMIUM VISUAL & MODO NOTURNO (TCC)
-         ========================================== -->
     <style>
-        /* Aplica a nova fonte elegante */
-        body, h1, h2, h3, h4, p, span, div, a, button, input, select {
-            font-family: 'Poppins', 'Inter', sans-serif !important;
+        /* Reset Base e Tipografia */
+        *, *::before, *::after {
+            box-sizing: border-box;
         }
 
-        body {
-            background-color: #f8fafc !important; 
-            color: #334155;
-            transition: background-color 0.3s, color 0.3s;
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* Animação de Entrada Flutuante */
-        main, #app { animation: fadeUp 0.5s ease-out; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        /* Container Central Responsivo */
+        .container, main#app {
+            width: 100%;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 20px 16px 60px 16px;
+            animation: fadeUp 0.4s ease-out;
+        }
 
-        /* Cartões de Produto com Efeito Apple/Nubank */
+        @keyframes fadeUp { 
+            from { opacity: 0; transform: translateY(12px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* Cartões de Produtos */
         .product-card {
-            transition: all 0.3s ease !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 12px !important;
             background: #ffffff;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
+
         .product-card:hover {
-            transform: translateY(-6px) !important;
-            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-            border-color: #cbd5e1 !important;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -4px rgba(0,0,0,0.08);
+            border-color: #cbd5e1;
         }
 
-        /* Botões Modernos e Clicáveis */
-        .btn { border-radius: 8px !important; font-weight: 500 !important; transition: all 0.2s ease !important; }
-        .btn:active { transform: scale(0.96) !important; }
-        .btn-primary { box-shadow: 0 4px 6px rgba(0, 102, 255, 0.2) !important; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0, 102, 255, 0.3) !important; filter: brightness(1.05); }
-
-        /* Barra de Rolagem (Scroll) Limpa */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        /* Formulários que Brilham ao Clicar */
-        input:focus, select:focus {
-            outline: none !important; border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        /* Botões */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
 
-        /* ==========================================
-           MODO NOTURNO (EFEITO APAGAR LUZES)
-           ========================================== */
-        body.dark-mode { background-color: #0f172a !important; color: #e2e8f0 !important; }
-        
-        body.dark-mode .panel, body.dark-mode .product-card, body.dark-mode #user-menu, body.dark-mode #modal-carrinho {
-            background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important;
+        .btn:active {
+            transform: scale(0.97);
         }
-        
-        /* Correção: Garantir que o menu e as abas não somem no escuro */
-        body.dark-mode .nav-link, 
-        body.dark-mode .brand, 
-        body.dark-mode .brand strong,
-        body.dark-mode .user-chip,
-        body.dark-mode .brand-mark {
-            color: #ffffff !important;
+
+        /* Modo Noturno */
+        body.dark-mode {
+            background-color: #0b1329 !important;
+            color: #e2e8f0 !important;
         }
+
         body.dark-mode header {
-            background-color: #0f172a !important;
-            border-bottom: 1px solid #1e293b !important;
+            background-color: #090e1f !important;
+            border-bottom: 1px solid #1e293b;
         }
 
-        /* Brilho LED nos cartões no modo noturno */
+        body.dark-mode .product-card,
+        body.dark-mode #user-menu,
+        body.dark-mode #modal-carrinho,
+        body.dark-mode .panel,
+        body.dark-mode .login-panel {
+            background-color: #131d38 !important;
+            border-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
+
+        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, 
+        body.dark-mode h4, body.dark-mode strong {
+            color: #f8fafc !important;
+        }
+
+        body.dark-mode input, body.dark-mode select {
+            background-color: #0b1329 !important;
+            color: #fff !important;
+            border-color: #334155 !important;
+        }
+
         body.dark-mode .product-card:hover {
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4) !important; border-color: #38bdf8 !important;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.3) !important;
+            border-color: #38bdf8 !important;
         }
-        
-        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4, body.dark-mode strong { color: #f8fafc !important; }
-        body.dark-mode input, body.dark-mode select { background-color: #0f172a !important; color: #fff !important; border-color: #334155 !important; }
 
-        /* ==========================================
-           SISTEMA DE TOASTS (Substitui Alertas)
-           ========================================== */
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 999999; display: flex; flex-direction: column; gap: 10px; }
-        .toast {
-            min-width: 280px; padding: 16px 20px; border-radius: 8px; color: #fff; font-weight: 500;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideInRight 0.3s ease-out, fadeOut 0.3s ease 7.5s forwards;
-            display: flex; align-items: center; gap: 10px; font-size: 0.95rem;
+        /* Botão do Modo Noturno */
+        #btn-dark-mode {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            padding: 10px 18px;
+            border-radius: 50px;
+            background: #0f172a;
+            color: #ffffff;
+            border: 2px solid #38bdf8;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.25s ease;
         }
-        .toast.sucesso { background: #10b981; border-left: 5px solid #047857; }
-        .toast.erro { background: #ef4444; border-left: 5px solid #b91c1c; }
-        .toast.aviso { background: #f59e0b; border-left: 5px solid #b45309; }
-        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
 
-        /* ==========================================
-           RODAPÉ PROFISSIONAL
-           ========================================== */
-        .site-footer { background: #0f172a; color: #94a3b8; padding: 60px 20px 20px; margin-top: 60px; font-family: 'Poppins', sans-serif; }
-        .site-footer h4 { color: #f8fafc; margin-bottom: 20px; font-size: 1.1rem; }
-        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto; }
-        .footer-bottom { text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #1e293b; font-size: 0.85rem; }
+        #btn-dark-mode:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+        }
 
-        /* Tabelas Responsivas para Telemóvel */
-        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 15px; border-radius: 8px; }
-        .table-responsive table { min-width: 600px; }
+        /* Rodapé Profissional */
+        .site-footer {
+            background: #090e1f;
+            color: #94a3b8;
+            padding: 50px 20px 24px;
+            margin-top: 60px;
+            border-top: 1px solid #1e293b;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .site-footer h4 {
+            color: #f8fafc;
+            margin-bottom: 14px;
+            font-size: 1.05rem;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #1e293b;
+            font-size: 0.82rem;
+        }
+
+        /* AJUSTES RESPONSIVOS DE TELA (MOBILE) */
+        @media (max-width: 768px) {
+            .container, main#app {
+                padding: 15px 12px 70px 12px;
+            }
+
+            .header-container {
+                padding: 12px 14px;
+            }
+
+            .main-nav {
+                top: 58px;
+                padding: 18px;
+            }
+
+            /* No celular, o botão de apagar a luz fica compacto e não tampa o carrinho */
+            #btn-dark-mode {
+                bottom: 16px;
+                right: 16px;
+                padding: 8px 14px;
+                font-size: 0.78rem;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .site-footer {
+                padding: 40px 16px 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -134,35 +215,35 @@
     
     <main id="app" class="container"></main>
     
-    <!-- RODAPÉ PROFISSIONAL -->
+    <!-- RODAPÉ -->
     <footer id="site-footer" class="site-footer">
         <div class="footer-grid">
             <div>
-                <h4>Sobre a JR Iluminação</h4>
-                <p style="font-size: 0.9rem; line-height: 1.6;">Especialistas em projetos luminotécnicos de alto padrão. Transformamos o seu ambiente combinando design moderno com a mais avançada e económica tecnologia LED do mercado.</p>
+                <h4>JR Iluminação e Leds</h4>
+                <p style="font-size: 0.88rem; line-height: 1.6;">Soluções completas em LED para projetos residenciais e corporativos. Unindo economia energética, design refinado e durabilidade.</p>
             </div>
             <div>
-                <h4>Central de Atendimento</h4>
-                <p style="font-size: 0.9rem; line-height: 1.8;">
+                <h4>Atendimento</h4>
+                <p style="font-size: 0.88rem; line-height: 1.8;">
                     📞 (11) 4002-8922<br>
                     📱 (11) 9988-7766 (WhatsApp)<br>
                     ✉️ contato@jriluminacao.com.br<br>
-                    📍 Av. Paulista, 1578 - Bela Vista, SP
+                    📍 Santo André - SP
                 </p>
             </div>
             <div>
-                <h4>Compra 100% Segura</h4>
-                <p style="font-size: 1.8rem; letter-spacing: 8px; margin: 10px 0;">🔒💳📄🛡️</p>
-                <p style="font-size: 0.8rem; color: #64748b;">Ambiente criptografado. Os seus dados estão protegidos sob a Lei Geral de Proteção de Dados (LGPD).</p>
+                <h4>Segurança e Garantia</h4>
+                <p style="font-size: 1.5rem; letter-spacing: 6px; margin: 8px 0;">🔒 💳 📄 🛡️</p>
+                <p style="font-size: 0.8rem; color: #64748b;">Ambiente com criptografia ponta a ponta. Dados protegidos nos termos da LGPD.</p>
             </div>
         </div>
         <div class="footer-bottom">
             &copy; 2026 JR Iluminação e Leds. Todos os direitos reservados.<br>
-            <span style="font-size: 0.75rem; color: #475569;">Desenvolvido como Trabalho de Conclusão de Curso (TCC).</span>
+            <span style="font-size: 0.75rem; color: #475569;">Projeto desenvolvido para Trabalho de Conclusão de Curso (TCC).</span>
         </div>
     </footer>
 
-    <!-- Seus Scripts Originais -->
+    <!-- SCRIPTS ESSENCIAIS -->
     <script src="js/utils.js"></script>
     <script src="js/router.js"></script>
     <script src="js/components.js"></script>
@@ -174,39 +255,18 @@
     <script src="js/validations.js"></script>
     
     <script>
-        document.addEventListener('DOMContentLoaded', checkSessao);
-        document.addEventListener('click', (e) => {
-            if (e.target.tagName === 'A' && e.target.getAttribute('href') === '#') e.preventDefault();
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof checkSessao === 'function') checkSessao();
+            aplicarPremiumUI();
         });
-    </script>
 
-    <!-- ==========================================
-         SCRIPT FORÇADO: NOTIFICAÇÕES E MODO NOTURNO
-         ========================================== -->
-    <script>
-        // 1. O SISTEMA DE NOTIFICAÇÕES (Substitui Alertas)
-        window.exibirMensagem = function(msg, tipo = 'sucesso') {
-            let container = document.getElementById('toast-container');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'toast-container';
-                document.body.appendChild(container);
+        document.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A' && e.target.getAttribute('href') === '#') {
+                e.preventDefault();
             }
-            let icone = tipo === 'sucesso' ? '✅' : (tipo === 'erro' ? '❌' : '⚠️');
-            const toast = document.createElement('div');
-            toast.className = `toast ${tipo}`;
-            toast.innerHTML = `<span>${icone}</span> <div>${msg}</div>`;
-            container.appendChild(toast);
-            
-            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 8000);
-        };
+        });
 
-        // TRUQUE DE MESTRE: Sobrescreve o alert feio do navegador pelo nosso Toast bonito!
-        window.alert = function(msg) {
-            window.exibirMensagem(msg, 'aviso');
-        };
-
-        // 2. FUNÇÃO MODO NOTURNO E BOTÃO FLUTUANTE
+        // Modo Noturno Controlado
         function aplicarPremiumUI() {
             const isDark = JSON.parse(localStorage.getItem('jr_dark_mode') || 'false');
             if (isDark) document.body.classList.add('dark-mode');
@@ -214,25 +274,19 @@
             if (!document.getElementById('btn-dark-mode')) {
                 const btnLuz = document.createElement('button');
                 btnLuz.id = 'btn-dark-mode';
-                btnLuz.innerHTML = isDark ? '💡 Acender a Luz' : '🌙 Apagar a Luz';
-                btnLuz.style.cssText = 'position: fixed; bottom: 30px; right: 30px; z-index: 9000; padding: 12px 24px; border-radius: 30px; background: #1e293b; color: #fff; border: 2px solid #38bdf8; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4); cursor: pointer; font-weight: bold; font-family: "Poppins", sans-serif; transition: all 0.3s;';
-                
-                btnLuz.onmouseover = () => btnLuz.style.transform = 'scale(1.05)';
-                btnLuz.onmouseout = () => btnLuz.style.transform = 'scale(1)';
+                btnLuz.setAttribute('aria-label', 'Alternar modo escuro');
+                btnLuz.innerHTML = isDark ? '💡 Acender' : '🌙 Apagar';
                 
                 btnLuz.onclick = function() {
                     document.body.classList.toggle('dark-mode');
                     const darkAtivo = document.body.classList.contains('dark-mode');
                     localStorage.setItem('jr_dark_mode', darkAtivo);
-                    this.innerHTML = darkAtivo ? '💡 Acender a Luz' : '🌙 Apagar a Luz';
+                    this.innerHTML = darkAtivo ? '💡 Acender' : '🌙 Apagar';
                 };
                 
                 document.body.appendChild(btnLuz);
             }
         }
-        
-        // Aguarda meio segundo para garantir que a página carregou e injeta o botão
-        setTimeout(aplicarPremiumUI, 500); 
     </script>
 </body>
 </html>
