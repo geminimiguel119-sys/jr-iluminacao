@@ -23,6 +23,10 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_TIMEOUT => 10
     ]);
+    
+    // Fuso Horário do Brasil para registrar a Auditoria corretamente (Teste 4)
+    $pdo->exec("SET TIME ZONE 'America/Sao_Paulo'");
+    
 } catch (PDOException $e) {
     echo json_encode(['sucesso' => false, 'erro' => 'Falha na conexão com o banco: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
     exit;
@@ -40,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // Busca o utilizador incluindo a coluna de status
         $stmt = $pdo->prepare("SELECT u.id, u.nome, u.email, u.role, u.status, a.senha 
                                FROM usuarios u 
                                JOIN autenticacao a ON u.id = a.usuario_id 
@@ -50,17 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($user && password_verify($senhaInput, $user['senha'])) {
             
-            // VERIFICAÇÃO DE SEGURANÇA: Impede clientes pendentes de entrar
+            // TESTE 2: Impede clientes pendentes de entrar
             if ($user['role'] !== 'admin' && $user['status'] === 'Pendente') {
                 echo json_encode(['sucesso' => false, 'mensagem' => 'A sua conta está em análise. Aguarde a aprovação do administrador para aceder à loja.'], JSON_UNESCAPED_UNICODE);
                 exit;
             }
 
-            // Atualiza a data/hora do último login
+            // Atualiza a data/hora do último login no fuso do Brasil
             $updateStmt = $pdo->prepare("UPDATE autenticacao SET ultimo_login = CURRENT_TIMESTAMP WHERE usuario_id = ?");
             $updateStmt->execute([$user['id']]);
 
-            unset($user['senha']); // Remove hash antes de retornar
+            unset($user['senha']); 
             echo json_encode(['sucesso' => true, 'dados' => $user], JSON_UNESCAPED_UNICODE);
         } else {
             echo json_encode(['sucesso' => false, 'mensagem' => 'E-mail ou senha incorretos.'], JSON_UNESCAPED_UNICODE);
