@@ -2,6 +2,7 @@
 window.produtosGlobais = [];
 window.categoriaAtual = 'todas';
 window.ordemAtual = 'padrao';
+window.prazoEntregaAtual = 'A combinar';
 
 // === INJEÇÃO DE ESTILOS CSS AUXILIARES ===
 (function injetarEstilosBotoes() {
@@ -16,12 +17,6 @@ window.ordemAtual = 'padrao';
     .btn-ghost:hover { background-color: rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; }
     .btn-qtd { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; width: 26px; height: 26px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
     .btn-qtd:hover { background: #e2e8f0; }
-    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 999999; display: flex; flex-direction: column; gap: 10px; }
-    .toast { min-width: 280px; max-width: 420px; padding: 14px 18px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.18); color: #fff; display: flex; align-items: center; gap: 12px; font-size: 0.95rem; animation: fadeInToast 0.3s ease-in-out; }
-    .toast.sucesso { background-color: #15803d; border-left: 5px solid #052e16; }
-    .toast.erro { background-color: #b91c1c; border-left: 5px solid #450a0a; }
-    .toast.aviso { background-color: #b45309; border-left: 5px solid #451a03; }
-    @keyframes fadeInToast { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     .mobile-user-links { display: none; }
     .desktop-user-dropdown { display: inline-block; }
     @media (max-width: 768px) {
@@ -83,7 +78,7 @@ function renderHeader() {
 function renderSidebar() { return `<aside class="admin-sidebar"><div class="sidebar-brand"><span class="brand-mark">JR</span><div><strong>Administração</strong><small>JR Iluminação</small></div></div><nav><a onclick="navegar('admin/dashboard')">▦ <span>Dashboard</span></a><a onclick="navegar('admin/produtos')">▣ <span>Produtos</span></a><a onclick="navegar('admin/clientes')">♙ <span>Clientes</span></a><a onclick="navegar('admin/pedidos')">▤ <span>Pedidos</span></a><a onclick="navegar('admin/relatorios')">◔ <span>Relatórios</span></a></nav><div class="sidebar-bottom"><button onclick="navegar('home')">← Voltar para loja</button></div></aside>`; }
 function renderHome() { const app = document.getElementById('app'); if (!app) return; app.className = ''; app.innerHTML = `<section class="hero"><div class="hero-inner"><span class="eyebrow">ILUMINAÇÃO • TECNOLOGIA • DESIGN</span><h1>Ilumine ambientes.<br><span>Transforme espaços.</span></h1><p>Soluções em LED para projetos residenciais e comerciais, com qualidade, economia e estilo.</p><div class="hero-actions"><button class="btn btn-primary btn-lg" onclick="navegar('produtos')">Explorar produtos <span>→</span></button><button class="btn btn-ghost btn-lg" onclick="document.getElementById('diferenciais').scrollIntoView({behavior:'smooth'})">Conheça a JR</button></div><div class="hero-trust"><span>✓ Qualidade garantida</span><span>✓ Atendimento especializado</span><span>✓ Economia de energia</span></div></div><div class="hero-glow"></div></section><section id="diferenciais" class="section"><div class="section-heading"><div><span class="eyebrow dark">POR QUE ESCOLHER A JR?</span><h2>Iluminação pensada para você.</h2></div><p>Produtos selecionados para unir desempenho, durabilidade e um visual moderno em cada projeto.</p></div><div class="feature-grid"><article><div class="feature-icon">✦</div><h3>Alta eficiência</h3><p>Tecnologia LED que entrega mais luminosidade consumindo menos energia.</p></article><article><div class="feature-icon">◇</div><h3>Design moderno</h3><p>Peças que valorizam ambientes residenciais, comerciais e corporativos.</p></article><article><div class="feature-icon">✓</div><h3>Compra segura</h3><p>Processo simples, atendimento próximo e informações claras.</p></article></div></section><section class="cta"><div><span class="eyebrow">CATÁLOGO JR</span><h2>Encontre a iluminação ideal.</h2><p>Veja nosso catálogo e escolha a solução certa para o seu projeto.</p></div><button class="btn btn-primary btn-lg" onclick="navegar('produtos')">Ver catálogo →</button></section>`; }
 
-// === CATÁLOGO COM FILTROS DE CATEGORIA, ORDENAÇÃO E BUSCA ===
+// === CATÁLOGO COM FILTROS ===
 function renderProdutos() {
   const app = document.getElementById('app');
   if (!app) return;
@@ -211,7 +206,7 @@ async function realizarRegistro(event) {
   } catch(e) { if (typeof exibirMensagem === 'function') exibirMensagem("Erro de conexão.", "erro"); }
 }
 
-// === PERFIL DO CLIENTE (COM HISTÓRICO DETALHADO DE ITENS) ===
+// === PERFIL DO CLIENTE ===
 window.renderPerfil = async function() {
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
     if (!user) return navegar('login');
@@ -378,10 +373,28 @@ function removerDoCarrinho(index) {
   renderHeader(); renderizarItensCarrinho();
 }
 
-// === TELA DE CHECKOUT COM SELETOR DE PAGAMENTO ===
+// === TELA DE CHECKOUT (COM CÁLCULO DE FRETE E CAMPOS DE CARTÃO) ===
+function calcularPrazoEntrega(cep) {
+    const cepNum = parseInt(cep.replace(/\D/g, ''), 10);
+    if (isNaN(cepNum)) return "";
+    
+    if (cepNum >= 9000000 && cepNum <= 9299999) return "1 dia útil (Santo André e Região)";
+    if (cepNum >= 9300000 && cepNum <= 9999999) return "1 a 2 dias úteis (Grande ABC)";
+    if (cepNum >= 1000000 && cepNum <= 8999999) return "2 a 3 dias úteis (Capital - SP)";
+    if (cepNum >= 10000000 && cepNum <= 19999999) return "3 a 5 dias úteis (Interior/Litoral SP)";
+    return "5 a 10 dias úteis (Outros Estados)";
+}
+
+window.alternarCamposPagamento = function(valor) {
+    const boxCartao = document.getElementById('box-cartao');
+    if (valor === 'Cartão de Crédito') { boxCartao.style.display = 'block'; } 
+    else { boxCartao.style.display = 'none'; }
+}
+
 window.renderizarCheckout = function() {
   const modal = document.getElementById('modal-carrinho');
   const user = JSON.parse(localStorage.getItem('jr_user') || '{}');
+  window.prazoEntregaAtual = 'A combinar';
   
   const html = `
     <div style="display:flex; align-items:center; margin-bottom:15px; gap: 15px;">
@@ -401,13 +414,23 @@ window.renderizarCheckout = function() {
                 <input type="text" id="chk-cidade" placeholder="Cidade" style="width:60%; padding:10px; border:1px solid #cbd5e1; border-radius:4px;" required>
             </div>
             <input type="text" id="chk-endereco" placeholder="Ex: Rua das Lâmpadas, 100 - Centro" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px;" required>
+            <div id="box-prazo" style="margin-top: 10px; font-size: 0.85rem; color: #0284c7; font-weight: 600; display: none;">🚚 Previsão: <span id="txt-prazo"></span></div>
             
-            <h4 style="margin: 15px 0 12px 0; font-size: 0.95rem; color: #475569;">3. Pagamento</h4>
-            <select id="chk-pagamento" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#0f172a; cursor:pointer;">
+            <h4 style="margin: 20px 0 12px 0; font-size: 0.95rem; color: #475569;">3. Pagamento</h4>
+            <select id="chk-pagamento" onchange="alternarCamposPagamento(this.value)" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#0f172a; cursor:pointer;">
                 <option value="PIX">⚡ PIX (Aprovação Imediata)</option>
                 <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
                 <option value="Boleto Bancário">📄 Boleto Bancário</option>
             </select>
+
+            <div id="box-cartao" style="display:none; margin-top: 10px; padding: 15px; background: #eff6ff; border-radius: 6px; border: 1px solid #bfdbfe;">
+                <input type="text" placeholder="Número do Cartão (Ex: 4111 1111 1111 1111)" maxlength="19" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #cbd5e1; border-radius:4px;">
+                <input type="text" placeholder="Nome Impresso no Cartão" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #cbd5e1; border-radius:4px;">
+                <div style="display:flex; gap:8px;">
+                    <input type="text" placeholder="Validade (MM/AA)" maxlength="5" style="width:50%; padding:10px; border:1px solid #cbd5e1; border-radius:4px;">
+                    <input type="text" placeholder="CVV (Verso)" maxlength="3" style="width:50%; padding:10px; border:1px solid #cbd5e1; border-radius:4px;">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -425,11 +448,27 @@ window.renderizarCheckout = function() {
       inputCep.addEventListener('input', async function(e) {
           let v = e.target.value.replace(/\D/g, ''); let x = v.match(/(\d{0,5})(\d{0,3})/); e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2];
           if (v.length === 8) {
-              const inputCidade = document.getElementById('chk-cidade'); const inputEnd = document.getElementById('chk-endereco');
+              const inputCidade = document.getElementById('chk-cidade'); 
+              const inputEnd = document.getElementById('chk-endereco');
+              const boxPrazo = document.getElementById('box-prazo');
+              const txtPrazo = document.getElementById('txt-prazo');
+
               if (inputCidade) inputCidade.value = "A consultar...";
               try {
                   const res = await fetch(`https://viacep.com.br/ws/${v}/json/`); const data = await res.json();
-                  if (!data.erro) { if (inputCidade) inputCidade.value = `${data.localidade} / ${data.uf}`; if (inputEnd && !inputEnd.value) inputEnd.value = data.logradouro ? `${data.logradouro}, ${data.bairro}` : ''; inputEnd?.focus(); } 
+                  if (!data.erro) { 
+                      if (inputCidade) inputCidade.value = `${data.localidade} / ${data.uf}`; 
+                      if (inputEnd && !inputEnd.value) inputEnd.value = data.logradouro ? `${data.logradouro}, ${data.bairro}` : ''; 
+                      
+                      // Cálculo Logístico (Prazo)
+                      const prazo = calcularPrazoEntrega(v);
+                      window.prazoEntregaAtual = prazo;
+                      if (boxPrazo && txtPrazo) {
+                          txtPrazo.innerText = prazo;
+                          boxPrazo.style.display = 'block';
+                      }
+                      inputEnd?.focus(); 
+                  } 
                   else { if (inputCidade) inputCidade.value = ""; if (typeof exibirMensagem === 'function') exibirMensagem("CEP não encontrado.", "aviso"); }
               } catch (err) { if (inputCidade) inputCidade.value = ""; }
           }
@@ -463,7 +502,7 @@ window.finalizarPedido = async function(btnElement) {
     try {
         const res = await apiFetch('api/pedidos.php', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ acao: 'criar', email: user.email, nome: nome, telefone: telefone, cep: cep, cidade: cidade, endereco: endereco, forma_pagamento: pagamento, total: total, itens: carrinho })
+            body: JSON.stringify({ acao: 'criar', email: user.email, nome: nome, telefone: telefone, cep: cep, cidade: cidade, endereco: endereco, forma_pagamento: pagamento, prazo_entrega: window.prazoEntregaAtual, total: total, itens: carrinho })
         });
 
         if (res && res.sucesso) {
@@ -479,7 +518,7 @@ window.finalizarPedido = async function(btnElement) {
     }
 };
 
-// === COMPROVANTE COM SIMULADOR PIX E AUTO-APROVAÇÃO ===
+// === COMPROVANTE COM PIX, BOLETO E CARTÃO (SIMULAÇÃO REALISTA) ===
 window.exibirComprovantePedido = function(pedidoId, total, cidade, endereco, pagamento) {
   let modalRecibo = document.getElementById('modal-recibo-pedido');
   if (modalRecibo) modalRecibo.remove();
@@ -489,24 +528,49 @@ window.exibirComprovantePedido = function(pedidoId, total, cidade, endereco, pag
   modalRecibo.style.cssText = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); z-index: 1000000; display: flex; align-items: center; justify-content: center; padding: 20px;`;
 
   let infoPagamentoHTML = '';
+
   if (pagamento === 'PIX') {
       const pixFalso = "00020126580014BR.GOV.BCB.PIX0136pix-teste-tcc@jriluminacao.com.br5204000053039865802BR5913JR Iluminacao6009Sao Paulo62070503***63041D3D";
       infoPagamentoHTML = `
           <div style="background: #f0fdf4; border: 2px dashed #22c55e; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-              <h4 style="margin: 0 0 10px 0; color: #166534; font-size: 1rem;">Pagamento via PIX</h4>
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixFalso)}" alt="QR Code PIX" style="width: 150px; height: 150px; display: block; margin: 0 auto 10px auto; border-radius: 8px;">
+              <h4 style="margin: 0 0 10px 0; color: #166534; font-size: 1rem;">⚡ Pagamento via PIX</h4>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(pixFalso)}" alt="QR Code PIX" style="width: 140px; height: 140px; display: block; margin: 0 auto 10px auto; border-radius: 8px;">
               <button onclick="navigator.clipboard.writeText('${pixFalso}'); this.innerHTML='Copiado!'; setTimeout(()=>this.innerHTML='📋 Copiar Código PIX', 2000);" style="background: #16a34a; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold; width: 100%;">📋 Copiar Código PIX</button>
-              
-              <!-- BOTÃO DE APRESENTAÇÃO PARA O TCC -->
-              <button id="btn-simular-pix" onclick="simularAprovacaoPedido(${pedidoId}, this)" style="margin-top: 10px; background: #eab308; color: #713f12; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; width: 100%;">⚡ Simular Pagamento Imediato (TCC)</button>
+              <button onclick="simularAprovacaoPedido(${pedidoId}, this)" style="margin-top: 10px; background: #eab308; color: #713f12; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; width: 100%;">⚡ Simular Pagamento Instantâneo (TCC)</button>
+          </div>
+      `;
+  } else if (pagamento === 'Boleto Bancário') {
+      const linhaBoleto = "34191.79001 01043.510047 91020.150008 5 914500000" + Math.floor(total * 100);
+      const dataVencimento = new Date();
+      dataVencimento.setDate(dataVencimento.getDate() + 3);
+      const vencFormatado = dataVencimento.toLocaleDateString('pt-BR');
+
+      infoPagamentoHTML = `
+          <div style="background: #f8fafc; border: 2px dashed #64748b; border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align: left;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <h4 style="margin: 0; color: #1e293b; font-size: 0.95rem;">📄 Boleto Bancário</h4>
+                  <small style="color: #dc2626; font-weight: bold;">Vence em: ${vencFormatado}</small>
+              </div>
+              <p style="margin: 0 0 6px 0; font-size: 0.8rem; color: #64748b;">Linha Digitável:</p>
+              <div style="background: #e2e8f0; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 0.8rem; word-break: break-all; margin-bottom: 10px; color: #0f172a;">${linhaBoleto}</div>
+              <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                  <button onclick="navigator.clipboard.writeText('${linhaBoleto}'); this.innerHTML='Copiado!'; setTimeout(()=>this.innerHTML='📋 Copiar Código', 2000);" style="flex: 1; background: #475569; color: #fff; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">📋 Copiar Código</button>
+                  <button onclick="window.print()" style="flex: 1; background: #fff; color: #334155; border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">🖨️ Imprimir</button>
+              </div>
+              <button onclick="simularAprovacaoPedido(${pedidoId}, this)" style="background: #eab308; color: #713f12; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; width: 100%;">⚡ Simular Compensação do Boleto (TCC)</button>
           </div>
       `;
   } else {
+      const codigoAuth = "AUT-" + (Math.floor(Math.random() * 900000) + 100000);
       infoPagamentoHTML = `
-          <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-              <h4 style="margin: 0 0 5px 0; color: #334155; font-size: 0.95rem;">Método Selecionado:</h4>
-              <p style="margin: 0; color: #0284c7; font-weight: bold; font-size: 1.1rem;">${pagamento}</p>
-              <p style="margin: 5px 0 0 0; color: #64748b; font-size: 0.8rem;">O seu pedido será processado assim que a confirmação bancária for recebida.</p>
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 10px 0; color: #1e40af; font-size: 0.95rem;">💳 Cartão de Crédito</h4>
+              <div style="background: #fff; padding: 10px; border-radius: 4px; border: 1px dashed #93c5fd; text-align: left; margin-bottom: 10px;">
+                  <p style="margin: 0 0 5px 0; font-size: 0.8rem; color: #64748b;">Processando cartão final ****</p>
+                  <p style="margin: 0 0 5px 0; font-size: 0.8rem; color: #64748b;">Autorização: <strong style="color: #1e40af;">${codigoAuth}</strong></p>
+                  <p style="margin: 0; font-size: 0.8rem; color: #64748b;">Status: <strong style="color: #22c55e;">Pré-Autorizado</strong></p>
+              </div>
+              <button onclick="simularAprovacaoPedido(${pedidoId}, this)" style="background: #eab308; color: #713f12; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; width: 100%;">⚡ Confirmar Captura do Cartão (TCC)</button>
           </div>
       `;
   }
@@ -514,7 +578,7 @@ window.exibirComprovantePedido = function(pedidoId, total, cidade, endereco, pag
   modalRecibo.innerHTML = `
     <div style="background: #fff; border-radius: 12px; max-width: 440px; width: 100%; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: fadeInToast 0.3s ease;">
       <h2 style="margin: 0 0 10px 0; color: #0f172a; font-size: 1.5rem;">🎉 Pedido Registado!</h2>
-      <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;">A sua compra <strong>#${pedidoId}</strong> foi guardada com sucesso.</p>
+      <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;">Pedido <strong>#${pedidoId}</strong> gerado com sucesso.</p>
       
       ${infoPagamentoHTML}
 
@@ -531,7 +595,7 @@ window.exibirComprovantePedido = function(pedidoId, total, cidade, endereco, pag
   `;
 
   document.body.appendChild(modalRecibo);
-}
+};
 
 // Botão "Mágico" para o TCC
 window.simularAprovacaoPedido = async function(pedidoId, btnEl) {
@@ -540,10 +604,10 @@ window.simularAprovacaoPedido = async function(pedidoId, btnEl) {
     try {
         const res = await apiFetch('api/pedidos.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ acao: 'atualizar_status', id: pedidoId, status: 'Em processamento' }) });
         if (res && res.sucesso) {
-            btnEl.innerHTML = "✅ Pagamento Aprovado na Hora!";
+            btnEl.innerHTML = "✅ Aprovado na Hora!";
             btnEl.style.background = "#22c55e";
             btnEl.style.color = "#fff";
-            if (typeof exibirMensagem === 'function') exibirMensagem("Simulação de webhook recebida com sucesso!", "sucesso");
+            if (typeof exibirMensagem === 'function') exibirMensagem("Webhook recebido: Pedido aprovado!", "sucesso");
         } else {
             btnEl.innerHTML = "❌ Erro ao Aprovar";
         }
@@ -560,3 +624,34 @@ function feedbackCompra(botao, idProduto) {
     botao.innerHTML = "✓ Adicionado"; botao.style.backgroundColor = "#15803d"; botao.style.color = "#ffffff"; botao.style.pointerEvents = "none";
     setTimeout(() => { botao.innerHTML = textoOriginal; botao.style.backgroundColor = ""; botao.style.color = ""; botao.style.pointerEvents = "auto"; }, 1500);
 }
+
+// NOVO CÓDIGO DA MENSAGEM (100% INLINE E BLINDADO A FALHAS)
+window.exibirMensagem = function(msg, tipo = 'sucesso') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed; top:20px; right:20px; z-index:9999999; display:flex; flex-direction:column; gap:10px;';
+        document.body.appendChild(container);
+    }
+    
+    let icone = tipo === 'sucesso' ? '✓' : (tipo === 'erro' ? '✕' : '⚠');
+    let corFundo = tipo === 'sucesso' ? '#15803d' : (tipo === 'erro' ? '#b91c1c' : '#b45309');
+    let corBorda = tipo === 'sucesso' ? '#052e16' : (tipo === 'erro' ? '#450a0a' : '#451a03');
+
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        min-width: 250px; max-width: 400px; padding: 14px 18px; border-radius: 8px; 
+        box-shadow: 0 4px 14px rgba(0,0,0,0.3); color: #fff; display: flex; align-items: center; 
+        gap: 12px; font-size: 0.95rem; font-family: sans-serif;
+        background-color: ${corFundo}; border-left: 5px solid ${corBorda};
+        transition: opacity 0.3s ease-out; opacity: 1;
+    `;
+    toast.innerHTML = `<strong>${icone}</strong> <div>${msg}</div>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
+    }, 3000); // Exibe por apenas 3 segundos
+};
