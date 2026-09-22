@@ -178,7 +178,7 @@ async function carregarProdutos() {
   finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
 }
 
-// === LOGIN E REGISTRO ===
+// === LOGIN, REGISTO E RECUPERAÇÃO DE PALAVRA-PASSE ===
 function renderLogin() {
   const app = document.getElementById('app');
   if (!app) return;
@@ -196,6 +196,9 @@ function renderLogin() {
         <form onsubmit="realizarLogin(event)">
           <label>E-mail<input type="email" id="login-email" placeholder="seu@email.com" required></label>
           <label>Senha<input type="password" id="login-senha" placeholder="••••••••" required></label>
+          <div style="text-align: right; margin-bottom: 12px;">
+            <a href="#" onclick="solicitarRecuperacaoSenha(); return false;" style="font-size: 0.82rem; color: #0284c7; text-decoration: none;">Esqueceu a sua senha?</a>
+          </div>
           <button class="btn btn-primary btn-lg full" type="submit">Entrar <span>→</span></button>
         </form>
 
@@ -222,8 +225,8 @@ function renderLogin() {
         <span class="eyebrow dark">NOVA CONTA</span>
         <h1>Crie seu acesso.</h1>
         <form onsubmit="realizarRegistro(event)">
-          <label>Nome Completo<input type="text" id="reg-nome" placeholder="João da Silva" required></label>
-          <label>E-mail<input type="email" id="reg-email" placeholder="seu@email.com" required></label>
+          <label>Nome Completo<input type="text" id="reg-nome" placeholder="Carlos Eduardo Ramos" required></label>
+          <label>E-mail<input type="email" id="reg-email" placeholder="carlos.ramos@email.com" required></label>
           <label>Senha<input type="password" id="reg-senha" placeholder="••••••••" required></label>
           <button class="btn btn-primary btn-lg full" type="submit">Cadastrar <span>→</span></button>
         </form>
@@ -232,6 +235,31 @@ function renderLogin() {
       <button class="back-link" onclick="navegar('home')">← Voltar para a loja</button>
     </div>`;
 }
+
+// Modal de Recuperação de Palavra-passe
+window.solicitarRecuperacaoSenha = async function() {
+    if (typeof Swal === 'undefined') return alert("Funcionalidade temporariamente indisponível.");
+    const { value: email } = await Swal.fire({
+        title: 'Recuperar Senha',
+        input: 'email',
+        inputLabel: 'Introduza o seu e-mail cadastrado',
+        inputPlaceholder: 'seu@email.com',
+        confirmButtonText: 'Enviar Link',
+        cancelButtonText: 'Cancelar',
+        showCancelButton: true,
+        confirmButtonColor: '#0284c7'
+    });
+
+    if (email) {
+        Swal.fire({
+            title: 'Verificação Enviada',
+            text: `Se o e-mail ${email} estiver registado na JR Iluminação, enviámos um código temporário de redefinição.`,
+            icon: 'info',
+            confirmButtonColor: '#0284c7'
+        });
+    }
+};
+
 function alternarFormulario(tipo) {
   document.getElementById('form-login-area').style.display = tipo === 'registro' ? 'none' : 'block';
   document.getElementById('form-registro-area').style.display = tipo === 'registro' ? 'block' : 'none';
