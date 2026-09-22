@@ -1,8 +1,8 @@
 /* ==========================================================================
-   JR ILUMINAÇÃO - DESIGN SYSTEM UNIFICADO (PC & MOBILE RESILIENTE)
+   JR ILUMINAÇÃO - DESIGN SYSTEM UNIVERSAL (TODAS AS TELAS - PC & MOBILE)
    ========================================================================== */
 
-/* 1. RESET E VARIÁVEIS GLOBAIS */
+/* 1. RESET BASE E VARIÁVEIS */
 :root {
   --primary: #0284c7;
   --primary-hover: #0369a1;
@@ -32,7 +32,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 2. CABEÇALHO (HEADER) FIXO */
+/* 2. CABEÇALHO GLOBAL */
 header {
   position: sticky !important;
   top: 0 !important;
@@ -40,15 +40,14 @@ header {
   width: 100% !important;
   background-color: #0f172a !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-  z-index: 99999 !important;
+  z-index: 100000 !important;
 }
 
 .header-container {
   max-width: 1200px !important;
   margin: 0 auto !important;
-  padding: 12px 20px !important;
+  padding: 10px 16px !important;
   display: flex !important;
-  flex-direction: row !important;
   align-items: center !important;
   justify-content: space-between !important;
   position: relative !important;
@@ -57,7 +56,7 @@ header {
 .brand {
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
+  gap: 10px !important;
   background: transparent !important;
   border: none !important;
   cursor: pointer !important;
@@ -66,8 +65,8 @@ header {
 }
 
 .brand img {
-  height: 44px !important;
-  width: 44px !important;
+  height: 40px !important;
+  width: 40px !important;
   object-fit: contain !important;
   border-radius: 8px !important;
   background: #ffffff !important;
@@ -77,16 +76,15 @@ header {
 .brand span strong {
   display: block !important;
   color: #ffffff !important;
-  font-size: 1.05rem !important;
+  font-size: 1rem !important;
   font-weight: 600 !important;
-  line-height: 1.2 !important;
+  line-height: 1.1 !important;
 }
 
 .brand span small {
   display: block !important;
   color: #94a3b8 !important;
-  font-size: 0.75rem !important;
-  letter-spacing: 0.5px !important;
+  font-size: 0.72rem !important;
 }
 
 .main-nav {
@@ -117,49 +115,50 @@ header {
   line-height: 1 !important;
 }
 
-/* 3. HERO BANNER FLUIDO (ELIMINA ENCAVALAMENTO) */
+/* 3. TELA 1: HOME (HERO, DIFERENCIAIS E CTA) */
 .hero {
   background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
   color: #ffffff !important;
-  padding: 50px 20px 40px 20px !important;
+  padding: clamp(30px, 6vw, 60px) 16px !important;
   text-align: center !important;
-  border-radius: 0 0 24px 24px !important;
-  margin-bottom: 40px !important;
-  position: static !important;
+  border-radius: 0 0 20px 20px !important;
+  margin-bottom: 30px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  position: relative !important;
   height: auto !important;
   min-height: unset !important;
-  max-height: none !important;
-  display: block !important;
-  overflow: visible !important;
   clear: both !important;
 }
 
 .hero-inner {
+  width: 100% !important;
   max-width: 800px !important;
   margin: 0 auto !important;
-  position: static !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 16px !important;
+  position: relative !important;
+  gap: 14px !important;
 }
 
 .hero-glow {
-  display: none !important; /* Desativa camadas absolutas que cobrem texto */
+  display: none !important;
 }
 
 .hero .eyebrow {
   display: inline-block !important;
-  font-size: 0.8rem !important;
+  font-size: clamp(0.72rem, 2.5vw, 0.85rem) !important;
   font-weight: 700 !important;
-  letter-spacing: 1.5px !important;
+  letter-spacing: 1.2px !important;
   color: #fef08a !important;
   text-transform: uppercase !important;
   margin: 0 !important;
 }
 
 .hero-inner h1 {
-  font-size: 2.3rem !important;
+  font-size: clamp(1.5rem, 5vw, 2.4rem) !important;
   font-weight: 700 !important;
   line-height: 1.25 !important;
   margin: 0 !important;
@@ -168,8 +167,8 @@ header {
 
 .hero-inner p {
   color: #e0f2fe !important;
-  font-size: 1rem !important;
-  line-height: 1.6 !important;
+  font-size: clamp(0.9rem, 3vw, 1.05rem) !important;
+  line-height: 1.55 !important;
   max-width: 600px !important;
   margin: 0 !important;
 }
@@ -178,87 +177,61 @@ header {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  gap: 14px !important;
-  margin: 10px 0 !important;
+  gap: 12px !important;
   width: 100% !important;
-  position: static !important;
+  margin-top: 6px !important;
 }
 
 .hero-trust {
   display: flex !important;
   justify-content: center !important;
+  align-items: center !important;
   flex-wrap: wrap !important;
-  gap: 18px !important;
+  gap: 12px 18px !important;
   color: #bae6fd !important;
-  font-size: 0.85rem !important;
-  margin-top: 5px !important;
-  position: static !important;
+  font-size: clamp(0.78rem, 2.5vw, 0.88rem) !important;
+  margin-top: 6px !important;
 }
 
-/* 4. SEÇÕES, DIFERENCIAIS E CTA */
 .section {
   max-width: 1200px !important;
   margin: 0 auto !important;
-  padding: 40px 20px !important;
+  padding: 30px 16px !important;
   clear: both !important;
-  position: relative !important;
 }
 
 .section-heading {
   text-align: center !important;
-  margin-bottom: 35px !important;
-}
-
-.section-heading .eyebrow {
-  display: inline-block !important;
-  font-size: 0.78rem !important;
-  font-weight: 700 !important;
-  color: #0284c7 !important;
-  letter-spacing: 1.5px !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 28px !important;
 }
 
 .section-heading h2 {
-  font-size: 2rem !important;
+  font-size: clamp(1.4rem, 4.5vw, 2rem) !important;
   font-weight: 700 !important;
   color: #0f172a !important;
-  margin: 0 0 10px 0 !important;
-}
-
-.section-heading p {
-  color: #64748b !important;
-  font-size: 1rem !important;
-  max-width: 650px !important;
-  margin: 0 auto !important;
+  margin: 0 0 8px 0 !important;
 }
 
 .feature-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
-  gap: 24px !important;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+  gap: 18px !important;
 }
 
 .feature-grid article {
   background: #ffffff !important;
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
-  padding: 28px 20px !important;
+  padding: 22px 18px !important;
   box-shadow: var(--shadow-sm) !important;
-  text-align: left !important;
-}
-
-.feature-icon {
-  font-size: 1.8rem !important;
-  color: var(--primary) !important;
-  margin-bottom: 12px !important;
 }
 
 .cta {
   background: #0f172a !important;
   color: #ffffff !important;
   border-radius: 16px !important;
-  padding: 45px 24px !important;
-  margin: 50px auto !important;
+  padding: 40px 20px !important;
+  margin: 40px auto !important;
   max-width: 1200px !important;
   display: flex !important;
   align-items: center !important;
@@ -267,28 +240,49 @@ header {
   flex-wrap: wrap !important;
 }
 
-.cta h2 {
-  color: #ffffff !important;
-  margin: 8px 0 !important;
-}
-
-.cta p {
-  color: #94a3b8 !important;
-  margin: 0 !important;
-}
-
-/* 5. GRELHA DE PRODUTOS */
-.container, main#app {
+/* 4. TELA 2: CATÁLOGO DE PRODUTOS */
+.container, main#app, .page-shell {
   max-width: 1200px !important;
   margin: 0 auto !important;
-  padding: 10px 20px 60px 20px !important;
+  padding: 15px 16px 60px 16px !important;
+}
+
+.page-header {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin-bottom: 24px !important;
+  flex-wrap: wrap !important;
+}
+
+.search-wrap {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 320px !important;
+}
+
+.search-wrap input {
+  width: 100% !important;
+  padding: 10px 14px 10px 38px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  font-size: 0.9rem !important;
+}
+
+.search-wrap span {
+  position: absolute !important;
+  left: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: var(--text-muted) !important;
 }
 
 .product-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
-  gap: 24px !important;
-  margin-top: 25px !important;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  gap: 20px !important;
 }
 
 .product-card {
@@ -304,88 +298,149 @@ header {
 }
 
 .product-card:hover {
-  transform: translateY(-4px) !important;
+  transform: translateY(-3px) !important;
   box-shadow: var(--shadow-elevated) !important;
 }
 
-/* 6. PAINEL DE LOGIN CENTRALIZADO */
+/* 5. TELA 3: LOGIN E REGISTRO */
 .login-page {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  min-height: calc(100vh - 180px) !important;
-  padding: 40px 16px !important;
+  min-height: calc(100vh - 160px) !important;
+  padding: 25px 16px !important;
 }
 
 .login-panel {
   background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
-  max-width: 440px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06) !important;
+  max-width: 420px !important;
   width: 100% !important;
-  padding: 36px 30px !important;
+  padding: 30px 24px !important;
   margin: 0 auto !important;
 }
 
 .login-panel label {
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
-  font-size: 0.88rem !important;
+  gap: 5px !important;
+  font-size: 0.85rem !important;
   font-weight: 500 !important;
   color: #475569 !important;
-  margin-bottom: 14px !important;
+  margin-bottom: 12px !important;
   text-align: left !important;
 }
 
 .login-panel input {
   width: 100% !important;
-  padding: 12px 14px !important;
+  padding: 11px 13px !important;
   border: 1px solid #cbd5e1 !important;
   border-radius: 8px !important;
   font-size: 0.95rem !important;
-  outline: none !important;
-  background: #fff !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
-}
-
-.login-panel input:focus {
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
 }
 
 .login-panel button.btn-primary {
   width: 100% !important;
   padding: 12px !important;
-  font-size: 1rem !important;
-  margin-top: 8px !important;
 }
 
-.back-link {
-  display: block !important;
-  background: none !important;
-  border: none !important;
-  color: #64748b !important;
-  cursor: pointer !important;
-  margin-top: 20px !important;
-  text-align: center !important;
+/* 6. TELA 4: MODAL / GAVETA DO CARRINHO */
+#modal-carrinho {
+  box-sizing: border-box !important;
+}
+
+#modal-carrinho input {
+  font-size: 0.9rem !important;
   width: 100% !important;
-  font-size: 0.88rem !important;
 }
 
-/* 7. BOTÕES GLOBAIS */
+/* 7. TELA 5: ÁREA DO CLIENTE / PERFIL */
+.table-responsive {
+  width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  border-radius: 8px !important;
+  margin-bottom: 15px !important;
+}
+
+.table-responsive table {
+  width: 100% !important;
+  min-width: 520px !important;
+  border-collapse: collapse !important;
+}
+
+/* 8. TELA 6: PAINEL ADMINISTRATIVO */
+.admin-layout, .admin-page {
+  display: flex !important;
+  flex-direction: row !important;
+  min-height: calc(100vh - 70px) !important;
+  width: 100% !important;
+}
+
+.admin-sidebar {
+  width: 250px !important;
+  min-width: 250px !important;
+  background: #0f172a !important;
+  color: #ffffff !important;
+  padding: 20px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+.admin-sidebar nav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin-top: 20px !important;
+}
+
+.admin-sidebar nav a {
+  color: #cbd5e1 !important;
+  text-decoration: none !important;
+  padding: 10px 12px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  font-size: 0.9rem !important;
+}
+
+.admin-sidebar nav a:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #38bdf8 !important;
+}
+
+.admin-content {
+  flex: 1 !important;
+  padding: 24px !important;
+  background: #f8fafc !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+.stat-grid, .admin-stats {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+  gap: 16px !important;
+  margin-bottom: 24px !important;
+}
+
+/* 9. BOTÕES GLOBAIS */
 .btn {
   border-radius: 8px !important;
   font-weight: 500 !important;
-  padding: 10px 20px !important;
+  padding: 10px 18px !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
   border: none !important;
   text-decoration: none !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  transition: all 0.2s ease !important;
 }
 
 .btn-primary {
@@ -398,19 +453,18 @@ header {
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.18) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
 }
 
-.btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-}
-
-/* 8. REGRAS RESPONSIVAS MOBILE (DISPOSITIVOS MÓVEIS E TABLETS) */
+/* ==========================================================================
+   10. REGRAS RESPONSIVAS GLOBAIS PARA MOBILE (TELAS <= 768px)
+   ========================================================================== */
 @media (max-width: 768px) {
+  /* Cabeçalho e Menu */
   .header-container {
-    padding: 10px 16px !important;
+    padding: 10px 14px !important;
   }
 
   .mobile-menu {
@@ -426,9 +480,9 @@ header {
     background-color: #0f172a !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    padding: 18px 24px !important;
-    gap: 16px !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+    padding: 16px 20px !important;
+    gap: 14px !important;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
 
@@ -436,26 +490,11 @@ header {
     display: flex !important;
   }
 
-  .main-nav a.nav-link {
-    font-size: 1rem !important;
-    padding: 8px 0 !important;
-  }
-
-  .hero {
-    padding: 35px 16px 30px 16px !important;
-    border-radius: 0 0 18px 18px !important;
-    margin-bottom: 25px !important;
-  }
-
-  .hero-inner h1 {
-    font-size: 1.65rem !important;
-    line-height: 1.3 !important;
-  }
-
+  /* Home */
   .hero-actions {
     flex-direction: column !important;
-    gap: 12px !important;
     width: 100% !important;
+    gap: 10px !important;
   }
 
   .hero-actions .btn {
@@ -465,19 +504,10 @@ header {
 
   .hero-trust {
     flex-direction: column !important;
-    gap: 8px !important;
-  }
-
-  .section {
-    padding: 25px 16px !important;
-  }
-
-  .section-heading h2 {
-    font-size: 1.6rem !important;
+    gap: 6px !important;
   }
 
   .cta {
-    padding: 30px 18px !important;
     flex-direction: column !important;
     text-align: center !important;
   }
@@ -486,20 +516,64 @@ header {
     width: 100% !important;
   }
 
+  /* Catálogo de Produtos */
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .search-wrap {
+    max-width: 100% !important;
+  }
+
   .product-grid {
     grid-template-columns: 1fr !important;
     gap: 16px !important;
   }
 
-  .login-panel {
-    padding: 24px 18px !important;
-    border-radius: 12px !important;
+  /* Carrinho Modal (Ocupa 100% da tela do celular) */
+  #modal-carrinho {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    padding: 18px 14px !important;
   }
 
+  /* Painel Administrativo no celular */
+  .admin-layout, .admin-page {
+    flex-direction: column !important;
+  }
+
+  .admin-sidebar {
+    width: 100% !important;
+    min-width: 100% !important;
+    padding: 15px !important;
+  }
+
+  .admin-sidebar nav {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .admin-sidebar nav a {
+    padding: 8px 10px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .admin-content {
+    padding: 16px 12px !important;
+  }
+
+  .stat-grid, .admin-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Botão Modo Escuro no celular */
   #btn-dark-mode {
-    bottom: 15px !important;
-    right: 15px !important;
-    padding: 8px 14px !important;
-    font-size: 0.78rem !important;
+    bottom: 12px !important;
+    right: 12px !important;
+    padding: 7px 12px !important;
+    font-size: 0.75rem !important;
   }
 }
