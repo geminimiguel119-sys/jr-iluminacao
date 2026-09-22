@@ -3,7 +3,7 @@
 require_once 'config.php';
 require_once 'conexao.php';
 
-// Teste 4: Força o Fuso Horário de Brasília
+// Fuso Horário de Brasília
 $pdo->exec("SET TIME ZONE 'America/Sao_Paulo'");
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') erro("Método não permitido", 405);
@@ -23,7 +23,7 @@ try {
     $stmtCheck->execute([$email]);
     if ($stmtCheck->fetch()) throw new Exception("E-mail já cadastrado.");
 
-    // Clientes comuns são bloqueados inicialmente
+    // Clientes comuns iniciam como Pendentes
     $status = ($role === 'admin') ? 'Aprovado' : 'Pendente';
 
     $stmtUser = $pdo->prepare("INSERT INTO usuarios (nome, email, role, status) VALUES (?, ?, ?, ?) RETURNING id");
@@ -41,19 +41,19 @@ try {
     $pdo->commit();
 
     // ==========================================
-    // OBS 5: INTEGRAÇÃO COM TELEGRAM 
-    // Substitua os dados abaixo pelo seu BotFather.
+    // INTEGRAÇÃO OFICIAL DO TELEGRAM (JR ILUMINAÇÃO)
     // ==========================================
-    $telegramToken = "SEU_TOKEN_AQUI"; 
-    $telegramChatId = "SEU_CHAT_ID_AQUI";       
+    $telegramToken = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
+    $telegramChatId = "5034813131";
 
-    if (!empty($telegramToken) && $telegramToken !== "SEU_TOKEN_AQUI") {
-        $msg = "🚨 *Novo Cliente* \n👤 Nome: {$nome}\n📧 E-mail: {$email}\n📌 Status: Aguardando aprovação.";
-        $urlTG = "https://api.telegram.org/bot{$telegramToken}/sendMessage?chat_id={$telegramChatId}&parse_mode=Markdown&text=" . urlencode($msg);
-        @file_get_contents($urlTG);
-    }
+    $msg = "🚨 *Novo Cliente Registado!*\n\n";
+    $msg .= "👤 *Nome:* {$nome}\n";
+    $msg .= "📧 *E-mail:* {$email}\n";
+    $msg .= "📌 *Status:* Pendente de aprovação no Painel.";
 
-    // TESTE 1: Mensagem clara sobre aprovação
+    $urlTG = "https://api.telegram.org/bot{$telegramToken}/sendMessage?chat_id={$telegramChatId}&parse_mode=Markdown&text=" . urlencode($msg);
+    @file_get_contents($urlTG);
+
     sucesso("Conta criada com sucesso! O seu registo está em análise. Aguarde a aprovação do administrador para efetuar o login.");
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
