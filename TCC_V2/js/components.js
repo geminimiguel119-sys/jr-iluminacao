@@ -80,16 +80,10 @@ window.produtosGlobais = [];
     }
 
     /* Regras de perfil e menu mobile */
-    .mobile-user-links {
-      display: none;
-    }
-    .desktop-user-dropdown {
-      display: inline-block;
-    }
+    .mobile-user-links { display: none; }
+    .desktop-user-dropdown { display: inline-block; }
     @media (max-width: 768px) {
-      .desktop-user-dropdown {
-        display: none !important;
-      }
+      .desktop-user-dropdown { display: none !important; }
       .mobile-user-links {
         display: flex !important;
         flex-direction: column !important;
@@ -98,10 +92,7 @@ window.produtosGlobais = [];
         margin-top: 8px !important;
         border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
       }
-      .mobile-user-links a {
-        font-size: 1rem !important;
-        font-weight: 500 !important;
-      }
+      .mobile-user-links a { font-size: 1rem !important; font-weight: 500 !important; }
     }
   `;
   document.head.appendChild(style);
@@ -121,9 +112,7 @@ function fecharMenuMobile() {
 function alternarUserMenu(e) {
   if (e) e.stopPropagation();
   const menu = document.getElementById('user-menu');
-  if (menu) {
-    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-  }
+  if (menu) menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
 }
 
 function fecharUserMenu() {
@@ -131,7 +120,6 @@ function fecharUserMenu() {
   if (menu) menu.style.display = 'none';
 }
 
-// Fecha o menu de usuário ao clicar fora dele
 document.addEventListener('click', (e) => {
   const userMenu = document.getElementById('user-menu');
   const userChip = document.querySelector('.user-chip');
@@ -171,7 +159,6 @@ function renderHeader() {
         ` : ''}
         
         ${user ? `
-          <!-- Links para visualização em celular -->
           <div class="mobile-user-links">
             <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('perfil'); return false;" style="color: #e2e8f0;">
               👤 Meu Perfil (${user.nome.split(' ')[0]})
@@ -181,7 +168,6 @@ function renderHeader() {
             </a>
           </div>
 
-          <!-- Dropdown para computadores -->
           <div class="desktop-user-dropdown" style="position: relative;">
             <div class="user-chip" onclick="alternarUserMenu(event)" style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
               <span class="avatar" style="background: #0284c7; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff;">
@@ -199,7 +185,6 @@ function renderHeader() {
           <button class="btn btn-primary btn-login" onclick="fecharMenuMobile(); navegar('login');">Entrar</button>
         `}
       </nav>
-
       <button class="mobile-menu" aria-label="Abrir menu" onclick="alternarMenuMobile()">☰</button>
     </div>
   `;
@@ -252,17 +237,13 @@ async function carregarProdutos() {
       
       return `
       <article class="product-card" data-name="${(p.nome || '').toLowerCase()}" style="animation-delay:${i*45}ms; display: flex; flex-direction: column; justify-content: space-between;">
-        <div style="height: 220px; width: 100%; background-image: url('${imagemProduto}'); background-size: cover; background-position: center; border-bottom: 1px solid #eee;">
-        </div>
-        
+        <div style="height: 220px; width: 100%; background-image: url('${imagemProduto}'); background-size: cover; background-position: center; border-bottom: 1px solid #eee;"></div>
         <div class="product-body" style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
           <div class="product-stock ${!disponivel ? 'low' : (qtd < 5 ? 'low' : '')}" style="margin-bottom: 10px; font-size: 0.8rem; font-weight: 600;">
               ${disponivel ? `✓ Em estoque (${qtd} un.)` : '✕ Esgotado'}
           </div>
-          
           <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #1e293b;">${p.nome || 'Produto sem nome'}</h3>
           <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px; flex: 1;">${p.descricao || 'Solução de iluminação LED.'}</p>
-          
           <div class="product-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 15px;">
             <strong style="font-size: 1.25rem; color: #0f172a;">R$ ${preco}</strong>
             ${disponivel 
@@ -505,26 +486,30 @@ function renderSkeletonGrid(n) {
   return Array.from({ length: n }, () => '<div class="skeleton-card"><div></div><span></span><span></span></div>').join('');
 }
 
-// === CARRINHO COM AJUSTE DE QUANTIDADE (+ / -) ===
+// === CARRINHO COM AJUSTE DE QUANTIDADE (+ / -) E VALIDAÇÃO DE ESTOQUE ===
 function adicionarAoCarrinho(id) {
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
   
   if (!user) {
-      if (typeof exibirMensagem === 'function') exibirMensagem("Precisa iniciar sessão para comprar.", "aviso");
+      if (typeof exibirMensagem === 'function') exibirMensagem("Precisa de iniciar sessão para comprar.", "aviso");
       navegar('login');
       return;
   }
 
-  if (!window.produtosGlobais || window.produtosGlobais.length === 0) {
-    if (typeof exibirMensagem === 'function') exibirMensagem("Erro: Produtos não carregados.", "erro");
-    return;
-  }
+  if (!window.produtosGlobais || window.produtosGlobais.length === 0) return;
 
   const p = window.produtosGlobais.find(x => String(x.id) === String(id));
   if (!p) return;
 
   let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
   let item = carrinho.find(x => String(x.id) === String(p.id));
+  let qtdAtual = item ? item.quantidade : 0;
+
+  // TRAVA DE ESTOQUE: Impede adicionar se passar do limite
+  if (qtdAtual + 1 > p.quantidade) {
+      if (typeof exibirMensagem === 'function') exibirMensagem(`Limite atingido! Apenas ${p.quantidade} unidades em stock.`, "aviso");
+      return;
+  }
 
   if (item) {
     item.quantidade += 1;
@@ -541,6 +526,14 @@ function alterarQtdCarrinho(index, delta) {
   let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
   if (!carrinho[index]) return;
 
+  // Busca o produto real para ver o limite
+  const p = window.produtosGlobais.find(x => String(x.id) === String(carrinho[index].id));
+  
+  if (delta > 0 && p && (carrinho[index].quantidade + delta > p.quantidade)) {
+      if (typeof exibirMensagem === 'function') exibirMensagem(`Limite atingido! Apenas ${p.quantidade} unidades em stock.`, "aviso");
+      return;
+  }
+
   carrinho[index].quantidade += delta;
   if (carrinho[index].quantidade <= 0) {
     carrinho.splice(index, 1);
@@ -556,10 +549,10 @@ function abrirCarrinho() {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'modal-carrinho';
-    modal.style.cssText = 'position:fixed; top:0; right:0; width:100%; max-width:390px; height:100%; background:#fff; box-shadow:-5px 0 15px rgba(0,0,0,0.3); z-index:99999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: 0.3s;';
+    modal.style.cssText = 'position:fixed; top:0; right:0; width:100%; max-width:420px; height:100%; background:#fff; box-shadow:-5px 0 25px rgba(0,0,0,0.3); z-index:99999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: 0.3s;';
     document.body.appendChild(modal);
   }
-  renderizarItensCarrinho();
+  renderizarItensCarrinho(); // Mostra o passo 1
   modal.style.display = 'flex';
 }
 
@@ -568,7 +561,7 @@ function fecharCarrinho() {
   if (modal) modal.style.display = 'none';
 }
 
-// === RENDERIZAÇÃO DO CARRINHO E AUTO-COMPLETE VIACEP ===
+// === PASSO 1: MOSTRAR ITENS DO CARRINHO ===
 function renderizarItensCarrinho() {
   const modal = document.getElementById('modal-carrinho');
   if (!modal) return;
@@ -578,14 +571,14 @@ function renderizarItensCarrinho() {
 
   let html = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-      <h2 style="margin:0; font-size: 1.4rem;">🛒 Seu Carrinho</h2>
+      <h2 style="margin:0; font-size: 1.4rem;">🛒 O Seu Carrinho</h2>
       <button onclick="fecharCarrinho()" style="background:none; border:none; font-size:28px; cursor:pointer; color: #888;">&times;</button>
     </div>
     <div style="flex:1; overflow-y:auto; padding-right:5px;">
   `;
 
   if (carrinho.length === 0) {
-    html += `<p style="color:#666; text-align:center; margin-top:40px;">Seu carrinho está vazio.</p>`;
+    html += `<p style="color:#666; text-align:center; margin-top:40px;">O seu carrinho está vazio.</p></div>`;
   } else {
     carrinho.forEach((item, index) => {
       const subtotal = item.preco * item.quantidade;
@@ -608,36 +601,75 @@ function renderizarItensCarrinho() {
         </div>
       `;
     });
-  }
 
-  html += `</div>
-    <div style="margin-top:15px; border-top:2px solid #eee; padding-top:15px;">
-      <h3 style="display:flex; justify-content:space-between; margin-bottom:15px; color: #1e293b;">
-          <span>Total:</span> 
-          <span>R$ ${total.toFixed(2).replace('.', ',')}</span>
-      </h3>
-      
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #e2e8f0;">
-          <h4 style="margin: 0 0 10px 0; font-size: 0.95rem; color: #475569;">📍 Dados de Entrega</h4>
-          
-          <input type="text" id="cart-telefone" placeholder="Seu Telefone/WhatsApp" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
-          
-          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-              <input type="text" id="cart-cep" placeholder="CEP (Auto)" maxlength="9" style="width:45%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
-              <input type="text" id="cart-cidade" placeholder="Cidade / UF" style="width:55%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
-          </div>
-          
-          <input type="text" id="cart-endereco" placeholder="Endereço (Rua, Nº, Bairro)" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-size: 0.9rem;" required>
+    html += `</div>
+      <div style="margin-top:15px; border-top:2px solid #eee; padding-top:15px;">
+        <h3 style="display:flex; justify-content:space-between; margin-bottom:15px; color: #1e293b;">
+            <span>Total:</span> 
+            <span>R$ ${total.toFixed(2).replace('.', ',')}</span>
+        </h3>
+        <button onclick="renderizarCheckout()" class="btn btn-primary btn-lg full" style="width:100%; cursor:pointer; padding: 14px;">Avançar para Entrega ➔</button>
       </div>
-
-      <button onclick="finalizarPedido()" class="btn btn-primary btn-lg full" style="width:100%; cursor:pointer;">Confirmar e Finalizar Compra</button>
-    </div>
-  `;
+    `;
+  }
   
   modal.innerHTML = html;
+}
 
-  // Formatação do telefone
-  const inputTelefone = document.getElementById('cart-telefone');
+function removerDoCarrinho(index) {
+  let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+  carrinho.splice(index, 1);
+  localStorage.setItem('carrinho', JSON.stringify(carrinho));
+  renderHeader();
+  renderizarItensCarrinho();
+}
+
+// === PASSO 2: TELA DE CHECKOUT (DADOS DO CLIENTE) ===
+window.renderizarCheckout = function() {
+  const modal = document.getElementById('modal-carrinho');
+  const user = JSON.parse(localStorage.getItem('jr_user') || '{}');
+  
+  const html = `
+    <div style="display:flex; align-items:center; margin-bottom:20px; gap: 15px;">
+      <button onclick="renderizarItensCarrinho()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color: #0284c7;">⬅ Voltar</button>
+      <h2 style="margin:0; font-size: 1.2rem;">📦 Dados de Entrega</h2>
+    </div>
+    
+    <div style="flex:1; overflow-y:auto; padding-right:5px;">
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #e2e8f0;">
+            <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: #475569;">1. Seus Dados</h4>
+            
+            <label style="font-size: 0.8rem; color: #64748b; margin-bottom: 2px; display:block;">Nome Completo</label>
+            <input type="text" id="chk-nome" value="${user.nome || ''}" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:4px;" required>
+            
+            <label style="font-size: 0.8rem; color: #64748b; margin-bottom: 2px; display:block;">Telefone / WhatsApp</label>
+            <input type="text" id="chk-telefone" placeholder="(11) 90000-0000" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid #cbd5e1; border-radius:4px;" required>
+            
+            <h4 style="margin: 15px 0 12px 0; font-size: 0.95rem; color: #475569;">2. Endereço</h4>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 0.8rem; color: #64748b; margin-bottom: 2px; display:block;">CEP</label>
+                    <input type="text" id="chk-cep" placeholder="00000-000" maxlength="9" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px;" required>
+                </div>
+                <div style="flex: 1.5;">
+                    <label style="font-size: 0.8rem; color: #64748b; margin-bottom: 2px; display:block;">Cidade / UF</label>
+                    <input type="text" id="chk-cidade" placeholder="Cidade" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px;" required>
+                </div>
+            </div>
+            
+            <label style="font-size: 0.8rem; color: #64748b; margin-bottom: 2px; display:block;">Rua, Número e Bairro</label>
+            <input type="text" id="chk-endereco" placeholder="Ex: Rua das Lâmpadas, 100 - Centro" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px;" required>
+        </div>
+    </div>
+
+    <div style="margin-top:10px; border-top:2px solid #eee; padding-top:15px;">
+        <button id="btn-finalizar" onclick="finalizarPedido(this)" class="btn btn-primary btn-lg full" style="width:100%; cursor:pointer; padding: 14px; font-weight: bold; background: #15803d; border-color: #15803d;">✅ Confirmar e Finalizar Compra</button>
+    </div>
+  `;
+  modal.innerHTML = html;
+
+  // Máscara do Telefone
+  const inputTelefone = document.getElementById('chk-telefone');
   if (inputTelefone) {
       inputTelefone.addEventListener('input', function(e) {
           let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
@@ -645,8 +677,8 @@ function renderizarItensCarrinho() {
       });
   }
 
-  // Preenchimento automático via ViaCEP
-  const inputCep = document.getElementById('cart-cep');
+  // Preenchimento ViaCEP
+  const inputCep = document.getElementById('chk-cep');
   if (inputCep) {
       inputCep.addEventListener('input', async function(e) {
           let v = e.target.value.replace(/\D/g, '');
@@ -654,9 +686,9 @@ function renderizarItensCarrinho() {
           e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2];
 
           if (v.length === 8) {
-              const inputCidade = document.getElementById('cart-cidade');
-              const inputEnd = document.getElementById('cart-endereco');
-              if (inputCidade) inputCidade.value = "Consultando...";
+              const inputCidade = document.getElementById('chk-cidade');
+              const inputEnd = document.getElementById('chk-endereco');
+              if (inputCidade) inputCidade.value = "A consultar...";
 
               try {
                   const res = await fetch(`https://viacep.com.br/ws/${v}/json/`);
@@ -679,15 +711,81 @@ function renderizarItensCarrinho() {
   }
 }
 
-function removerDoCarrinho(index) {
-  let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
-  carrinho.splice(index, 1);
-  localStorage.setItem('carrinho', JSON.stringify(carrinho));
-  renderHeader();
-  renderizarItensCarrinho();
-}
+// === FINALIZAÇÃO DO PEDIDO (COM TRAVA ANTI-DUPLO CLIQUE) ===
+window.finalizarPedido = async function(btnElement) {
+    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
+    if (!user) return navegar('login');
 
-// === COMPROVATIVO VISUAL DE ENCOMENDA ===
+    const nome = document.getElementById('chk-nome').value.trim();
+    const telefone = document.getElementById('chk-telefone').value.trim();
+    const cep = document.getElementById('chk-cep').value.trim();
+    const cidade = document.getElementById('chk-cidade').value.trim();
+    const endereco = document.getElementById('chk-endereco').value.trim();
+
+    if (!nome || !telefone || !cep || !cidade || !endereco) {
+        if (typeof exibirMensagem === 'function') exibirMensagem("Por favor, preencha todos os campos do endereço e contacto.", "aviso");
+        return; 
+    }
+
+    const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
+    if (carrinho.length === 0) return;
+
+    let total = 0;
+    carrinho.forEach(item => total += (parseFloat(item.preco) * parseInt(item.quantidade)));
+
+    // TRAVA ANTI-DUPLO CLIQUE: Desativa o botão de imediato
+    if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.innerHTML = '⏳ A processar encomenda...';
+        btnElement.style.opacity = '0.7';
+        btnElement.style.cursor = 'not-allowed';
+    }
+
+    try {
+        const res = await apiFetch('api/pedidos.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                acao: 'criar',
+                email: user.email, 
+                nome: nome,
+                telefone: telefone,
+                cep: cep,
+                cidade: cidade,
+                endereco: endereco,
+                total: total,
+                itens: carrinho
+            })
+        });
+
+        if (res && res.sucesso) {
+            localStorage.removeItem('carrinho');
+            fecharCarrinho();
+            renderHeader();
+            exibirComprovantePedido(res.pedido_id, total, cidade, endereco);
+        } else {
+            if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + (res.erro || "Falha na compra"), "erro");
+            // Se falhou, reativa o botão para tentar de novo
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = '✅ Confirmar e Finalizar Compra';
+                btnElement.style.opacity = '1';
+                btnElement.style.cursor = 'pointer';
+            }
+        }
+    } catch (erro) {
+        console.error("Erro no checkout:", erro);
+        if (typeof exibirMensagem === 'function') exibirMensagem("Erro ao comunicar com o servidor.", "erro");
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.innerHTML = '✅ Confirmar e Finalizar Compra';
+            btnElement.style.opacity = '1';
+            btnElement.style.cursor = 'pointer';
+        }
+    }
+};
+
+// COMPROVATIVO E FEEDBACK MANTÉM-SE...
 function exibirComprovantePedido(pedidoId, total, cidade, endereco) {
   let modalRecibo = document.getElementById('modal-recibo-pedido');
   if (modalRecibo) modalRecibo.remove();
@@ -723,69 +821,6 @@ function exibirComprovantePedido(pedidoId, total, cidade, endereco) {
   document.body.appendChild(modalRecibo);
 }
 
-// === FINALIZAÇÃO DO PEDIDO ===
-window.finalizarPedido = async function() {
-    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
-    
-    if (!user || !user.email) {
-        if (typeof exibirMensagem === 'function') exibirMensagem("Sessão inválida. Faça login novamente.", "erro");
-        fecharCarrinho();
-        return navegar('login');
-    }
-
-    const telefone = document.getElementById('cart-telefone').value.trim();
-    const cep = document.getElementById('cart-cep').value.trim();
-    const cidade = document.getElementById('cart-cidade').value.trim();
-    const endereco = document.getElementById('cart-endereco').value.trim();
-
-    if (!telefone || !cep || !cidade || !endereco) {
-        if (typeof exibirMensagem === 'function') exibirMensagem("Por favor, preencha todos os dados de entrega antes de finalizar.", "aviso");
-        return; 
-    }
-
-    const carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
-    if (carrinho.length === 0) {
-        if (typeof exibirMensagem === 'function') exibirMensagem("O seu carrinho está vazio!", "erro");
-        return;
-    }
-
-    let total = 0;
-    carrinho.forEach(item => {
-        total += (parseFloat(item.preco) * parseInt(item.quantidade));
-    });
-
-    if (typeof mostrarLoading === 'function') mostrarLoading(true, "A processar a sua encomenda...");
-
-    try {
-        const res = await apiFetch('api/pedidos.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                acao: 'criar',
-                email: user.email, 
-                nome: user.nome,   
-                total: total,
-                itens: carrinho
-            })
-        });
-
-        if (res && res.sucesso) {
-            localStorage.removeItem('carrinho');
-            fecharCarrinho();
-            renderHeader();
-
-            exibirComprovantePedido(res.pedido_id, total, cidade, endereco);
-        } else {
-            if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + (res.erro || "Falha na compra"), "erro");
-        }
-    } catch (erro) {
-        console.error("Erro no checkout:", erro);
-        if (typeof exibirMensagem === 'function') exibirMensagem("Erro ao comunicar com a API.", "erro");
-    } finally {
-        if (typeof mostrarLoading === 'function') mostrarLoading(false);
-    }
-};
-
 function feedbackCompra(botao, idProduto) {
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
     if (!user) {
@@ -810,7 +845,6 @@ function feedbackCompra(botao, idProduto) {
     }, 1500);
 }
 
-// Fallback de notificações (6 segundos)
 window.exibirMensagem = function(msg, tipo = 'sucesso') {
     let container = document.getElementById('toast-container');
     if (!container) {
