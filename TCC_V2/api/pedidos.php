@@ -61,20 +61,19 @@ if ($metodo === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            // Recebe todos os dados do novo Checkout
             $email = trim($dados['email'] ?? '');
             $nome = trim($dados['nome'] ?? '');
             $telefone = trim($dados['telefone'] ?? 'Não informado');
             $cep = trim($dados['cep'] ?? 'Não informado');
             $cidade = trim($dados['cidade'] ?? 'Não informada');
             $endereco = trim($dados['endereco'] ?? 'Não informado');
+            $forma_pagamento = trim($dados['forma_pagamento'] ?? 'Não informada');
             $total = floatval($dados['total'] ?? 0);
             
             if (empty($email) || empty($nome)) {
                 throw new Exception("Nome e e-mail do cliente são obrigatórios.");
             }
             
-            // Busca ou cria o cliente
             $stmtBusca = $pdo->prepare("SELECT id FROM clientes WHERE LOWER(email) = LOWER(?)");
             $stmtBusca->execute([$email]);
             $cliente_id = $stmtBusca->fetchColumn();
@@ -85,12 +84,10 @@ if ($metodo === 'POST') {
                 $cliente_id = $stmtNovoCli->fetchColumn();
             }
             
-            // Grava o pedido
             $stmtPedido = $pdo->prepare("INSERT INTO pedidos (cliente_id, total, status) VALUES (?, ?, 'Pendente') RETURNING id");
             $stmtPedido->execute([$cliente_id, $total]);
             $pedido_id = $stmtPedido->fetchColumn();
             
-            // Grava itens e desconta estoque
             $alertasEstoque = [];
             $listaItensMsg = "";
 
@@ -126,30 +123,27 @@ if ($metodo === 'POST') {
             
             $pdo->commit();
 
-            // === 1. NOTIFICAÇÃO COMPLETA DE NOVO PEDIDO ===
+            // === NOTIFICAÇÃO COMPLETA DE NOVO PEDIDO ===
             $totalFormatado = number_format($total, 2, ',', '.');
             $dataHora = date('d/m/Y H:i');
 
             $msgNovoPedido  = "🎉 <b>NOVO PEDIDO RECEBIDO!</b>\n\n";
             $msgNovoPedido .= "🆔 <b>Pedido:</b> #{$pedido_id}\n";
-            $msgNovoPedido .= "💰 <b>Valor Total:</b> R$ {$totalFormatado}\n\n";
+            $msgNovoPedido .= "💰 <b>Valor Total:</b> R$ {$totalFormatado}\n";
+            $msgNovoPedido .= "💳 <b>Pagamento:</b> " . htmlspecialchars($forma_pagamento) . "\n\n";
             $msgNovoPedido .= "👤 <b>DADOS DO CLIENTE:</b>\n";
             $msgNovoPedido .= "Nome: <i>" . htmlspecialchars($nome) . "</i>\n";
-            $msgNovoPedido .= "WhatsApp/Tel: <i>" . htmlspecialchars($telefone) . "</i>\n";
-            $msgNovoPedido .= "E-mail: <i>" . htmlspecialchars($email) . "</i>\n\n";
+            $msgNovoPedido .= "Tel: <i>" . htmlspecialchars($telefone) . "</i>\n\n";
             $msgNovoPedido .= "📍 <b>ENDEREÇO DE ENTREGA:</b>\n";
-            $msgNovoPedido .= htmlspecialchars($endereco) . "\n";
-            $msgNovoPedido .= htmlspecialchars($cidade) . " - CEP: " . htmlspecialchars($cep) . "\n\n";
+            $msgNovoPedido .= htmlspecialchars($endereco) . " | " . htmlspecialchars($cidade) . " - CEP: " . htmlspecialchars($cep) . "\n\n";
             $msgNovoPedido .= "🛒 <b>ITENS DA COMPRA:</b>\n{$listaItensMsg}\n";
-            $msgNovoPedido .= "⏰ <b>Data/Hora:</b> {$dataHora}";
 
             notificarAdminTelegram($msgNovoPedido);
 
-            // === 2. NOTIFICAÇÃO DE ESTOQUE BAIXO ===
             foreach ($alertasEstoque as $alerta) {
                 $msgEstoque  = "⚠️ <b>ALERTA DE ESTOQUE CRÍTICO!</b>\n\n";
                 $msgEstoque .= "📦 <b>Produto:</b> " . htmlspecialchars($alerta['nome']) . "\n";
-                $msgEstoque .= "📉 <b>Estoque Restante:</b> {$alerta['restante']} unidades\n";
+                $msgEstoque .= "📉 <b>Estoque Restante:</b> {$alerta['restante']} un.\n";
                 notificarAdminTelegram($msgEstoque);
             }
 
@@ -162,7 +156,6 @@ if ($metodo === 'POST') {
         }
     }
     
-    // (As restantes funções atualizar_status, excluir, etc. mantêm-se iguais...)
     if ($acao === 'atualizar_status') {
         try {
             $stmt = $pdo->prepare("UPDATE pedidos SET status = ? WHERE id = ?");
@@ -190,15 +183,39 @@ if ($metodo === 'POST') {
     }
 }
 
+// 4. LER OS PEDIDOS (AGORA COM OS ITENS EMBUTIDOS VIA JSON_AGG DO POSTGRES)
 if ($metodo === 'GET') {
     try {
+        $baseQuery = "SELECT p.id, p.total, p.status, p.data_pedido, c.nome as cliente_nome, 
+                             COALESCE((
+                                 SELECT json_agg(json_build_object(
+                                     'nome', COALESCE(pr.nome, 'Produto Excluído'), 
+                                     'quantidade', ip.quantidade, 
+                                     'preco', ip.preco_unitario
+                                 )) 
+                                 FROM itens_pedido ip 
+                                 LEFT JOIN produtos pr ON ip.produto_id = pr.id 
+                                 WHERE ip.pedido_id = p.id
+                             ), '[]'::json) as itens_json 
+                      FROM pedidos p 
+                      LEFT JOIN clientes c ON p.cliente_id = c.id ";
+                      
         if (isset($_GET['email'])) {
-            $stmt = $pdo->prepare("SELECT p.id, p.total, p.status, p.data_pedido, c.nome as cliente_nome FROM pedidos p JOIN clientes c ON p.cliente_id = c.id WHERE LOWER(c.email) = LOWER(?) ORDER BY p.data_pedido DESC");
+            $stmt = $pdo->prepare($baseQuery . "WHERE LOWER(c.email) = LOWER(?) ORDER BY p.data_pedido DESC");
             $stmt->execute([$_GET['email']]);
         } else {
-            $stmt = $pdo->query("SELECT p.id, p.total, p.status, p.data_pedido, c.nome as cliente_nome FROM pedidos p LEFT JOIN clientes c ON p.cliente_id = c.id ORDER BY p.data_pedido DESC");
+            $stmt = $pdo->query($baseQuery . "ORDER BY p.data_pedido DESC");
         }
-        echo json_encode(['sucesso' => true, 'dados' => $stmt->fetchAll(PDO::FETCH_ASSOC)], JSON_UNESCAPED_UNICODE);
+        
+        $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Decodifica o JSON gerado pelo banco para enviar como array limpo ao front
+        foreach ($pedidos as &$p) {
+            $p['itens'] = json_decode($p['itens_json'], true) ?: [];
+            unset($p['itens_json']);
+        }
+        
+        echo json_encode(['sucesso' => true, 'dados' => $pedidos], JSON_UNESCAPED_UNICODE);
         exit;
     } catch (PDOException $e) {
         echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
