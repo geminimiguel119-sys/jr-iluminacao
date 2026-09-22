@@ -252,3 +252,120 @@
         background: #3d3d3d;
     }
 }
+
+/* ===================================================
+   AJUSTES RESPONSIVOS MOBILE (SMARTPHONES E TABLETS)
+   =================================================== */
+
+html, body {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
+* {
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+  /* 1. Cabeçalho e Menu */
+  .header-container {
+    padding: 12px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  .main-nav {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    background: #0f172a;
+    flex-direction: column;
+    padding: 20px;
+    gap: 15px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    z-index: 99999;
+  }
+
+  .main-nav.open {
+    display: flex !important;
+  }
+
+  .mobile-menu {
+    display: block !important;
+    background: transparent !important;
+    border: none !important;
+    font-size: 26px !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+  }
+
+  /* 2. Banner Principal (Hero) */
+  .hero-inner {
+    padding: 35px 15px !important;
+    text-align: center !important;
+  }
+
+  .hero-inner h1 {
+    font-size: 1.8rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .hero-actions {
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .hero-actions .btn, 
+  .hero-actions button {
+    width: 100% !important;
+  }
+
+  .hero-trust {
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: center !important;
+  }
+
+  /* 3. Catálogo de Produtos */
+  .product-grid {
+    grid-template-columns: 1fr !important;
+    padding: 10px 15px !important;
+    gap: 20px !important;
+  }
+
+  .product-card {
+    width: 100% !important;
+  }
+
+  /* 4. Carrinho de Compras */
+  #modal-carrinho {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    padding: 20px 16px !important;
+  }
+
+  /* 5. Painel de Login e Telas de Formulário */
+  .login-panel {
+    width: 92% !important;
+    margin: 20px auto !important;
+    padding: 25px 16px !important;
+  }
+
+  /* 6. Tabelas do Histórico de Compras */
+  .table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100% !important;
+  }
+
+  table {
+    min-width: 480px !important;
+  }
+}
