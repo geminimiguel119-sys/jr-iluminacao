@@ -2,17 +2,14 @@
 // SISTEMA DE ROTAS (router.js)
 // ==========================================
 
-// Função para mudar de página (altera a hash do URL)
 window.navegar = function(rota, params = {}) {
     let hash = rota;
-    // Se houver um ID (ex: editar produto), adiciona-o ao URL
     if (params.id) {
         hash += '?id=' + params.id;
     }
     window.location.hash = hash;
 };
 
-// Função principal que lê o URL e carrega o ecrã correspondente
 window.router = function() {
     let hash = window.location.hash.substring(1) || 'home';
     let rota = hash.split('?')[0];
@@ -24,27 +21,22 @@ window.router = function() {
         params.id = urlParams.get('id');
     }
 
-    // === BARREIRA DE SEGURANÇA ===
+    // === BARREIRA DE SEGURANÇA ADMIN ===
     if (rota.startsWith('admin')) {
         const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
         if (!user || user.role !== 'admin') {
             alert("Acesso negado. Área restrita a administradores.");
-            navegar('home'); // Expulsa para a página inicial
+            navegar('home'); 
             return;
         }
     }
 
-    // ROTAS PÚBLICAS
+    // MAPA DE ROTAS PÚBLICAS
     if (rota === 'home' || rota === '') {
         if (typeof renderHome === 'function') renderHome();
     } 
     else if (rota === 'produtos') {
-        if (typeof renderVitrine === 'function') renderVitrine();
-        else if (typeof renderProdutos === 'function') renderProdutos();
-        else if (typeof carregarProdutos === 'function') carregarProdutos();
-    }
-    else if (rota === 'carrinho') {
-        if (typeof renderCarrinho === 'function') renderCarrinho();
+        if (typeof renderProdutos === 'function') renderProdutos();
     }
     else if (rota === 'login') {
         if (typeof renderLogin === 'function') renderLogin();
@@ -53,7 +45,7 @@ window.router = function() {
         if (typeof renderPerfil === 'function') renderPerfil();
     }
     
-    // ROTAS PRIVADAS (Protegidas)
+    // MAPA DE ROTAS PRIVADAS ADMIN
     else if (rota === 'admin' || rota === 'admin/dashboard') {
         if (typeof renderDashboard === 'function') renderDashboard();
     } 
@@ -72,7 +64,7 @@ window.router = function() {
     else if (rota === 'admin/pedidos') {
         if (typeof renderAdminPedidos === 'function') renderAdminPedidos();
     }
-    // NOVA ROTA DE RELATÓRIOS
+    // ROTA DE RELATÓRIOS DO ADMIN (O SUCESSO ACONTECE AQUI)
     else if (rota === 'admin/relatorios') {
         if (typeof renderAdminRelatorios === 'function') renderAdminRelatorios();
     }
@@ -81,8 +73,5 @@ window.router = function() {
     }
 };
 
-// Inicia o router quando a página carrega pela primeira vez
 window.addEventListener('DOMContentLoaded', router);
-
-// Fica à escuta de mudanças no URL (quando o utilizador clica em links ou nos botões de voltar do navegador)
 window.addEventListener('hashchange', router);
