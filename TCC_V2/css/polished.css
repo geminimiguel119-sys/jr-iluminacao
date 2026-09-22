@@ -1,433 +1,362 @@
 /* ==========================================================================
-   JR ILUMINAÇÃO - DESIGN SYSTEM REFINADO (DESKTOP & MOBILE)
+   JR ILUMINAÇÃO - DESIGN SYSTEM UNIFICADO (PC & MOBILE)
    ========================================================================== */
 
-/* 1. Reset Global e Variáveis de Cores */
+/* 1. RESET E VARIÁVEIS */
 :root {
   --primary: #0284c7;
   --primary-hover: #0369a1;
-  --primary-light: #e0f2fe;
   --dark-bg: #0f172a;
+  --header-bg: #0f172a;
   --surface: #ffffff;
-  --surface-alt: #f8fafc;
-  --border-subtle: #e2e8f0;
+  --border: #e2e8f0;
   --text-main: #0f172a;
   --text-muted: #64748b;
-  --success: #16a34a;
-  --danger: #dc2626;
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-elevated: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
 
 *, *::before, *::after {
-  box-sizing: border-box;
+  box-sizing: border-box !important;
 }
 
 html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: var(--text-main);
-  background-color: #f1f5f9;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  font-family: 'Poppins', sans-serif !important;
+  background-color: #f8fafc !important;
+  color: var(--text-main) !important;
   -webkit-font-smoothing: antialiased;
 }
 
-/* 2. Cabeçalho & Barra de Navegação */
+/* 2. CABEÇALHO (HEADER) BLINDADO */
 header {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  background-color: #0f172a !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  z-index: 99999 !important;
 }
 
 .header-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 14px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 12px 20px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
 }
 
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  padding: 0;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  text-align: left !important;
 }
 
-.brand-mark {
-  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
-  color: #fff;
-  font-weight: 800;
-  font-size: 1.1rem;
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  letter-spacing: 0.5px;
+.brand img {
+  height: 44px !important;
+  width: 44px !important;
+  object-fit: contain !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  padding: 2px !important;
 }
 
 .brand span strong {
-  display: block;
-  color: #ffffff;
-  font-size: 1.05rem;
-  letter-spacing: -0.2px;
+  display: block !important;
+  color: #ffffff !important;
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
 }
 
 .brand span small {
-  display: block;
-  color: #94a3b8;
-  font-size: 0.75rem;
-  letter-spacing: 0.5px;
+  display: block !important;
+  color: #94a3b8 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.5px !important;
 }
 
 .main-nav {
-  display: flex;
-  align-items: center;
-  gap: 24px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 20px !important;
 }
 
-.nav-link {
-  color: #cbd5e1;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.92rem;
-  transition: color 0.2s ease;
+.main-nav a.nav-link {
+  color: #cbd5e1 !important;
+  text-decoration: none !important;
+  font-size: 0.92rem !important;
+  font-weight: 500 !important;
+  transition: color 0.2s ease !important;
 }
 
-.nav-link:hover {
-  color: #38bdf8;
+.main-nav a.nav-link:hover {
+  color: #38bdf8 !important;
 }
 
-/* 3. Hero Section (Banner de Boas-Vindas) */
+.mobile-menu {
+  display: none !important;
+  background: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-size: 28px !important;
+  cursor: pointer !important;
+  line-height: 1 !important;
+}
+
+/* 3. HERO SECTION (BANNER) */
 .hero {
-  background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%);
-  color: #ffffff;
-  padding: 80px 24px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  padding: 60px 20px !important;
+  text-align: center !important;
+  border-radius: 0 0 24px 24px !important;
+  margin-bottom: 40px !important;
 }
 
 .hero-inner {
-  max-width: 800px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 2;
+  max-width: 800px !important;
+  margin: 0 auto !important;
 }
 
-.eyebrow {
-  display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 1.8px;
-  color: #38bdf8;
-  text-transform: uppercase;
-  margin-bottom: 16px;
+.hero-inner h1 {
+  font-size: 2.4rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  margin: 16px 0 !important;
+  color: #ffffff !important;
 }
 
-.hero h1 {
-  font-size: 2.8rem;
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.8px;
-  margin-bottom: 20px;
-}
-
-.hero h1 span {
-  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.hero p {
-  color: #94a3b8;
-  font-size: 1.15rem;
-  line-height: 1.6;
-  margin: 0 auto 36px auto;
-  max-width: 620px;
+.hero-inner p {
+  color: #e0f2fe !important;
+  font-size: 1.05rem !important;
+  max-width: 600px !important;
+  margin: 0 auto 25px auto !important;
 }
 
 .hero-actions {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 48px;
+  display: flex !important;
+  justify-content: center !important;
+  gap: 15px !important;
+  margin-bottom: 30px !important;
 }
 
 .hero-trust {
-  display: flex;
-  justify-content: center;
-  gap: 32px;
-  color: #cbd5e1;
-  font-size: 0.88rem;
-  font-weight: 500;
+  display: flex !important;
+  justify-content: center !important;
+  gap: 24px !important;
+  color: #bae6fd !important;
+  font-size: 0.85rem !important;
 }
 
-/* 4. Botões Globais */
+/* 4. SEÇÕES E CARDS DE PRODUTOS */
+.container, main#app {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 10px 20px 60px 20px !important;
+}
+
+.product-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+  gap: 24px !important;
+  margin-top: 25px !important;
+}
+
+.product-card {
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: var(--shadow-card) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.product-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: var(--shadow-elevated) !important;
+}
+
+/* 5. TELA DE LOGIN IMPECÁVEL (CONSERTO DO PRINT DO PC) */
+.login-page {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: calc(100vh - 180px) !important;
+  padding: 40px 16px !important;
+}
+
+.login-panel {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  max-width: 440px !important;
+  width: 100% !important;
+  padding: 36px 30px !important;
+  margin: 0 auto !important;
+}
+
+.login-panel label {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  color: #475569 !important;
+  margin-bottom: 14px !important;
+  text-align: left !important;
+}
+
+.login-panel input {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  font-size: 0.95rem !important;
+  outline: none !important;
+  background: #fff !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.login-panel input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
+}
+
+.login-panel button.btn-primary {
+  width: 100% !important;
+  padding: 12px !important;
+  font-size: 1rem !important;
+  margin-top: 8px !important;
+}
+
+.back-link {
+  display: block !important;
+  background: none !important;
+  border: none !important;
+  color: #64748b !important;
+  cursor: pointer !important;
+  margin-top: 20px !important;
+  text-align: center !important;
+  width: 100% !important;
+  font-size: 0.88rem !important;
+}
+
+/* 6. BOTÕES GLOBAIS */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  padding: 10px 20px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  border: 1px solid transparent;
-  outline: none;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  padding: 10px 20px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+  text-decoration: none !important;
 }
 
 .btn-primary {
-  background: var(--primary) !important;
+  background-color: #0284c7 !important;
   color: #ffffff !important;
 }
 
 .btn-primary:hover {
-  background: var(--primary-hover) !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+  background-color: #0369a1 !important;
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
 }
 
-.btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
-}
-
-/* 5. Seções Informativas */
-.section {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 70px 24px;
-}
-
-.section-heading {
-  text-align: center;
-  margin-bottom: 48px;
-}
-
-.section-heading h2 {
-  font-size: 2.2rem;
-  letter-spacing: -0.5px;
-  margin: 8px 0;
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 28px;
-}
-
-.feature-grid article {
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  padding: 32px 24px;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.feature-grid article:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.feature-icon {
-  font-size: 1.8rem;
-  color: var(--primary);
-  margin-bottom: 16px;
-}
-
-/* 6. Catálogo de Produtos */
-.page-shell {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 40px 24px 80px 24px;
-}
-
-.page-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 36px;
-  gap: 20px;
-}
-
-.search-wrap {
-  position: relative;
-  width: 100%;
-  max-width: 340px;
-}
-
-.search-wrap input {
-  width: 100%;
-  padding: 12px 16px 12px 42px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  font-size: 0.95rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.search-wrap input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
-}
-
-.search-wrap span {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-}
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 28px;
-}
-
-.product-card {
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
-}
-
-.product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-xl);
-}
-
-/* 7. Modal Lateral do Carrinho */
-#modal-carrinho {
-  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15) !important;
-  border-left: 1px solid var(--border-subtle);
-}
-
-#modal-carrinho input {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-#modal-carrinho input:focus {
-  outline: none;
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12) !important;
-}
-
-/* ==========================================================================
-   ADAPTAÇÃO RESPONSIVA REFINADA (MOBILE & TABLETS)
-   ========================================================================== */
+/* 7. REGRAS RESPONSIVAS MOBILE (RESOLVE O PRINT DO CELULAR) */
 @media (max-width: 768px) {
   .header-container {
-    padding: 12px 18px;
+    padding: 10px 16px !important;
+    position: relative !important;
+  }
+
+  .mobile-menu {
+    display: block !important;
   }
 
   .main-nav {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background: #0f172a;
-    flex-direction: column;
-    padding: 24px;
-    gap: 18px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: none !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    width: 100% !important;
+    background-color: #0f172a !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 18px 24px !important;
+    gap: 16px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
 
   .main-nav.open {
     display: flex !important;
   }
 
-  .mobile-menu {
-    display: block !important;
-    background: transparent;
-    border: none;
-    font-size: 26px;
-    color: #ffffff;
-    cursor: pointer;
-    line-height: 1;
+  .main-nav a.nav-link {
+    font-size: 1rem !important;
+    padding: 8px 0 !important;
   }
 
   .hero {
-    padding: 50px 18px;
+    padding: 40px 16px !important;
+    border-radius: 0 0 16px 16px !important;
+    margin-bottom: 25px !important;
   }
 
-  .hero h1 {
-    font-size: 2rem;
-  }
-
-  .hero p {
-    font-size: 1rem;
-    margin-bottom: 28px;
+  .hero-inner h1 {
+    font-size: 1.7rem !important;
   }
 
   .hero-actions {
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: column !important;
+    width: 100% !important;
   }
 
   .hero-actions .btn {
-    width: 100%;
+    width: 100% !important;
   }
 
   .hero-trust {
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .search-wrap {
-    max-width: 100%;
+    flex-direction: column !important;
+    gap: 8px !important;
   }
 
   .product-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  #modal-carrinho {
-    max-width: 100vw !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    padding: 20px 16px !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
   }
 
   .login-panel {
-    width: 92% !important;
-    padding: 28px 20px !important;
-    margin: 30px auto !important;
+    padding: 24px 18px !important;
+    border-radius: 12px !important;
+  }
+
+  #btn-dark-mode {
+    bottom: 15px !important;
+    right: 15px !important;
+    padding: 8px 14px !important;
+    font-size: 0.78rem !important;
   }
 }
