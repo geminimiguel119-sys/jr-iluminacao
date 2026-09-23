@@ -227,11 +227,33 @@ function alternarFormulario(tipo) {
 async function realizarRegistro(event) {
   event.preventDefault();
   try {
-    const res = await fetch('api/registro.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome: document.getElementById('reg-nome').value, email: document.getElementById('reg-email').value, senha: document.getElementById('reg-senha').value }) });
+    const res = await fetch('api/registro.php', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+            nome: document.getElementById('reg-nome').value, 
+            email: document.getElementById('reg-email').value, 
+            senha: document.getElementById('reg-senha').value 
+        }) 
+    });
     const data = await res.json();
-    if (data.sucesso) { if (typeof exibirMensagem === 'function') exibirMensagem("Conta criada!", "sucesso"); alternarFormulario('login'); } 
-    else { if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + data.erro, "erro"); }
-  } catch(e) { if (typeof exibirMensagem === 'function') exibirMensagem("Erro de conexão.", "erro"); }
+    
+    if (data.sucesso) { 
+        // Mensagem corrigida e destacada para o utilizador final
+        if (typeof exibirMensagem === 'function') {
+            exibirMensagem("Conta criada! O acesso está pendente de aprovação pela gerência.", "aviso");
+        } 
+        alternarFormulario('login'); 
+    } else { 
+        if (typeof exibirMensagem === 'function') {
+            exibirMensagem("Erro: " + data.erro, "erro"); 
+        }
+    }
+  } catch(e) { 
+      if (typeof exibirMensagem === 'function') {
+          exibirMensagem("Erro de ligação ao servidor.", "erro"); 
+      }
+  }
 }
 
 // === PERFIL DO CLIENTE ===
