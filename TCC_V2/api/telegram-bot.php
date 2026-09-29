@@ -158,19 +158,25 @@ switch ($comando) {
         }
         break;
 
-    case '/criticos':
-        $stmt = $pdo->query("SELECT id, nome, quantidade FROM produtos WHERE quantidade <= 5 ORDER BY quantidade ASC");
-        $criticos = $stmt->fetchAll();
+   case '/criticos':
+        try {
+            // Consulta resiliente: trata valores nulos e garante a conversão correta no PostgreSQL
+            $stmt = $pdo->query("SELECT id, nome, COALESCE(quantidade, 0) AS qtd FROM produtos WHERE COALESCE(quantidade, 0) <= 5 ORDER BY qtd ASC");
+            $criticos = $stmt->fetchAll();
 
-        if (empty($criticos)) {
-            enviarMensagem($chatId, "✅ <b>Estoque Saudável!</b> Todos os produtos possuem mais de 5 unidades.", $token);
-        } else {
-            $msg = "⚠️ <b>Alerta Preditivo: Estoque Crítico (<= 5 un.)</b>\n\n";
-            foreach ($criticos as $item) {
-                $msg .= "• <b>{$item['nome']}</b>: {$item['quantidade']} un. restantes\n";
+            if (empty($criticos)) {
+                enviarMensagem($chatId, "✅ <b>Estoque Saudável!</b> Todos os produtos possuem mais de 5 unidades.", $token);
+            } else {
+                $msg = "⚠️ <b>Alerta Preditivo: Estoque Crítico (<= 5 un.)</b>\n\n";
+                foreach ($criticos as $item) {
+                    $nomeItem = htmlspecialchars($item['nome'] ?? 'Item sem nome', ENT_QUOTES, 'UTF-8');
+                    $msg .= "• <b>{$nomeItem}</b>: {$item['qtd']} un. restantes\n";
+                }
+                $msg .= "\n<i>Sugestão: Realizar reposição com fornecedores.</i>";
+                enviarMensagem($chatId, $msg, $token);
             }
-            $msg .= "\n<i>Sugestão: Realizar reposição com fornecedores.</i>";
-            enviarMensagem($chatId, $msg, $token);
+        } catch (Exception $eCrit) {
+            enviarMensagem($chatId, "⚠️ Erro ao consultar estoque crítico: " . $eCrit->getMessage(), $token);
         }
         break;
 
