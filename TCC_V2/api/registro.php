@@ -66,16 +66,27 @@ try {
     $pdo->commit();
 
     // ==========================================
-    // NOTIFICAÇÃO TELEGRAM
+    // NOTIFICAÇÃO TELEGRAM COM BOTÕES INTERATIVOS
     // ==========================================
     $telegramToken = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
     $telegramChatId = "5034813131";
 
     if (!empty($telegramToken)) {
-        $msg = "🚨 *Novo Cliente Registado!*\n\n";
-        $msg .= "👤 *Nome:* " . str_replace(['_', '*', '['], '', $nome) . "\n";
-        $msg .= "📧 *E-mail:* " . str_replace(['_', '*', '['], '', $email) . "\n";
-        $msg .= "📌 *Status:* Pendente de aprovação.";
+        $msg = "🚨 <b>Novo Cliente Registado!</b>\n\n";
+        $msg .= "🆔 <b>ID:</b> {$usuario_id}\n";
+        $msg .= "👤 <b>Nome:</b> " . htmlspecialchars($nome, ENT_QUOTES, 'UTF-8') . "\n";
+        $msg .= "📧 <b>E-mail:</b> " . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . "\n";
+        $msg .= "📌 <b>Status:</b> Pendente de aprovação.";
+
+        // Teclado com botões clicáveis inline
+        $teclado = [
+            'inline_keyboard' => [
+                [
+                    ['text' => '✅ Aprovar', 'callback_data' => 'aprovar_' . $usuario_id],
+                    ['text' => '❌ Recusar', 'callback_data' => 'recusar_' . $usuario_id]
+                ]
+            ]
+        ];
 
         $urlTG = "https://api.telegram.org/bot{$telegramToken}/sendMessage";
         
@@ -84,9 +95,10 @@ try {
                 'method'  => 'POST',
                 'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
                 'content' => http_build_query([
-                    'chat_id'    => $telegramChatId,
-                    'text'       => $msg,
-                    'parse_mode' => 'Markdown'
+                    'chat_id'      => $telegramChatId,
+                    'text'         => $msg,
+                    'parse_mode'   => 'HTML',
+                    'reply_markup' => json_encode($teclado)
                 ]),
                 'timeout' => 4
             ]
