@@ -1,5 +1,34 @@
 <?php
 // api/cron-diario.php
+function enviarNotificacaoTelegram($mensagem) {
+    // Busca as chaves de segurança configuradas no painel do Render
+    $token = getenv('TELEGRAM_BOT_TOKEN');
+    $chat_id = getenv('TELEGRAM_CHAT_ID');
+    
+    // Se por acaso o Render não ler as variáveis, usamos o fallback seguro
+    if (!$token) $token = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
+    if (!$chat_id) $chat_id = "5034813131";
+
+    $url = "https://api.telegram.org/bot{$token}/sendMessage";
+    
+    $dados = http_build_query([
+        'chat_id' => $chat_id,
+        'text' => $mensagem,
+        'parse_mode' => 'Markdown'
+    ]);
+    
+    $opcoes = [
+        'http' => [
+            'method'  => 'POST',
+            'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
+            'content' => $dados
+        ]
+    ];
+    
+    $contexto = stream_context_create($opcoes);
+    file_get_contents($url, false, $contexto);
+}
+
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/conexao.php';
 
