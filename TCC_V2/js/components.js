@@ -136,27 +136,38 @@ function aplicarFiltrosCatalog() {
   else if (window.ordemAtual === 'maior_preco') filtrados.sort((a, b) => Number(b.preco) - Number(a.preco));
   else if (window.ordemAtual === 'nome_az') filtrados.sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
 
-  if (filtrados.length === 0) grid.innerHTML = renderEmptyState('◈', 'Nenhum produto encontrado', 'Tente outro termo de busca ou selecione outra categoria.');
-  else grid.innerHTML = filtrados.map((p, i) => {
-    const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
-    const disponivel = Number(p.quantidade || 0) > 0;
-    const img = (p.imagem && p.imagem.trim() !== '' && p.imagem !== 'placeholder.jpg') ? p.imagem : 'https://images.unsplash.com/photo-1565814329452-e1efa11c5e89?auto=format&fit=crop&w=600&q=80'; 
-    return `
-    <article class="product-card" style="animation-delay:${i*45}ms; display: flex; flex-direction: column; justify-content: space-between;">
-      <div style="height: 220px; width: 100%; background-image: url('${img}'); background-size: cover; background-position: center; border-bottom: 1px solid #eee;"></div>
-      <div class="product-body" style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
-        <div class="product-stock ${!disponivel || p.quantidade <= 5 ? 'low' : ''}" style="margin-bottom: 10px; font-size: 0.8rem; font-weight: 600;">
-            ${disponivel ? `✓ Em estoque (${p.quantidade} un.)` : '✕ Esgotado'}
-        </div>
-        <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #1e293b;">${p.nome || 'Produto'}</h3>
-        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px; flex: 1;">${p.descricao || 'Solução LED.'}</p>
-        <div class="product-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 15px;">
-          <strong style="font-size: 1.25rem; color: #0f172a;">R$ ${preco}</strong>
-          ${disponivel ? `<button class="btn btn-primary btn-comprar" style="padding: 8px 16px; border: none;" onclick="feedbackCompra(this, '${p.id}')">Comprar</button>` : `<button class="btn btn-disabled" style="padding: 8px 16px;" disabled>Indisponível</button>`}
-        </div>
-      </div>
-    </article>`;
-  }).join('');
+  if (filtrados.length === 0) {
+      grid.innerHTML = renderEmptyState('◈', 'Nenhum produto encontrado', 'Tente outro termo de busca ou selecione outra categoria.');
+  } else {
+      grid.innerHTML = filtrados.map((p, i) => {
+        const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
+        const disponivel = Number(p.quantidade || 0) > 0;
+        
+        // Puxa a URL exata do banco ou usa uma imagem neutra de erro
+        const imgUrl = (p.imagem && p.imagem.trim() !== '' && p.imagem !== 'placeholder.jpg') 
+                       ? p.imagem 
+                       : 'https://placehold.co/400x400/eeeeee/111827.jpg?text=Sem+Foto'; 
+                       
+        return `
+        <article class="product-card" style="animation-delay:${i*45}ms; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
+          
+          <!-- Nova Tag de Imagem HTML -->
+          <img src="${imgUrl}" alt="${p.nome}" style="width: 100%; height: 220px; object-fit: cover; border-bottom: 1px solid #eee;">
+          
+          <div class="product-body" style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
+            <div class="product-stock ${!disponivel || p.quantidade <= 5 ? 'low' : ''}" style="margin-bottom: 10px; font-size: 0.8rem; font-weight: 600;">
+                ${disponivel ? `✓ Em estoque (${p.quantidade} un.)` : '✕ Esgotado'}
+            </div>
+            <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #1e293b;">${p.nome || 'Produto'}</h3>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px; flex: 1;">${p.descricao || 'Solução LED.'}</p>
+            <div class="product-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+              <strong style="font-size: 1.25rem; color: #0f172a;">R$ ${preco}</strong>
+              ${disponivel ? `<button class="btn btn-primary btn-comprar" style="padding: 8px 16px; border: none;" onclick="feedbackCompra(this, '${p.id}')">Comprar</button>` : `<button class="btn btn-disabled" style="padding: 8px 16px;" disabled>Indisponível</button>`}
+            </div>
+          </div>
+        </article>`;
+      }).join('');
+  }
 }
 
 async function carregarProdutos() {
@@ -239,7 +250,6 @@ async function realizarRegistro(event) {
     const data = await res.json();
     
     if (data.sucesso) { 
-        // Mensagem corrigida e destacada para o utilizador final
         if (typeof exibirMensagem === 'function') {
             exibirMensagem("Conta criada! O acesso está pendente de aprovação pela gerência.", "aviso");
         } 
