@@ -22,68 +22,6 @@
     <link rel="stylesheet" href="css/polished.css">
 
     <style>
-        /* Modo Noturno */
-        body.dark-mode {
-            background-color: #0b1329 !important;
-            color: #e2e8f0 !important;
-        }
-
-        body.dark-mode header {
-            background-color: #070b18 !important;
-        }
-
-        body.dark-mode .product-card,
-        body.dark-mode .login-panel,
-        body.dark-mode #modal-carrinho,
-        body.dark-mode #user-menu {
-            background-color: #131d38 !important;
-            border-color: #1e293b !important;
-            color: #f8fafc !important;
-        }
-
-        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, 
-        body.dark-mode h4, body.dark-mode strong {
-            color: #f8fafc !important;
-        }
-
-        body.dark-mode input, body.dark-mode select {
-            background-color: #0b1329 !important;
-            color: #fff !important;
-            border-color: #334155 !important;
-        }
-
-        /* Botão do Modo Noturno (Posicionado à esquerda para harmonizar com a Lúcia à direita) */
-        #btn-dark-mode {
-            position: fixed;
-            bottom: 24px;
-            left: 24px;
-            right: auto !important;
-            z-index: 1000 !important;
-            padding: 10px 18px;
-            border-radius: 50px;
-            background: #0f172a;
-            color: #ffffff;
-            border: 2px solid #38bdf8;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.25s ease;
-        }
-
-        #btn-dark-mode:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
-        }
-        
-        /* Oculta o botão do modo noturno quando o carrinho estiver aberto no telemóvel */
-        body.carrinho-aberto #btn-dark-mode {
-            display: none !important;
-        }
-
         /* Rodapé */
         .site-footer {
             background: #090e1f;
@@ -118,13 +56,6 @@
         @media (max-width: 768px) {
             .footer-grid { grid-template-columns: 1fr; gap: 24px; }
             .site-footer { padding: 40px 16px 20px; }
-            #btn-dark-mode {
-                bottom: 16px !important;
-                left: 14px !important;
-                right: auto !important;
-                padding: 8px 14px !important;
-                font-size: 0.78rem !important;
-            }
         }
     </style>
 </head>
@@ -173,30 +104,13 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (typeof checkSessao === 'function') checkSessao();
-            aplicarPremiumUI();
-        });
-        
-        function aplicarPremiumUI() {
-            const isDark = JSON.parse(localStorage.getItem('jr_dark_mode') || 'false');
-            if (isDark) document.body.classList.add('dark-mode');
+            // Remove qualquer rastro de modo escuro que possa ter ficado no cache do navegador de vocês
+            document.body.classList.remove('dark-mode');
+            localStorage.removeItem('jr_dark_mode');
 
-            if (!document.getElementById('btn-dark-mode')) {
-                const btnLuz = document.createElement('button');
-                btnLuz.id = 'btn-dark-mode';
-                btnLuz.setAttribute('aria-label', 'Alternar modo escuro');
-                btnLuz.innerHTML = isDark ? '💡 Acender' : '🌙 Apagar';
-                
-                btnLuz.onclick = function() {
-                    document.body.classList.toggle('dark-mode');
-                    const darkAtivo = document.body.classList.contains('dark-mode');
-                    localStorage.setItem('jr_dark_mode', darkAtivo);
-                    this.innerHTML = darkAtivo ? '💡 Acender' : '🌙 Apagar';
-                };
-                
-                document.body.appendChild(btnLuz);
-            }
-        }
+            // Inicia o sistema
+            if (typeof checkSessao === 'function') checkSessao();
+        });
     </script>
 </body>
 </html>
