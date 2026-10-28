@@ -14,14 +14,14 @@ window.adminLayout = function(tituloPagina, subtitulo, conteudoHtml, botaoTopo =
                     JR Admin
                 </div>
                 <nav style="flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 10px;">
-                    <a href="#" onclick="navegar('admin/dashboard'); return false;">📊 Visão Geral</a>
-                    <a href="#" onclick="navegar('admin/produtos'); return false;">📦 Produtos</a>
-                    <a href="#" onclick="navegar('admin/clientes'); return false;">👥 Clientes</a>
-                    <a href="#" onclick="navegar('admin/pedidos'); return false;">🛒 Pedidos</a>
-                    <a href="#" onclick="navegar('admin/relatorios'); return false;" style="color: #38bdf8;">📈 Relatórios</a>
+                    <a href="#" onclick="navegar('admin/dashboard'); return false;" style="color: #cbd5e1; text-decoration: none;">📊 Visão Geral</a>
+                    <a href="#" onclick="navegar('admin/produtos'); return false;" style="color: #cbd5e1; text-decoration: none;">📦 Produtos</a>
+                    <a href="#" onclick="navegar('admin/clientes'); return false;" style="color: #cbd5e1; text-decoration: none;">👥 Clientes</a>
+                    <a href="#" onclick="navegar('admin/pedidos'); return false;" style="color: #cbd5e1; text-decoration: none;">🛒 Pedidos</a>
+                    <a href="#" onclick="navegar('admin/relatorios'); return false;" style="color: #cbd5e1; text-decoration: none;">📈 Relatórios</a>
                 </nav>
                 <div class="sidebar-bottom" style="padding: 20px; border-top: 1px solid #1e293b;">
-                    <button class="btn btn-outline" style="width: 100%; color: #cbd5e1; border-color: #334155;" onclick="sairParaSite();">⬅ Voltar ao Site</button>
+                    <button class="btn btn-outline" style="width: 100%; color: #cbd5e1; border: 1px solid #334155; background: transparent; padding: 8px; border-radius: 4px; cursor: pointer;" onclick="sairParaSite();">⬅ Voltar ao Site</button>
                 </div>
             </aside>
             <div class="admin-content" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto;">
@@ -48,6 +48,9 @@ window.sairParaSite = function() {
     window.location.reload();
 };
 
+// ==========================================
+// VISÃO GERAL
+// ==========================================
 window.renderDashboard = function() {
     const user = JSON.parse(localStorage.getItem('jr_user') || '{}');
     const nome = user.nome ? user.nome.split(' ')[0] : 'Administrador';
@@ -63,17 +66,17 @@ window.renderDashboard = function() {
                 <div class="card stat-card" style="padding: 20px; border-left: 4px solid #1E88E5; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: left;">
                     <h3 style="margin: 0 0 10px 0; color: #333;">Produtos</h3>
                     <p style="margin: 0 0 15px 0; color: #666; font-size: 0.9rem;">Gerir catálogo e preços</p>
-                    <button class="btn btn-primary" style="width: 100%; padding: 8px;" onclick="navegar('admin/produtos')">Gerir Produtos</button>
+                    <button class="btn btn-primary" style="width: 100%; padding: 8px; background: #1E88E5; color: #fff; border: none; border-radius: 4px; cursor: pointer;" onclick="navegar('admin/produtos')">Gerir Produtos</button>
                 </div>
                 <div class="card stat-card" style="padding: 20px; border-left: 4px solid #43A047; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: left;">
                     <h3 style="margin: 0 0 10px 0; color: #333;">Clientes</h3>
                     <p style="margin: 0 0 15px 0; color: #666; font-size: 0.9rem;">Gerir contas e permissões</p>
-                    <button class="btn btn-primary" style="width: 100%; padding: 8px; background: #43A047;" onclick="navegar('admin/clientes')">Gerir Clientes</button>
+                    <button class="btn btn-primary" style="width: 100%; padding: 8px; background: #43A047; color: #fff; border: none; border-radius: 4px; cursor: pointer;" onclick="navegar('admin/clientes')">Gerir Clientes</button>
                 </div>
                 <div class="card stat-card" style="padding: 20px; border-left: 4px solid #F57C00; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: left;">
                     <h3 style="margin: 0 0 10px 0; color: #333;">Pedidos</h3>
                     <p style="margin: 0 0 15px 0; color: #666; font-size: 0.9rem;">Ver encomendas recebidas</p>
-                    <button class="btn btn-primary" style="width: 100%; padding: 8px; background: #F57C00;" onclick="navegar('admin/pedidos')">Ver Pedidos</button>
+                    <button class="btn btn-primary" style="width: 100%; padding: 8px; background: #F57C00; color: #fff; border: none; border-radius: 4px; cursor: pointer;" onclick="navegar('admin/pedidos')">Ver Pedidos</button>
                 </div>
             </div>
         </div>
@@ -82,7 +85,7 @@ window.renderDashboard = function() {
 };
 
 // ==========================================
-// RELATÓRIOS AVANÇADOS COM EXPORTAÇÃO
+// RELATÓRIOS
 // ==========================================
 window.renderAdminRelatorios = async function() {
     if (typeof mostrarLoading === 'function') mostrarLoading(true, "A gerar relatório detalhado...");
@@ -92,8 +95,6 @@ window.renderAdminRelatorios = async function() {
         
         const pedidos = resPedidos.dados || [];
         const produtos = resProdutos.dados || [];
-        
-        // Guardado no estado global para o botão de exportar
         window.dadosRelatorioAtual = { pedidos, produtos };
 
         let totalFaturado = 0;
@@ -101,15 +102,10 @@ window.renderAdminRelatorios = async function() {
         
         pedidos.forEach(p => {
             totalFaturado += parseFloat(p.total);
-            if (contagemStatus[p.status] !== undefined) {
-                contagemStatus[p.status]++;
-            }
+            if (contagemStatus[p.status] !== undefined) contagemStatus[p.status]++;
         });
         
-        const produtosCriticos = produtos
-            .filter(p => parseInt(p.quantidade) <= 5)
-            .sort((a, b) => parseInt(a.quantidade) - parseInt(b.quantidade));
-
+        const produtosCriticos = produtos.filter(p => parseInt(p.quantidade) <= 5).sort((a, b) => parseInt(a.quantidade) - parseInt(b.quantidade));
         const ultimosPedidos = pedidos.slice(0, 8);
 
         const getStatusColor = (status) => {
@@ -123,29 +119,25 @@ window.renderAdminRelatorios = async function() {
         };
 
         const html = `
-        <div class="panel" style="padding: 20px;">
+        <div class="panel" style="padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">
                 <h3 style="margin: 0; color: #1e293b;">Visão Geral de Desempenho</h3>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn" onclick="exportarRelatorioCSV()" style="padding: 8px 14px; font-size: 0.85rem; background: #0284c7; color: #fff; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                        📥 Exportar CSV
-                    </button>
-                    <button class="btn" onclick="imprimirRelatorio()" style="padding: 8px 14px; font-size: 0.85rem; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                        🖨️ Imprimir
-                    </button>
+                    <button class="btn" onclick="exportarRelatorioCSV()" style="padding: 8px 14px; font-size: 0.85rem; background: #0284c7; color: #fff; border: none; border-radius: 6px; cursor: pointer;">📥 Exportar CSV</button>
+                    <button class="btn" onclick="imprimirRelatorio()" style="padding: 8px 14px; font-size: 0.85rem; background: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer;">🖨️ Imprimir</button>
                 </div>
             </div>
             
             <div class="stat-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
-                <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #10b981; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #10b981; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
                     <p style="margin: 0; color: #64748b; font-size: 0.9rem;">Faturamento Total</p>
                     <h2 style="margin: 10px 0 0 0; color: #0f172a; font-size: 1.6rem;">R$ ${totalFaturado.toFixed(2).replace('.', ',')}</h2>
                 </div>
-                <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #3b82f6; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #3b82f6; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
                     <p style="margin: 0; color: #64748b; font-size: 0.9rem;">Total de Pedidos</p>
                     <h2 style="margin: 10px 0 0 0; color: #0f172a; font-size: 1.6rem;">${pedidos.length}</h2>
                 </div>
-                <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #8b5cf6; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #8b5cf6; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
                     <p style="margin: 0; color: #64748b; font-size: 0.9rem;">Produtos no Catálogo</p>
                     <h2 style="margin: 10px 0 0 0; color: #0f172a; font-size: 1.6rem;">${produtos.length}</h2>
                 </div>
@@ -162,7 +154,7 @@ window.renderAdminRelatorios = async function() {
                     </ul>
                 </div>
                 <div style="background: #fdf2f8; padding: 20px; border-radius: 8px; border: 1px solid #fbcfe8;">
-                    <h4 style="margin-top: 0; color: #9d174d; margin-bottom: 15px;">⚠️ Alerta de Reposição (Estoque Crítico)</h4>
+                    <h4 style="margin-top: 0; color: #9d174d; margin-bottom: 15px;">⚠️ Alerta de Reposição</h4>
                     ${produtosCriticos.length === 0 ? '<p style="color: #be185d;">Todos os produtos têm bom estoque.</p>' : `
                     <div style="max-height: 150px; overflow-y: auto;">
                         <ul style="list-style: none; padding: 0; margin: 0;">
@@ -205,7 +197,6 @@ window.renderAdminRelatorios = async function() {
 
         adminLayout('Relatório Detalhado', 'Métricas avançadas e saúde do seu e-commerce.', html);
     } catch (e) {
-        console.error("Erro ao gerar relatórios:", e);
         if (typeof exibirMensagem === 'function') exibirMensagem("Falha ao carregar relatórios.", 'erro');
     } finally {
         if (typeof mostrarLoading === 'function') mostrarLoading(false);
@@ -213,11 +204,8 @@ window.renderAdminRelatorios = async function() {
 };
 
 window.exportarRelatorioCSV = function() {
-    if (!window.dadosRelatorioAtual || !window.dadosRelatorioAtual.pedidos) {
-        return alert("Nenhum dado carregado para exportação.");
-    }
+    if (!window.dadosRelatorioAtual || !window.dadosRelatorioAtual.pedidos) return alert("Sem dados.");
     const pedidos = window.dadosRelatorioAtual.pedidos;
-    
     let csv = "ID Pedido;Data;Cliente;Total (R$);Status\n";
     pedidos.forEach(p => {
         const data = new Date(p.data_pedido).toLocaleDateString('pt-BR');
@@ -225,23 +213,17 @@ window.exportarRelatorioCSV = function() {
         const cliente = (p.cliente_nome || 'Desconhecido').replace(/;/g, ' ');
         csv += `${p.id};${data};"${cliente}";${valor};${p.status}\n`;
     });
-
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
     link.setAttribute("download", `relatorio_vendas_jr_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
 };
-
-window.imprimirRelatorio = function() {
-    window.print();
-};
+window.imprimirRelatorio = function() { window.print(); };
 
 // ==========================================
-// CRUD DE PRODUTOS
+// CRUD DE PRODUTOS (COM UPLOAD DE IMAGEM E TOKEN)
 // ==========================================
 window.renderAdminProdutos = async function() {
     if (typeof mostrarLoading === 'function') mostrarLoading(true, 'A carregar catálogo...');
@@ -250,30 +232,31 @@ window.renderAdminProdutos = async function() {
         const products = res.dados || [];
         
         const html = `
-        <div class="panel">
+        <div class="panel" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
             <div class="table-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <span class="table-count"><strong>${products.length}</strong> produtos registados</span>
-                <button class="btn btn-primary" onclick="navegar('admin/produtos/novo')">+ Novo produto</button>
+                <button class="btn btn-primary" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;" onclick="navegar('admin/produtos/novo')">+ Novo produto</button>
             </div>
             <div class="table-responsive">
-                <table class="admin-table">
+                <table class="admin-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr>
-                            <th>Produto</th>
-                            <th>Preço</th>
-                            <th>Estoque</th>
-                            <th>Status</th>
-                            <th style="text-align: right;">Ações</th>
+                        <tr style="background: #f8f9fa; text-align: left; border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 12px;">Produto</th>
+                            <th style="padding: 12px;">Preço</th>
+                            <th style="padding: 12px;">Estoque</th>
+                            <th style="padding: 12px;">Status</th>
+                            <th style="padding: 12px; text-align: right;">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${products.length === 0 ? `<tr><td colspan="5" style="text-align: center; padding: 20px;">Nenhum produto registado.</td></tr>` : 
-                        products.map(p => `<tr>
-                            <td><strong>${escapeHtml(p.nome)}</strong></td>
-                            <td><strong>${formatarMoeda(p.preco)}</strong></td>
-                            <td>${p.quantidade}</td>
-                            <td><span class="badge ${p.quantidade > 0 ? 'badge-success' : 'badge-error'}">${p.quantidade > 0 ? 'Disponível' : 'Esgotado'}</span></td>
-                            <td style="text-align: right;">
+                        ${products.length === 0 ? `<tr><td colspan="5" style="text-align: center; padding: 20px;">Nenhum produto.</td></tr>` : 
+                        products.map(p => `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 12px;"><strong>${escapeHtml(p.nome)}</strong></td>
+                            <td style="padding: 12px;"><strong>${formatarMoeda(p.preco)}</strong></td>
+                            <td style="padding: 12px;">${p.quantidade}</td>
+                            <td style="padding: 12px;"><span style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: ${p.quantidade > 0 ? '#e8f5e9; color: #1b5e20' : '#ffebee; color: #b71c1c'}">${p.quantidade > 0 ? 'Disponível' : 'Esgotado'}</span></td>
+                            <td style="padding: 12px; text-align: right;">
                                 <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem; margin-right: 5px; cursor: pointer;" onclick="navegar('admin/produtos/editar', {id: ${p.id}})">Editar</button>
                                 <button class="btn" style="padding: 6px 12px; font-size: 0.85rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="excluirProduto(${p.id})">Excluir</button>
                             </td>
@@ -307,40 +290,80 @@ window.renderAdminProdutoForm = async function(params = {}) {
     }
 
     const formHtml = `
-    <div class="panel" style="max-width: 700px; margin: 0 auto;">
+    <div class="panel" style="max-width: 700px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
         <form id="form-produto" onsubmit="salvarProduto(event, ${id})">
             <div style="margin-bottom: 15px;">
-                <label>Nome do Produto</label>
-                <input type="text" id="prod-nome" value="${escapeHtml(produto.nome)}" required style="width:100%; padding:10px;">
+                <label style="display:block; margin-bottom:5px; font-weight: 500;">Nome do Produto</label>
+                <input type="text" id="prod-nome" value="${escapeHtml(produto.nome)}" required style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;">
             </div>
             <div style="margin-bottom: 15px;">
-                <label>Descrição</label>
+                <label style="display:block; margin-bottom:5px; font-weight: 500;">Descrição</label>
                 <textarea id="prod-descricao" rows="4" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">${escapeHtml(produto.descricao)}</textarea>
             </div>
             <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                <div style="flex: 1;"><label>Preço (R$)</label><input type="number" id="prod-preco" step="0.01" value="${produto.preco}" required style="width:100%; padding:10px;"></div>
-                <div style="flex: 1;"><label>Quantidade em Estoque</label><input type="number" id="prod-quantidade" value="${produto.quantidade}" required style="width:100%; padding:10px;"></div>
+                <div style="flex: 1;"><label style="display:block; margin-bottom:5px; font-weight: 500;">Preço (R$)</label><input type="number" id="prod-preco" step="0.01" value="${produto.preco}" required style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;"></div>
+                <div style="flex: 1;"><label style="display:block; margin-bottom:5px; font-weight: 500;">Quantidade em Estoque</label><input type="number" id="prod-quantidade" value="${produto.quantidade}" required style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;"></div>
             </div>
-            <div style="margin-bottom: 25px;">
-                <label>Nome da Imagem ou URL</label>
-                <input type="text" id="prod-imagem" value="${escapeHtml(produto.imagem)}" style="width:100%; padding:10px;">
+            
+            <div style="margin-bottom: 25px; padding: 15px; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                <label style="display:block; margin-bottom:8px; font-weight: 600; color: #334155;">📷 Imagem do Produto (Upload)</label>
+                <input type="file" id="prod-imagem-file" accept="image/png, image/jpeg, image/webp" style="width:100%; padding:10px; background: #fff; cursor: pointer; border-radius: 4px; border: 1px solid #e2e8f0;">
+                
+                ${produto.imagem ? `
+                <div style="margin-top: 15px; display: flex; align-items: center; gap: 12px;">
+                    <img src="${escapeHtml(produto.imagem)}" style="height: 60px; width: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;"> 
+                    <span style="font-size: 0.85rem; color: #64748b;">Imagem atual no sistema.<br>Selecione um ficheiro novo apenas para substituir.</span>
+                </div>` : ''}
+                <input type="hidden" id="prod-imagem-atual" value="${escapeHtml(produto.imagem)}">
             </div>
+
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button type="button" class="btn btn-outline" onclick="navegar('admin/produtos')" style="color:#333; border-color:#ccc;">Cancelar</button>
-                <button type="submit" class="btn btn-primary">${isEdit ? 'Atualizar Produto' : 'Guardar Novo Produto'}</button>
+                <button type="button" class="btn btn-outline" onclick="navegar('admin/produtos')" style="padding: 10px 16px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer;">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="padding: 10px 16px; border: none; border-radius: 6px; background: #0284c7; color: #fff; font-weight: bold; cursor: pointer;">${isEdit ? 'Atualizar Produto' : 'Guardar Novo Produto'}</button>
             </div>
         </form>
     </div>`;
-    adminLayout(isEdit ? 'Editar Produto' : 'Novo Produto', 'Preencha os detalhes do item.', formHtml);
+    adminLayout(isEdit ? 'Editar Produto' : 'Novo Produto', 'Preencha os detalhes do item e anexe a fotografia.', formHtml);
 };
 
 window.salvarProduto = async function(event, id) {
     event.preventDefault();
     
-    // Bloqueia o botão durante o salvamento (Teste 6 - Clique rápido duplo)
     const btnSubmit = event.target.querySelector('button[type="submit"]');
     if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.innerHTML = 'A guardar...'; }
 
+    let caminhoFinalImagem = document.getElementById('prod-imagem-atual').value;
+    const fileInput = document.getElementById('prod-imagem-file');
+
+    // 1. FAZ O UPLOAD DA IMAGEM SE O ARQUIVO FOI SELECIONADO
+    if (fileInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append('imagem', fileInput.files[0]);
+        
+        if (typeof mostrarLoading === 'function') mostrarLoading(true, "A fazer upload da imagem...");
+        try {
+            const token = localStorage.getItem('jr_token') || '';
+            const resUpload = await fetch('api/upload.php', { 
+                method: 'POST', 
+                body: formData,
+                headers: { 'Authorization': 'Bearer ' + token } // Adiciona o Token ao header do fetch manual
+            });
+            const dataUpload = await resUpload.json();
+            
+            if (dataUpload.sucesso) {
+                caminhoFinalImagem = dataUpload.dados.caminho;
+            } else {
+                throw new Error(dataUpload.mensagem || dataUpload.erro || 'Falha no upload');
+            }
+        } catch(e) {
+            if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Guardar Novo Produto'; }
+            if (typeof mostrarLoading === 'function') mostrarLoading(false);
+            if (typeof exibirMensagem === 'function') exibirMensagem(e.message, 'erro');
+            return; // Bloqueia a execução se a foto falhar
+        }
+    }
+
+    // 2. GUARDA OS DADOS NO BANCO COM O CAMINHO DA FOTO
     const dados = {
         acao: 'salvar',
         id: id || null,
@@ -348,9 +371,10 @@ window.salvarProduto = async function(event, id) {
         descricao: document.getElementById('prod-descricao').value,
         preco: document.getElementById('prod-preco').value,
         quantidade: document.getElementById('prod-quantidade').value,
-        imagem: document.getElementById('prod-imagem').value
+        imagem: caminhoFinalImagem
     };
-    if (typeof mostrarLoading === 'function') mostrarLoading(true, "A guardar...");
+    
+    if (typeof mostrarLoading === 'function') mostrarLoading(true, "A guardar produto...");
     try {
         const res = await apiFetch('api/produtos.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
         if (res && res.sucesso) { 
@@ -361,7 +385,6 @@ window.salvarProduto = async function(event, id) {
             if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Guardar Novo Produto'; }
         }
     } catch (erro) { 
-        console.error(erro); 
         if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Guardar Novo Produto'; }
     } finally { 
         if (typeof mostrarLoading === 'function') mostrarLoading(false); 
@@ -379,7 +402,7 @@ window.excluirProduto = async function(id) {
 };
 
 // ==========================================
-// CRUD DE CLIENTES
+// CRUD DE CLIENTES E PEDIDOS
 // ==========================================
 window.renderAdminClientes = async function() {
     if (typeof mostrarLoading === 'function') mostrarLoading(true, "A carregar clientes...");
@@ -388,10 +411,10 @@ window.renderAdminClientes = async function() {
         const clients = res.dados || [];
         
         const html = `
-        <div class="panel">
+        <div class="panel" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
             <div class="table-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <span class="table-count"><strong>${clients.length}</strong> utilizadores registados</span>
-                <button class="btn btn-primary" onclick="navegar('admin/clientes/novo')">+ Novo Cliente</button>
+                <button class="btn btn-primary" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;" onclick="navegar('admin/clientes/novo')">+ Novo Cliente</button>
             </div>
             <div class="table-responsive">
                 <table class="admin-table" style="width: 100%; border-collapse: collapse;">
@@ -416,8 +439,8 @@ window.renderAdminClientes = async function() {
                                 </td>
                                 <td style="padding: 12px; text-align: right;">
                                     ${c.status === 'Pendente' ? `<button class="btn" style="padding: 6px 12px; font-size: 0.85rem; margin-right: 5px; background: #15803d; color: #fff; border: none; border-radius: 4px; cursor: pointer;" onclick="aprovarClienteWeb(${c.id})">✅ Aprovar</button>` : ''}
-                                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem; margin-right: 5px;" onclick="navegar('admin/clientes/editar', {id: ${c.id}})">Editar</button>
-                                    <button class="btn" style="padding: 6px 12px; font-size: 0.85rem; background: #dc3545; color: white; border: none; border-radius: 4px;" onclick="excluirCliente(${c.id})">Excluir</button>
+                                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem; margin-right: 5px; cursor: pointer;" onclick="navegar('admin/clientes/editar', {id: ${c.id}})">Editar</button>
+                                    <button class="btn" style="padding: 6px 12px; font-size: 0.85rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="excluirCliente(${c.id})">Excluir</button>
                                 </td>
                             </tr>
                         `).join('')}
@@ -425,7 +448,7 @@ window.renderAdminClientes = async function() {
                 </table>
             </div>
         </div>`;
-        adminLayout('Clientes', 'Gerencie aprovações e permissões (Igual ao App).', html);
+        adminLayout('Clientes', 'Gerencie aprovações e permissões.', html);
     } catch (e) { console.error(e); } finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
 };
 
@@ -436,6 +459,7 @@ window.aprovarClienteWeb = async function(id) {
         if (res && res.sucesso) { if (typeof Swal !== 'undefined') Swal.fire('Sucesso', 'Cliente Aprovado!', 'success'); renderAdminClientes(); } 
     } catch (erro) { console.error(erro); } finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
 };
+
 window.renderAdminClienteForm = async function(params = {}) {
     const id = params.id || null;
     const isEdit = !!id;
@@ -453,18 +477,18 @@ window.renderAdminClienteForm = async function(params = {}) {
     }
 
     const formHtml = `
-    <div class="panel" style="max-width: 700px; margin: 0 auto;">
+    <div class="panel" style="max-width: 700px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
         <form id="form-cliente" onsubmit="salvarCliente(event, ${id})">
             <div style="margin-bottom: 15px;">
-                <label>Nome Completo</label>
-                <input type="text" id="cli-nome" value="${escapeHtml(cliente.nome)}" required style="width:100%; padding:10px;">
+                <label style="display:block; margin-bottom:5px; font-weight: 500;">Nome Completo</label>
+                <input type="text" id="cli-nome" value="${escapeHtml(cliente.nome)}" required style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;">
             </div>
             <div style="margin-bottom: 15px;">
-                <label>E-mail</label>
-                <input type="email" id="cli-email" value="${escapeHtml(cliente.email)}" required style="width:100%; padding:10px;">
+                <label style="display:block; margin-bottom:5px; font-weight: 500;">E-mail</label>
+                <input type="email" id="cli-email" value="${escapeHtml(cliente.email)}" required style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;">
             </div>
             <div style="margin-bottom: 25px;">
-                <label>Nível de Acesso (Permissão)</label>
+                <label style="display:block; margin-bottom:5px; font-weight: 500;">Nível de Acesso (Permissão)</label>
                 <select id="cli-role" style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;">
                     <option value="cliente" ${cliente.role === 'cliente' ? 'selected' : ''}>Cliente Padrão</option>
                     <option value="admin" ${cliente.role === 'admin' ? 'selected' : ''}>Administrador do Sistema</option>
@@ -472,8 +496,8 @@ window.renderAdminClienteForm = async function(params = {}) {
             </div>
             ${!isEdit ? '<p style="color: #666; font-size: 0.9rem;">Nota: Será atribuída a senha padrão <b>123456</b>.</p>' : ''}
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button type="button" class="btn btn-outline" onclick="navegar('admin/clientes')" style="color:#333; border-color:#ccc;">Cancelar</button>
-                <button type="submit" class="btn btn-primary">${isEdit ? 'Atualizar Cliente' : 'Guardar Novo Cliente'}</button>
+                <button type="button" class="btn btn-outline" onclick="navegar('admin/clientes')" style="padding: 10px 16px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer;">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="padding: 10px 16px; border: none; border-radius: 6px; background: #0284c7; color: #fff; font-weight: bold; cursor: pointer;">${isEdit ? 'Atualizar Cliente' : 'Guardar Novo Cliente'}</button>
             </div>
         </form>
     </div>`;
@@ -501,9 +525,6 @@ window.excluirCliente = async function(id) {
     } catch (erro) { console.error(erro); } finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
 };
 
-// ==========================================
-// GESTÃO DE PEDIDOS
-// ==========================================
 window.renderAdminPedidos = async function() {
     if (typeof mostrarLoading === 'function') mostrarLoading(true, "A carregar pedidos...");
     try {
@@ -521,7 +542,7 @@ window.renderAdminPedidos = async function() {
         };
 
         const html = `
-        <div class="panel">
+        <div class="panel" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
             <div class="table-toolbar" style="margin-bottom: 15px;">
                 <span class="table-count"><strong>${pedidos.length}</strong> pedidos registados no sistema</span>
             </div>
@@ -545,9 +566,13 @@ window.renderAdminPedidos = async function() {
                                 <td style="padding: 12px;">${escapeHtml(p.cliente_nome || 'Cliente Removido')}</td>
                                 <td style="padding: 12px; color: #555;">${new Date(p.data_pedido).toLocaleDateString('pt-BR')}</td>
                                 <td style="padding: 12px;"><strong>R$ ${parseFloat(p.total).toFixed(2).replace('.', ',')}</strong></td>
-                                <td style="padding: 12px;"><span class="badge" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; ${getStatusColor(p.status)}">${p.status}</span></td>
+                                <td style="padding: 12px;">
+                                    <span class="badge" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; ${getStatusColor(p.status)}">
+                                        ${p.status}
+                                    </span>
+                                </td>
                                 <td style="padding: 12px; text-align: right; min-width: 180px;">
-                                    <select onchange="alterarStatusPedido(${p.id}, this.value)" style="padding: 5px; margin-right: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.85rem;">
+                                    <select onchange="alterarStatusPedido(${p.id}, this.value)" style="padding: 5px; margin-right: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.85rem; cursor: pointer;">
                                         <option value="">Alterar...</option>
                                         <option value="Pendente">Pendente</option>
                                         <option value="Em processamento">Em processamento</option>
@@ -562,8 +587,14 @@ window.renderAdminPedidos = async function() {
                 </table>
             </div>
         </div>`;
+
         adminLayout('Pedidos', 'Faça a gestão das vendas e acompanhe os envios.', html);
-    } catch (e) { exibirMensagem("Falha ao carregar pedidos.", 'erro'); } finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
+    } catch (e) { 
+        console.error("Erro ao carregar pedidos:", e);
+        if (typeof exibirMensagem === 'function') exibirMensagem("Falha ao carregar pedidos.", 'erro'); 
+    } finally { 
+        if (typeof mostrarLoading === 'function') mostrarLoading(false); 
+    }
 };
 
 window.alterarStatusPedido = async function(id, novoStatus) {
