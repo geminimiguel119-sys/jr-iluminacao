@@ -223,7 +223,7 @@ window.exportarRelatorioCSV = function() {
 window.imprimirRelatorio = function() { window.print(); };
 
 // ==========================================
-// CRUD DE PRODUTOS (COM UPLOAD DE IMAGEM E TOKEN)
+// CRUD DE PRODUTOS (COM CATEGORIA E UPLOAD)
 // ==========================================
 window.renderAdminProdutos = async function() {
     if (typeof mostrarLoading === 'function') mostrarLoading(true, 'A carregar catálogo...');
@@ -276,7 +276,7 @@ window.renderAdminProdutos = async function() {
 window.renderAdminProdutoForm = async function(params = {}) {
     const id = params.id || null;
     const isEdit = !!id;
-    let produto = { nome: '', descricao: '', preco: '', quantidade: 1, imagem: '' };
+    let produto = { nome: '', descricao: '', categoria: 'outros', preco: '', quantidade: 1, imagem: '' };
 
     if (isEdit) {
         if (typeof mostrarLoading === 'function') mostrarLoading(true, 'A carregar produto...');
@@ -292,61 +292,81 @@ window.renderAdminProdutoForm = async function(params = {}) {
     const formHtml = `
     <div class="panel" style="max-width: 700px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
         <form id="form-produto" onsubmit="salvarProduto(event, ${id})">
+            
             <div style="margin-bottom: 15px;">
                 <label style="display:block; margin-bottom:5px; font-weight: 500;">Nome do Produto</label>
                 <input type="text" id="prod-nome" value="${escapeHtml(produto.nome)}" required style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;">
             </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:5px; font-weight: 500;">Categoria (Filtro da Loja)</label>
+                <select id="prod-categoria" style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px; background: #fff;">
+                    <option value="fita" ${produto.categoria === 'fita' ? 'selected' : ''}>Fitas LED</option>
+                    <option value="spot" ${produto.categoria === 'spot' ? 'selected' : ''}>Spots & Embutidos</option>
+                    <option value="lampada" ${produto.categoria === 'lampada' ? 'selected' : ''}>Lâmpadas</option>
+                    <option value="painel" ${produto.categoria === 'painel' ? 'selected' : ''}>Painéis Plafon</option>
+                    <option value="outros" ${!['fita','spot','lampada','painel'].includes(produto.categoria) ? 'selected' : ''}>Outros / Diversos</option>
+                </select>
+            </div>
+
             <div style="margin-bottom: 15px;">
                 <label style="display:block; margin-bottom:5px; font-weight: 500;">Descrição</label>
                 <textarea id="prod-descricao" rows="4" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">${escapeHtml(produto.descricao)}</textarea>
             </div>
+            
             <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                <div style="flex: 1;"><label style="display:block; margin-bottom:5px; font-weight: 500;">Preço (R$)</label><input type="number" id="prod-preco" step="0.01" value="${produto.preco}" required style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;"></div>
-                <div style="flex: 1;"><label style="display:block; margin-bottom:5px; font-weight: 500;">Quantidade em Estoque</label><input type="number" id="prod-quantidade" value="${produto.quantidade}" required style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;"></div>
+                <div style="flex: 1;">
+                    <label style="display:block; margin-bottom:5px; font-weight: 500;">Preço (R$)</label>
+                    <input type="number" id="prod-preco" step="0.01" value="${produto.preco}" required style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="display:block; margin-bottom:5px; font-weight: 500;">Estoque</label>
+                    <input type="number" id="prod-quantidade" value="${produto.quantidade}" required style="width:100%; padding:10px; border: 1px solid #ccc; border-radius: 6px;">
+                </div>
             </div>
             
-            <div style="margin-bottom: 25px; padding: 15px; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1;">
-                <label style="display:block; margin-bottom:8px; font-weight: 600; color: #334155;">📷 Imagem do Produto (Upload)</label>
-                <input type="file" id="prod-imagem-file" accept="image/png, image/jpeg, image/webp" style="width:100%; padding:10px; background: #fff; cursor: pointer; border-radius: 4px; border: 1px solid #e2e8f0;">
+            <div style="margin-bottom: 25px; padding: 15px; background: #f0f9ff; border-radius: 6px; border: 2px dashed #0284c7;">
+                <label style="display:block; margin-bottom:8px; font-weight: 600; color: #0369a1;">📷 Escolha a Foto do Produto (Upload)</label>
+                <input type="file" id="prod-imagem-file" accept="image/png, image/jpeg, image/webp" style="width:100%; padding:10px; background: #fff; cursor: pointer; border-radius: 4px; border: 1px solid #bae6fd;">
                 
                 ${produto.imagem ? `
                 <div style="margin-top: 15px; display: flex; align-items: center; gap: 12px;">
                     <img src="${escapeHtml(produto.imagem)}" style="height: 60px; width: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1;"> 
-                    <span style="font-size: 0.85rem; color: #64748b;">Imagem atual no sistema.<br>Selecione um ficheiro novo apenas para substituir.</span>
+                    <span style="font-size: 0.85rem; color: #64748b;">Esta é a foto atual. Só escolha um arquivo acima se quiser trocar.</span>
                 </div>` : ''}
+                
                 <input type="hidden" id="prod-imagem-atual" value="${escapeHtml(produto.imagem)}">
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button type="button" class="btn btn-outline" onclick="navegar('admin/produtos')" style="padding: 10px 16px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer;">Cancelar</button>
-                <button type="submit" class="btn btn-primary" style="padding: 10px 16px; border: none; border-radius: 6px; background: #0284c7; color: #fff; font-weight: bold; cursor: pointer;">${isEdit ? 'Atualizar Produto' : 'Guardar Novo Produto'}</button>
+                <button type="submit" class="btn btn-primary" style="padding: 10px 16px; border: none; border-radius: 6px; background: #0284c7; color: #fff; font-weight: bold; cursor: pointer;">${isEdit ? 'Atualizar Produto' : 'Salvar Novo Produto'}</button>
             </div>
         </form>
     </div>`;
-    adminLayout(isEdit ? 'Editar Produto' : 'Novo Produto', 'Preencha os detalhes do item e anexe a fotografia.', formHtml);
+    adminLayout(isEdit ? 'Editar Produto' : 'Novo Produto', 'Preencha os detalhes e anexe a foto.', formHtml);
 };
 
 window.salvarProduto = async function(event, id) {
     event.preventDefault();
     
     const btnSubmit = event.target.querySelector('button[type="submit"]');
-    if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.innerHTML = 'A guardar...'; }
+    if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.innerHTML = 'Salvando...'; }
 
     let caminhoFinalImagem = document.getElementById('prod-imagem-atual').value;
     const fileInput = document.getElementById('prod-imagem-file');
 
-    // 1. FAZ O UPLOAD DA IMAGEM SE O ARQUIVO FOI SELECIONADO
     if (fileInput.files.length > 0) {
         const formData = new FormData();
         formData.append('imagem', fileInput.files[0]);
         
-        if (typeof mostrarLoading === 'function') mostrarLoading(true, "A fazer upload da imagem...");
+        if (typeof mostrarLoading === 'function') mostrarLoading(true, "Enviando imagem...");
         try {
             const token = localStorage.getItem('jr_token') || '';
             const resUpload = await fetch('api/upload.php', { 
                 method: 'POST', 
                 body: formData,
-                headers: { 'Authorization': 'Bearer ' + token } // Adiciona o Token ao header do fetch manual
+                headers: { 'Authorization': 'Bearer ' + token }
             });
             const dataUpload = await resUpload.json();
             
@@ -356,36 +376,36 @@ window.salvarProduto = async function(event, id) {
                 throw new Error(dataUpload.mensagem || dataUpload.erro || 'Falha no upload');
             }
         } catch(e) {
-            if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Guardar Novo Produto'; }
+            if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Salvar Novo Produto'; }
             if (typeof mostrarLoading === 'function') mostrarLoading(false);
             if (typeof exibirMensagem === 'function') exibirMensagem(e.message, 'erro');
-            return; // Bloqueia a execução se a foto falhar
+            return; 
         }
     }
 
-    // 2. GUARDA OS DADOS NO BANCO COM O CAMINHO DA FOTO
     const dados = {
         acao: 'salvar',
         id: id || null,
         nome: document.getElementById('prod-nome').value,
+        categoria: document.getElementById('prod-categoria').value,
         descricao: document.getElementById('prod-descricao').value,
         preco: document.getElementById('prod-preco').value,
         quantidade: document.getElementById('prod-quantidade').value,
         imagem: caminhoFinalImagem
     };
     
-    if (typeof mostrarLoading === 'function') mostrarLoading(true, "A guardar produto...");
+    if (typeof mostrarLoading === 'function') mostrarLoading(true, "Salvando produto no banco...");
     try {
         const res = await apiFetch('api/produtos.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
         if (res && res.sucesso) { 
             if (typeof Swal !== 'undefined') Swal.fire('Feito!', 'Produto salvo com sucesso.', 'success'); 
             navegar('admin/produtos'); 
         } else { 
-            if (typeof Swal !== 'undefined') Swal.fire('Aviso', res.erro || 'Falha ao guardar.', 'warning'); 
-            if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Guardar Novo Produto'; }
+            if (typeof Swal !== 'undefined') Swal.fire('Aviso', res.erro || 'Falha ao salvar.', 'warning'); 
+            if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Salvar Novo Produto'; }
         }
     } catch (erro) { 
-        if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Guardar Novo Produto'; }
+        if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerHTML = id ? 'Atualizar Produto' : 'Salvar Novo Produto'; }
     } finally { 
         if (typeof mostrarLoading === 'function') mostrarLoading(false); 
     }
