@@ -5,7 +5,6 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Content-Type: application/json; charset=utf-8');
 
-// Chave secreta para assinar os tokens (Não partilhar fora do servidor)
 define('SECRET_KEY', 'JR_ILUMINACAO_TCC_2026_SUPER_SECRETO');
 
 function resposta($sucesso = true, $mensagem = '', $dados = null, $codigo = 200) {
@@ -23,7 +22,7 @@ function validarEmail($email) { return filter_var($email, FILTER_VALIDATE_EMAIL)
 // ==========================================
 function gerarToken($user_id, $role) {
     $header = base64_encode(json_encode(['alg' => 'HS256', 'typ' => 'JWT']));
-    $payload = base64_encode(json_encode(['id' => $user_id, 'role' => $role, 'exp' => time() + 86400])); // Expira em 24h
+    $payload = base64_encode(json_encode(['id' => $user_id, 'role' => $role, 'exp' => time() + 86400]));
     $signature = hash_hmac('sha256', "$header.$payload", SECRET_KEY);
     return "$header.$payload.$signature";
 }
@@ -41,6 +40,10 @@ function obterCabecalhoAutorizacao() {
 
 function validarAdmin() {
     $authHeader = obterCabecalhoAutorizacao();
+    
+    // CORREÇÃO: Garante que $authHeader é sempre uma string (mesmo que vazia) para evitar o erro do PHP 8.2
+    $authHeader = $authHeader ? $authHeader : '';
+
     if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
         $token = $matches[1];
         $partes = explode('.', $token);
@@ -48,7 +51,6 @@ function validarAdmin() {
             $signature = hash_hmac('sha256', "$partes[0].$partes[1]", SECRET_KEY);
             if (hash_equals($signature, $partes[2])) {
                 $payload = json_decode(base64_decode($partes[1]), true);
-                // Verifica se é administrador e se o token não expirou
                 if ($payload && isset($payload['role']) && $payload['role'] === 'admin' && $payload['exp'] > time()) {
                     return true; 
                 }
