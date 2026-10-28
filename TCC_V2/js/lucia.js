@@ -18,7 +18,6 @@ window.getUserLucia = function() {
     }
 };
 
-// Função para fazer a Lúcia "pensar" por alguns milissegundos
 window.esperarLucia = function(ms) {
     return new Promise(function(resolve) { setTimeout(resolve, ms); });
 };
@@ -40,11 +39,9 @@ window.renderizarBoasVindasLucia = async function() {
     const msgContainer = document.getElementById('lucia-messages');
     if (!msgContainer) return;
 
-    // Limpa o chat para a mensagem inicial
     msgContainer.innerHTML = '';
-
     const typing = window.mostrarDigitandoLucia();
-    await window.esperarLucia(1000); // 1 segundo "a pensar" logo na abertura
+    await window.esperarLucia(1000); 
     if (typing) typing.remove();
 
     const user = window.getUserLucia();
@@ -160,7 +157,7 @@ window.acaoRapidaLucia = async function(acao) {
     if (acao === 'rastreio') {
         window.adicionarBolhaLucia('user', '📦 Quero rastrear meu pedido');
         const typing = window.mostrarDigitandoLucia();
-        await window.esperarLucia(1000); // Pensa por 1 segundo
+        await window.esperarLucia(1000);
 
         const user = window.getUserLucia();
         if (!user) {
@@ -300,7 +297,7 @@ window.acaoRapidaLucia = async function(acao) {
 window.simularAmbienteLucia = async function(ambiente, metros) {
     window.adicionarBolhaLucia('user', 'Calcular para ' + ambiente + ' (' + metros + 'm²)');
     const typing = window.mostrarDigitandoLucia();
-    await window.esperarLucia(1200); // Simula o cálculo demorado
+    await window.esperarLucia(1200); 
     if (typing) typing.remove();
 
     const lumensPorM2 = ambiente.indexOf('Cozinha') !== -1 ? 200 : 150;
@@ -332,7 +329,6 @@ window.processarEnvioLucia = async function(event) {
 
     const texto = textoOriginal.toLowerCase();
     
-    // Mostra indicador e atrasa 1 segundo no mínimo para todas as respostas processadas via texto
     const typing = window.mostrarDigitandoLucia();
     await window.esperarLucia(1000);
 
@@ -533,17 +529,6 @@ window.montarWidgetLucia = function() {
         #lucia-send:hover { background: #0369a1; }
 
         body.carrinho-aberto #lucia-fab, body.carrinho-aberto #lucia-window { display: none !important; }
-        
-        /* Dark Mode */
-        body.dark-mode #lucia-window { background: #131d38 !important; border-color: #1e293b !important; }
-        body.dark-mode #lucia-messages { background: #0b1329 !important; }
-        body.dark-mode .lucia-bubble.bot { background: #1e293b !important; color: #f8fafc !important; border-color: #334155 !important; }
-        body.dark-mode .lucia-prod-card { background: #0f172a !important; border-color: #334155 !important; }
-        body.dark-mode .lucia-prod-info strong { color: #f8fafc !important; }
-        body.dark-mode .lucia-chip { background: #1e293b !important; color: #38bdf8 !important; border-color: #0284c7 !important; }
-        body.dark-mode .lucia-chip:hover { background: #0284c7 !important; color: #ffffff !important; }
-        body.dark-mode .lucia-footer { background: #131d38 !important; border-color: #1e293b !important; }
-        body.dark-mode #lucia-input { background: #0b1329 !important; color: #ffffff !important; border-color: #334155 !important; }
 
         @media (max-width: 600px) {
             #lucia-fab { bottom: 16px !important; right: 14px !important; padding: 8px 14px 8px 10px !important; font-size: 0.82rem !important; }
