@@ -9,7 +9,7 @@ function escapeHtml(v) {
 }
 
 function checkSessao() {
-  renderHeader();
+  if (typeof renderHeader === 'function') renderHeader();
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
   const last = localStorage.getItem('jr_last_page') || 'home';
   const params = JSON.parse(localStorage.getItem('jr_last_params') || '{}');
@@ -21,9 +21,16 @@ function checkSessao() {
 async function apiFetch(url, options = {}) {
   if (typeof mostrarLoading === 'function') mostrarLoading(true, 'A processar...');
   
+  // INJEÇÃO DO TOKEN DE SEGURANÇA (JWT)
+  const token = localStorage.getItem('jr_token');
+  if (token) {
+      if (!options.headers) options.headers = {};
+      options.headers['Authorization'] = 'Bearer ' + token;
+  }
+  
   try {
     const r = await fetch(url, options);
-    const text = await r.text(); // Pega a resposta como texto primeiro
+    const text = await r.text();
     
     let data;
     try {
@@ -42,7 +49,6 @@ async function apiFetch(url, options = {}) {
     throw err;
     
   } finally {
-    // ESTA LINHA É A MAIS IMPORTANTE: Garante que o loading fecha SEMPRE
     if (typeof mostrarLoading === 'function') mostrarLoading(false);
   }
 }
