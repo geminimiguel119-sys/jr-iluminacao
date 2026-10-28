@@ -1,7 +1,7 @@
 <?php
 // api/login.php
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Content-Type: application/json; charset=utf-8');
 
@@ -9,6 +9,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
+
+// Requer o config para usar a função gerarToken()
+require_once 'config.php';
 
 $host = 'aws-0-us-west-2.pooler.supabase.com';
 $port = '5432';
@@ -86,16 +89,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$email]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // 1. Se for primeiro acesso via Google: cria na tabela usuarios com status Pendente
+            // 1. Se for primeiro acesso via Google
             if (!$user) {
                 $stmtIns = $pdo->prepare("INSERT INTO usuarios (nome, email, role, status) VALUES (?, ?, 'cliente', 'Pendente') RETURNING id, nome, email, role, status");
                 $stmtIns->execute([$nome, $email]);
                 $user = $stmtIns->fetch(PDO::FETCH_ASSOC);
 
-                // Cria o registro na autenticacao para vincular ID
                 $pdo->prepare("INSERT INTO autenticacao (usuario_id, senha, ultimo_login) VALUES (?, 'OAUTH_GOOGLE', CURRENT_TIMESTAMP) ON CONFLICT (usuario_id) DO NOTHING")->execute([$user['id']]);
-
-                // Notifica no Telegram
                 notificarTelegramGoogle($nome, $email, $telegramToken, $telegramChatId);
 
                 echo json_encode([
@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
 
-            // 2. Se a conta já existe mas o admin ainda não aprovou
+            // 2. Se a conta já existe mas está pendente
             if ($user['role'] !== 'admin' && ($user['status'] ?? 'Pendente') === 'Pendente') {
                 echo json_encode([
                     'sucesso' => false,
@@ -116,10 +116,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
 
-            // 3. Usuário aprovado
+            // 3. Utilizador aprovado -> Gera o Token JWT
             $pdo->prepare("INSERT INTO autenticacao (usuario_id, senha, ultimo_login) VALUES (?, 'OAUTH_GOOGLE', CURRENT_TIMESTAMP) ON CONFLICT (usuario_id) DO UPDATE SET ultimo_login = CURRENT_TIMESTAMP")->execute([$user['id']]);
 
-            echo json_encode(['sucesso' => true, 'dados' => $user], JSON_UNESCAPED_UNICODE);
+            $token = gerarToken($user['id'], $user['role']);
+            echo json_encode(['sucesso' => true, 'dados' => $user, 'token' => $token], JSON_UNESCAPED_UNICODE);
             exit;
 
         } catch (PDOException $e) {
@@ -158,7 +159,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $updateStmt->execute([$user['id']]);
 
             unset($user['senha']); 
-            echo json_encode(['sucesso' => true, 'dados' => $user], JSON_UNESCAPED_UNICODE);
+            
+            // 3. Utilizador aprovado -> Gera o Token JWT
+            $token = gerarToken($user['id'], $user['role']);
+            echo json_encode(['sucesso' => true, 'dados' => $user, 'token' => $token], JSON_UNESCAPED_UNICODE);
         } else {
             echo json_encode(['sucesso' => false, 'mensagem' => 'E-mail ou senha incorretos.'], JSON_UNESCAPED_UNICODE);
         }
