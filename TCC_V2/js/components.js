@@ -35,7 +35,7 @@ function alternarUserMenu(e) { if (e) e.stopPropagation(); const menu = document
 function fecharUserMenu() { const menu = document.getElementById('user-menu'); if (menu) menu.style.display = 'none'; }
 document.addEventListener('click', (e) => { const userMenu = document.getElementById('user-menu'); const userChip = document.querySelector('.user-chip'); if (userMenu && userChip && !userChip.contains(e.target) && !userMenu.contains(e.target)) { userMenu.style.display = 'none'; } });
 
-// === CABEÇALHO (COM CONFIRMAÇÃO VISUAL DE LOGIN - EXIGÊNCIA PROFESSOR) ===
+// === CABEÇALHO ===
 function renderHeader() {
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
   const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
@@ -83,10 +83,14 @@ function renderHeader() {
   `;
 }
 
-function renderSidebar() { return `<aside class="admin-sidebar"><div class="sidebar-brand"><span class="brand-mark">JR</span><div><strong>Administração</strong><small>JR Iluminação</small></div></div><nav><a onclick="navegar('admin/dashboard')">▦ <span>Dashboard</span></a><a onclick="navegar('admin/produtos')">▣ <span>Produtos</span></a><a onclick="navegar('admin/clientes')">♙ <span>Clientes</span></a><a onclick="navegar('admin/pedidos')">▤ <span>Pedidos</span></a><a onclick="navegar('admin/relatorios')">◔ <span>Relatórios</span></a></nav><div class="sidebar-bottom"><button onclick="navegar('home')">← Voltar para loja</button></div></aside>`; }
-function renderHome() { const app = document.getElementById('app'); if (!app) return; app.className = ''; app.innerHTML = `<section class="hero"><div class="hero-inner"><span class="eyebrow">ILUMINAÇÃO • TECNOLOGIA • DESIGN</span><h1>Ilumine ambientes.<br><span>Transforme espaços.</span></h1><p>Soluções em LED para projetos residenciais e comerciais, com qualidade, economia e estilo.</p><div class="hero-actions"><button class="btn btn-primary btn-lg" onclick="navegar('produtos')">Explorar produtos <span>→</span></button><button class="btn btn-ghost btn-lg" onclick="document.getElementById('diferenciais').scrollIntoView({behavior:'smooth'})">Conheça a JR</button></div><div class="hero-trust"><span>✓ Qualidade garantida</span><span>✓ Atendimento especializado</span><span>✓ Economia de energia</span></div></div><div class="hero-glow"></div></section><section id="diferenciais" class="section"><div class="section-heading"><div><span class="eyebrow dark">POR QUE ESCOLHER A JR?</span><h2>Iluminação pensada para você.</h2></div><p>Produtos selecionados para unir desempenho, durabilidade e um visual moderno em cada projeto.</p></div><div class="feature-grid"><article><div class="feature-icon">✦</div><h3>Alta eficiência</h3><p>Tecnologia LED que entrega mais luminosidade consumindo menos energia.</p></article><article><div class="feature-icon">◇</div><h3>Design moderno</h3><p>Peças que valorizam ambientes residenciais, comerciais e corporativos.</p></article><article><div class="feature-icon">✓</div><h3>Compra segura</h3><p>Processo simples, atendimento próximo e informações claras.</p></article></div></section><section class="cta"><div><span class="eyebrow">CATÁLOGO JR</span><h2>Encontre a iluminação ideal.</h2><p>Veja nosso catálogo e escolha a solução certa para o seu projeto.</p></div><button class="btn btn-primary btn-lg" onclick="navegar('produtos')">Ver catálogo →</button></section>`; }
+function renderHome() { 
+    const app = document.getElementById('app'); 
+    if (!app) return; 
+    app.className = ''; 
+    app.innerHTML = `<section class="hero"><div class="hero-inner"><span class="eyebrow">ILUMINAÇÃO • TECNOLOGIA • DESIGN</span><h1>Ilumine ambientes.<br><span>Transforme espaços.</span></h1><p>Soluções em LED para projetos residenciais e comerciais, com qualidade, economia e estilo.</p><div class="hero-actions"><button class="btn btn-primary btn-lg" onclick="navegar('produtos')">Explorar produtos <span>→</span></button><button class="btn btn-ghost btn-lg" onclick="document.getElementById('diferenciais').scrollIntoView({behavior:'smooth'})">Conheça a JR</button></div><div class="hero-trust"><span>✓ Qualidade garantida</span><span>✓ Atendimento especializado</span><span>✓ Economia de energia</span></div></div><div class="hero-glow"></div></section><section id="diferenciais" class="section"><div class="section-heading"><div><span class="eyebrow dark">POR QUE ESCOLHER A JR?</span><h2>Iluminação pensada para você.</h2></div><p>Produtos selecionados para unir desempenho, durabilidade e um visual moderno em cada projeto.</p></div><div class="feature-grid"><article><div class="feature-icon">✦</div><h3>Alta eficiência</h3><p>Tecnologia LED que entrega mais luminosidade consumindo menos energia.</p></article><article><div class="feature-icon">◇</div><h3>Design moderno</h3><p>Peças que valorizam ambientes residenciais, comerciais e corporativos.</p></article><article><div class="feature-icon">✓</div><h3>Compra segura</h3><p>Processo simples, atendimento próximo e informações claras.</p></article></div></section><section class="cta"><div><span class="eyebrow">CATÁLOGO JR</span><h2>Encontre a iluminação ideal.</h2><p>Veja nosso catálogo e escolha a solução certa para o seu projeto.</p></div><button class="btn btn-primary btn-lg" onclick="navegar('produtos')">Ver catálogo →</button></section>`; 
+}
 
-// === CATÁLOGO COM FILTROS ===
+// === CATÁLOGO E FILTROS APRIMORADOS ===
 function renderProdutos() {
   const app = document.getElementById('app');
   if (!app) return;
@@ -127,9 +131,17 @@ function aplicarFiltrosCatalog() {
   let filtrados = window.produtosGlobais.filter(p => {
     const nome = String(p.nome || '').toLowerCase();
     const desc = String(p.descricao || '').toLowerCase();
+    const categoriaDoBanco = String(p.categoria || '').toLowerCase(); 
+    
     const bateTexto = nome.includes(termo) || desc.includes(termo);
+    
+    // Mostra tudo se a categoria ativa for 'todas'
     if (window.categoriaAtual === 'todas') return bateTexto;
-    return bateTexto && (nome.includes(window.categoriaAtual) || desc.includes(window.categoriaAtual));
+    
+    // Filtro super robusto: Checa a categoria oficial, ou se o nome/descrição incluem a palavra chave do botão
+    const bateCategoria = (categoriaDoBanco === window.categoriaAtual) || nome.includes(window.categoriaAtual) || desc.includes(window.categoriaAtual);
+    
+    return bateTexto && bateCategoria;
   });
 
   if (window.ordemAtual === 'menor_preco') filtrados.sort((a, b) => Number(a.preco) - Number(b.preco));
@@ -143,7 +155,7 @@ function aplicarFiltrosCatalog() {
         const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
         const disponivel = Number(p.quantidade || 0) > 0;
         
-        // Puxa a URL exata do banco ou usa uma imagem neutra de erro
+        // Puxa a URL exata da base de dados (seja arquivo local da pasta uploads/ ou link)
         const imgUrl = (p.imagem && p.imagem.trim() !== '' && p.imagem !== 'placeholder.jpg') 
                        ? p.imagem 
                        : 'https://placehold.co/400x400/eeeeee/111827.jpg?text=Sem+Foto'; 
@@ -151,15 +163,14 @@ function aplicarFiltrosCatalog() {
         return `
         <article class="product-card" style="animation-delay:${i*45}ms; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
           
-          <!-- Nova Tag de Imagem HTML -->
-          <img src="${imgUrl}" alt="${p.nome}" style="width: 100%; height: 220px; object-fit: cover; border-bottom: 1px solid #eee;">
+          <img src="${imgUrl}" alt="${escapeHtml(p.nome)}" style="width: 100%; height: 220px; object-fit: cover; border-bottom: 1px solid #eee;">
           
           <div class="product-body" style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
             <div class="product-stock ${!disponivel || p.quantidade <= 5 ? 'low' : ''}" style="margin-bottom: 10px; font-size: 0.8rem; font-weight: 600;">
                 ${disponivel ? `✓ Em estoque (${p.quantidade} un.)` : '✕ Esgotado'}
             </div>
-            <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #1e293b;">${p.nome || 'Produto'}</h3>
-            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px; flex: 1;">${p.descricao || 'Solução LED.'}</p>
+            <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #1e293b;">${escapeHtml(p.nome || 'Produto')}</h3>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px; flex: 1;">${escapeHtml(p.descricao || 'Solução LED.')}</p>
             <div class="product-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 15px;">
               <strong style="font-size: 1.25rem; color: #0f172a;">R$ ${preco}</strong>
               ${disponivel ? `<button class="btn btn-primary btn-comprar" style="padding: 8px 16px; border: none;" onclick="feedbackCompra(this, '${p.id}')">Comprar</button>` : `<button class="btn btn-disabled" style="padding: 8px 16px;" disabled>Indisponível</button>`}
@@ -250,19 +261,13 @@ async function realizarRegistro(event) {
     const data = await res.json();
     
     if (data.sucesso) { 
-        if (typeof exibirMensagem === 'function') {
-            exibirMensagem("Conta criada! O acesso está pendente de aprovação pela gerência.", "aviso");
-        } 
+        if (typeof exibirMensagem === 'function') exibirMensagem("Conta criada! O acesso está pendente de aprovação pela gerência.", "aviso");
         alternarFormulario('login'); 
     } else { 
-        if (typeof exibirMensagem === 'function') {
-            exibirMensagem("Erro: " + data.erro, "erro"); 
-        }
+        if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + data.erro, "erro"); 
     }
   } catch(e) { 
-      if (typeof exibirMensagem === 'function') {
-          exibirMensagem("Erro de ligação ao servidor.", "erro"); 
-      }
+      if (typeof exibirMensagem === 'function') exibirMensagem("Erro de ligação ao servidor.", "erro"); 
   }
 }
 
@@ -312,7 +317,7 @@ window.renderPerfil = async function() {
                                 <ul style="list-style: none; padding: 0; margin: 0;">
                                     ${p.itens && p.itens.length > 0 ? p.itens.map(item => `
                                         <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #cbd5e1; font-size: 0.9rem;">
-                                            <span style="color: #334155;">${item.quantidade}x ${item.nome}</span>
+                                            <span style="color: #334155;">${item.quantidade}x ${escapeHtml(item.nome)}</span>
                                             <strong style="color: #0f172a;">R$ ${parseFloat(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</strong>
                                         </li>
                                     `).join('') : '<li style="font-size: 0.85rem; color: #94a3b8;">Nenhum detalhe de item encontrado.</li>'}
@@ -390,7 +395,6 @@ function alterarQtdCarrinho(index, delta) {
   localStorage.setItem('carrinho', JSON.stringify(carrinho)); renderHeader(); renderizarItensCarrinho();
 }
 
-// === ABRE/FECHA CARRINHO (Controlo da classe "carrinho-aberto") ===
 function abrirCarrinho() {
   let modal = document.getElementById('modal-carrinho');
   if (!modal) {
@@ -425,7 +429,7 @@ function renderizarItensCarrinho() {
       total += subtotal;
       html += `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:15px;">
-          <div><strong style="display:block; margin-bottom:5px; font-size: 0.95rem;">${item.nome}</strong><div style="display:flex; align-items:center; gap:8px; margin-top:5px;"><button class="btn-qtd" onclick="alterarQtdCarrinho(${index}, -1)">−</button><span style="font-weight:600; font-size:0.9rem;">${item.quantidade}</span><button class="btn-qtd" onclick="alterarQtdCarrinho(${index}, 1)">+</button><small style="color:#666; margin-left: 5px;">x R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</small></div></div>
+          <div><strong style="display:block; margin-bottom:5px; font-size: 0.95rem;">${escapeHtml(item.nome)}</strong><div style="display:flex; align-items:center; gap:8px; margin-top:5px;"><button class="btn-qtd" onclick="alterarQtdCarrinho(${index}, -1)">−</button><span style="font-weight:600; font-size:0.9rem;">${item.quantidade}</span><button class="btn-qtd" onclick="alterarQtdCarrinho(${index}, 1)">+</button><small style="color:#666; margin-left: 5px;">x R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</small></div></div>
           <div style="text-align:right;"><strong style="display:block; margin-bottom:5px; font-size: 0.95rem;">R$ ${subtotal.toFixed(2).replace('.', ',')}</strong><button onclick="removerDoCarrinho(${index})" style="color:#dc3545; background:none; border:none; cursor:pointer; font-size:12px; font-weight:bold;">Remover</button></div>
         </div>`;
     });
@@ -527,7 +531,6 @@ window.renderizarCheckout = function() {
                       if (inputCidade) inputCidade.value = `${data.localidade} / ${data.uf}`; 
                       if (inputEnd && !inputEnd.value) inputEnd.value = data.logradouro ? `${data.logradouro}, ${data.bairro}` : ''; 
                       
-                      // Cálculo Logístico (Prazo)
                       const prazo = calcularPrazoEntrega(v);
                       window.prazoEntregaAtual = prazo;
                       if (boxPrazo && txtPrazo) {
@@ -547,7 +550,6 @@ window.renderizarCheckout = function() {
 window.finalizarPedido = async function(btnElement) {
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
     
-    // 1. Verificação de sessão rigorosa mas amigável (sem bloqueio de prompt)
     if (!user) {
         if (typeof exibirMensagem === 'function') {
             exibirMensagem("É obrigatório iniciar sessão (fazer login) para finalizar a compra e proteger os seus dados.", "aviso");
@@ -558,7 +560,6 @@ window.finalizarPedido = async function(btnElement) {
         return navegar('login');
     }
 
-    // 2. Coleta dos dados do formulário de checkout
     const nomeEl = document.getElementById('chk-nome');
     const telEl = document.getElementById('chk-telefone');
     const cepEl = document.getElementById('chk-cep');
@@ -591,7 +592,6 @@ window.finalizarPedido = async function(btnElement) {
     let total = 0; 
     carrinho.forEach(item => total += (parseFloat(item.preco) * parseInt(item.quantidade)));
 
-    // 3. Feedback visual imediato e desativação para evitar cliques duplos/duplicação de encomendas
     if (btnElement) { 
         btnElement.disabled = true; 
         btnElement.innerHTML = '⏳ A processar encomenda...'; 
@@ -599,7 +599,6 @@ window.finalizarPedido = async function(btnElement) {
         btnElement.style.cursor = 'not-allowed'; 
     }
 
-    // 4. Envio do pedido à API
     try {
         const res = await apiFetch('api/pedidos.php', {
             method: 'POST', 
@@ -756,7 +755,7 @@ function feedbackCompra(botao, idProduto) {
     setTimeout(() => { botao.innerHTML = textoOriginal; botao.style.backgroundColor = ""; botao.style.color = ""; botao.style.pointerEvents = "auto"; }, 1500);
 }
 
-// NOVO CÓDIGO DA MENSAGEM (100% INLINE E BLINDADO A FALHAS)
+// MENSAGENS INLINE BLINDADAS A FALHAS
 window.exibirMensagem = function(msg, tipo = 'sucesso') {
     let container = document.getElementById('toast-container');
     if (!container) {
@@ -784,5 +783,5 @@ window.exibirMensagem = function(msg, tipo = 'sucesso') {
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
-    }, 3000); // Exibe por apenas 3 segundos
+    }, 3000); 
 };
