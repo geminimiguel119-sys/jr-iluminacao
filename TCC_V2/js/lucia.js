@@ -2,7 +2,7 @@
 // ASSISTENTE VIRTUAL INTELIGENTE "LÚCIA" - JR ILUMINAÇÃO
 // =========================================================
 
-// Função auxiliar segura para evitar conflitos de carregamento
+// 1. FUNÇÕES AUXILIARES SEGURAS (Blindadas contra erros)
 window.luciaEscape = function(v) {
     if (typeof escapeHtml === 'function') return escapeHtml(v);
     return String(v ?? '').replace(/[&<>"']/g, function(c) {
@@ -10,7 +10,14 @@ window.luciaEscape = function(v) {
     });
 };
 
-// 1. MENU RÁPIDO DE OPÇÕES
+window.getUserLucia = function() {
+    try {
+        return JSON.parse(localStorage.getItem('jr_user') || 'null');
+    } catch(e) {
+        return null; // Evita falhas se o navegador bloquear o LocalStorage
+    }
+};
+
 window.menuRapidoHTML = function() {
     return `
         <div class="lucia-chips">
@@ -23,18 +30,12 @@ window.menuRapidoHTML = function() {
     `;
 };
 
-// 2. MENSAGEM INICIAL DE BOAS-VINDAS
+// 2. FUNÇÕES DE INTERAÇÃO DO CHAT
 window.renderizarBoasVindasLucia = function() {
     const msgContainer = document.getElementById('lucia-messages');
     if (!msgContainer) return;
 
-    let user = null;
-    try {
-        user = JSON.parse(localStorage.getItem('jr_user') || 'null');
-    } catch (e) {
-        user = null;
-    }
-
+    const user = window.getUserLucia();
     const saudacaoNome = (user && user.nome) ? `, <strong>${window.luciaEscape(user.nome.split(' ')[0])}</strong>` : '';
 
     msgContainer.innerHTML = `
@@ -46,30 +47,20 @@ window.renderizarBoasVindasLucia = function() {
     `;
 };
 
-// 3. ABRIR E FECHAR O CHAT (BLINDADO COM CLASSE CSS !IMPORTANT)
 window.alternarChatLucia = function(event) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
-
+    if (event) { event.preventDefault(); event.stopPropagation(); }
+    
     const win = document.getElementById('lucia-window');
     const badge = document.getElementById('lucia-unread-badge');
     if (!win) return;
 
     const estaAberto = win.classList.contains('lucia-aberta');
-
     if (estaAberto) {
         win.classList.remove('lucia-aberta');
     } else {
         win.classList.add('lucia-aberta');
         if (badge) badge.style.display = 'none';
-
-        const msgContainer = document.getElementById('lucia-messages');
-        if (msgContainer && msgContainer.children.length === 0) {
-            window.renderizarBoasVindasLucia();
-        }
-
+        
         setTimeout(function() {
             const input = document.getElementById('lucia-input');
             if (input) input.focus();
@@ -115,7 +106,7 @@ window.navegarPelaLucia = function(rota) {
 };
 
 window.comprarPelaLucia = function(idProduto) {
-    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
+    const user = window.getUserLucia();
     if (!user) {
         window.adicionarBolhaLucia('bot', `
             Para adicionar produtos ao carrinho com segurança, você precisa entrar na sua conta primeiro. 🔐<br><br>
@@ -145,13 +136,13 @@ window.obterProdutosParaLucia = async function() {
     return [];
 };
 
-// 4. AÇÕES DOS BOTÕES RÁPIDOS
+// 3. AÇÕES DOS BOTÕES RÁPIDOS
 window.acaoRapidaLucia = async function(acao) {
     if (acao === 'rastreio') {
         window.adicionarBolhaLucia('user', '📦 Quero rastrear meu pedido');
         const typing = window.mostrarDigitandoLucia();
 
-        const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
+        const user = window.getUserLucia();
         if (!user) {
             if (typing) typing.remove();
             window.adicionarBolhaLucia('bot', `
@@ -293,7 +284,7 @@ window.simularAmbienteLucia = async function(ambiente, metros) {
     `);
 };
 
-// 5. PROCESSAMENTO DE MENSAGENS DIGITADAS PELO USUÁRIO
+// 4. PROCESSAMENTO DE TEXTO DIGITADO (BOT DE IA)
 window.processarEnvioLucia = async function(event) {
     event.preventDefault();
     const input = document.getElementById('lucia-input');
@@ -308,7 +299,7 @@ window.processarEnvioLucia = async function(event) {
     const texto = textoOriginal.toLowerCase();
     const typing = window.mostrarDigitandoLucia();
 
-    // 1. Detecta CEP (8 dígitos)
+    // 4.1. Detecta CEP
     const cepMatch = texto.replace(/\D/g, '');
     if (cepMatch.length === 8 && /^\d{8}$/.test(cepMatch)) {
         try {
@@ -317,9 +308,7 @@ window.processarEnvioLucia = async function(event) {
             if (typing) typing.remove();
 
             if (!data.erro) {
-                const prazo = typeof calcularPrazoEntrega === 'function'
-                    ? calcularPrazoEntrega(cepMatch)
-                    : '2 a 5 dias úteis';
+                const prazo = typeof calcularPrazoEntrega === 'function' ? calcularPrazoEntrega(cepMatch) : '2 a 5 dias úteis';
                 window.adicionarBolhaLucia('bot', `
                     📍 <strong>Endereço localizado:</strong><br>
                     ${window.luciaEscape(data.logradouro || 'Endereço geral')}, ${window.luciaEscape(data.bairro || '')} — <strong>${window.luciaEscape(data.localidade)}/${window.luciaEscape(data.uf)}</strong>.<br><br>
@@ -330,26 +319,24 @@ window.processarEnvioLucia = async function(event) {
         } catch (e) {}
     }
 
-    // 2. Detecta metragem (ex: "15m2", "20 metros")
+    // 4.2. Detecta metros para calculadora
     const matchMetros = texto.match(/(\d+)\s*(m2|m²|metros|metro)/i);
     if (matchMetros) {
         if (typing) typing.remove();
         const m2 = parseInt(matchMetros[1], 10);
-        const tipoAmb = (texto.includes('cozinha') || texto.includes('escritorio') || texto.includes('escritório'))
-            ? 'Cozinha / Escritório'
-            : 'Sala / Quarto';
+        const tipoAmb = (texto.includes('cozinha') || texto.includes('escritorio') || texto.includes('escritório')) ? 'Cozinha / Escritório' : 'Sala / Quarto';
         window.simularAmbienteLucia(tipoAmb, m2);
         return;
     }
 
-    // 3. Intenção de Rastreio / Pedido
+    // 4.3. Rastreio
     if (texto.includes('pedido') || texto.includes('rastre') || texto.includes('compra') || texto.includes('entrega') || texto.includes('status')) {
         if (typing) typing.remove();
         window.acaoRapidaLucia('rastreio');
         return;
     }
 
-    // 4. Intenção de Pagamento
+    // 4.4. Pagamento
     if (texto.includes('pix') || texto.includes('cartao') || texto.includes('cartão') || texto.includes('boleto') || texto.includes('pagamento') || texto.includes('pagar')) {
         if (typing) typing.remove();
         window.adicionarBolhaLucia('bot', `
@@ -361,22 +348,19 @@ window.processarEnvioLucia = async function(event) {
         return;
     }
 
-    // 5. Intenção de Contato / WhatsApp
+    // 4.5. Contato
     if (texto.includes('whats') || texto.includes('telefone') || texto.includes('humano') || texto.includes('atendente') || texto.includes('onde fica') || texto.includes('santo andre') || texto.includes('santo andré')) {
         if (typing) typing.remove();
         window.acaoRapidaLucia('humano');
         return;
     }
 
-    // 6. Busca Inteligente no Catálogo do Banco de Dados
+    // 4.6. Busca no Catálogo
     const produtos = await window.obterProdutosParaLucia();
     if (typing) typing.remove();
 
     if (texto.includes('barato') || texto.includes('menor preço') || texto.includes('promo')) {
-        const disponiveis = produtos
-            .filter(function(p) { return Number(p.quantidade) > 0; })
-            .sort(function(a, b) { return Number(a.preco) - Number(b.preco); });
-
+        const disponiveis = produtos.filter(function(p) { return Number(p.quantidade) > 0; }).sort(function(a, b) { return Number(a.preco) - Number(b.preco); });
         if (disponiveis.length > 0) {
             const p = disponiveis[0];
             const preco = Number(p.preco).toFixed(2).replace('.', ',');
@@ -394,12 +378,7 @@ window.processarEnvioLucia = async function(event) {
         }
     }
 
-    const palavras = texto
-        .replace(/[?.,!]/g, '')
-        .split(/\s+/)
-        .filter(function(w) {
-            return w.length >= 3 && !['que', 'tem', 'uma', 'para', 'com', 'quero', 'ver', 'qual', 'preço', 'preco', 'valor'].includes(w);
-        });
+    const palavras = texto.replace(/[?.,!]/g, '').split(/\s+/).filter(function(w) { return w.length >= 3 && !['que', 'tem', 'uma', 'para', 'com', 'quero', 'ver', 'qual', 'preço', 'preco', 'valor'].includes(w); });
 
     if (palavras.length > 0 && produtos.length > 0) {
         const encontrados = produtos.filter(function(p) {
@@ -433,431 +412,103 @@ window.processarEnvioLucia = async function(event) {
         }
     }
 
-    // 7. Resposta Padrão
+    // Resposta padrão
     window.adicionarBolhaLucia('bot', `
         Posso te ajudar a encontrar qualquer item do nosso catálogo (experimente digitar <strong>"fita"</strong>, <strong>"lâmpada"</strong>, <strong>"painel"</strong> ou <strong>"spot"</strong>), consultar seu <strong>CEP</strong> ou calcular a iluminação ideal dizendo quantos <strong>m²</strong> tem seu espaço! 😊
         ${window.menuRapidoHTML()}
     `);
 };
 
-// 6. INICIALIZAÇÃO DO WIDGET NO DOM (APÓS TODAS AS FUNÇÕES EXISTIREM)
+// 5. INICIALIZAÇÃO DA ESTRUTURA HTML DO WIDGET
 window.montarWidgetLucia = function() {
-    if (document.getElementById('lucia-widget-root')) return;
+    if (document.getElementById('lucia-widget-root')) return; // Evita duplicação
 
     const style = document.createElement('style');
     style.id = 'lucia-styles';
     style.innerHTML = `
-        #lucia-widget-root {
-            font-family: 'Poppins', sans-serif;
-            z-index: 999990;
-        }
-
+        #lucia-widget-root { font-family: 'Poppins', sans-serif; z-index: 999990; }
+        
         #lucia-fab {
-            position: fixed !important;
-            bottom: 24px !important;
-            right: 24px !important;
-            z-index: 999990 !important;
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
-            color: #ffffff !important;
-            border: 2px solid rgba(255, 255, 255, 0.25) !important;
-            border-radius: 50px !important;
-            padding: 10px 20px 10px 12px !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 10px !important;
-            box-shadow: 0 8px 25px rgba(2, 132, 199, 0.4) !important;
-            cursor: pointer !important;
-            font-weight: 600 !important;
-            font-size: 0.9rem !important;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            position: fixed !important; bottom: 24px !important; right: 24px !important; z-index: 999990 !important;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important; color: #ffffff !important;
+            border: 2px solid rgba(255, 255, 255, 0.25) !important; border-radius: 50px !important;
+            padding: 10px 20px 10px 12px !important; display: flex !important; align-items: center !important; gap: 10px !important;
+            box-shadow: 0 8px 25px rgba(2, 132, 199, 0.4) !important; cursor: pointer !important;
+            font-weight: 600 !important; font-size: 0.9rem !important; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
-
-        #lucia-fab:hover {
-            transform: translateY(-3px) scale(1.02) !important;
-            box-shadow: 0 12px 30px rgba(2, 132, 199, 0.55) !important;
-        }
-
-        #lucia-fab-avatar {
-            position: relative;
-            width: 34px;
-            height: 34px;
-            flex-shrink: 0;
-        }
-
-        #lucia-fab-avatar img {
-            width: 34px !important;
-            height: 34px !important;
-            border-radius: 50% !important;
-            object-fit: contain !important;
-            background: #ffffff !important;
-            padding: 2px !important;
-        }
-
-        #lucia-online-dot {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 10px;
-            height: 10px;
-            background: #22c55e;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-        }
-
-        #lucia-unread-badge {
-            background: #ef4444;
-            color: #ffffff;
-            font-size: 0.72rem;
-            font-weight: 700;
-            padding: 2px 7px;
-            border-radius: 20px;
-            margin-left: 2px;
-            animation: luciaPulse 2s infinite;
-        }
-
-        @keyframes luciaPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.12); }
-        }
+        #lucia-fab:hover { transform: translateY(-3px) scale(1.02) !important; box-shadow: 0 12px 30px rgba(2, 132, 199, 0.55) !important; }
+        #lucia-fab-avatar { position: relative; width: 34px; height: 34px; flex-shrink: 0; }
+        #lucia-fab-avatar img { width: 34px !important; height: 34px !important; border-radius: 50% !important; object-fit: contain !important; background: #ffffff !important; padding: 2px !important; }
+        #lucia-online-dot { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: #22c55e; border: 2px solid #ffffff; border-radius: 50%; }
+        #lucia-unread-badge { background: #ef4444; color: #ffffff; font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-left: 2px; animation: luciaPulse 2s infinite; }
+        
+        @keyframes luciaPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 
         #lucia-window {
-            position: fixed !important;
-            bottom: 90px !important;
-            right: 24px !important;
-            width: 380px !important;
-            max-width: calc(100vw - 28px) !important;
-            height: 540px !important;
-            max-height: calc(100vh - 120px) !important;
-            background: #ffffff !important;
-            border-radius: 18px !important;
-            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.28) !important;
-            border: 1px solid #e2e8f0 !important;
-            display: none !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-            z-index: 999995 !important;
+            position: fixed !important; bottom: 90px !important; right: 24px !important;
+            width: 380px !important; max-width: calc(100vw - 28px) !important; height: 540px !important; max-height: calc(100vh - 120px) !important;
+            background: #ffffff !important; border-radius: 18px !important; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.28) !important;
+            border: 1px solid #e2e8f0 !important; display: none !important; flex-direction: column !important; overflow: hidden !important; z-index: 999995 !important;
             animation: luciaSlideUp 0.25s ease-out;
         }
+        #lucia-window.lucia-aberta { display: flex !important; }
+        
+        @keyframes luciaSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
-        #lucia-window.lucia-aberta {
-            display: flex !important;
-        }
+        .lucia-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #0284c7; }
+        .lucia-header-left { display: flex; align-items: center; gap: 10px; }
+        .lucia-header-left img { width: 38px; height: 38px; border-radius: 50%; background: #ffffff; padding: 2px; object-fit: contain; }
+        .lucia-header-title strong { display: block; font-size: 0.96rem; color: #ffffff !important; line-height: 1.2; }
+        .lucia-header-title small { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; color: #38bdf8 !important; }
+        .lucia-header-actions { display: flex; align-items: center; gap: 6px; }
+        
+        .lucia-icon-btn { background: rgba(255, 255, 255, 0.08); border: none; color: #cbd5e1; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s ease; }
+        .lucia-icon-btn:hover { background: rgba(255, 255, 255, 0.18); color: #ffffff; }
 
-        @keyframes luciaSlideUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        #lucia-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #f8fafc; scroll-behavior: smooth; }
+        .lucia-bubble { max-width: 88%; padding: 11px 14px; border-radius: 14px; font-size: 0.86rem; line-height: 1.5; word-wrap: break-word; position: relative; }
+        .lucia-bubble.bot { align-self: flex-start; background: #ffffff; color: #1e293b; border: 1px solid #e2e8f0; border-bottom-left-radius: 3px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04); }
+        .lucia-bubble.user { align-self: flex-end; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; border-bottom-right-radius: 3px; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25); }
 
-        .lucia-header {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #ffffff;
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 3px solid #0284c7;
-        }
+        .lucia-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .lucia-chip { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; border-radius: 20px; padding: 5px 11px; font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-family: inherit; }
+        .lucia-chip:hover { background: #0284c7; color: #ffffff; border-color: #0284c7; }
 
-        .lucia-header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .lucia-prod-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; margin-top: 8px; }
+        .lucia-prod-info { flex: 1; min-width: 0; }
+        .lucia-prod-info strong { display: block; font-size: 0.8rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lucia-prod-info span { font-size: 0.78rem; color: #0284c7; font-weight: 700; }
+        .lucia-prod-btn { background: #15803d; color: #ffffff; border: none; border-radius: 6px; padding: 6px 10px; font-size: 0.74rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .lucia-prod-btn:hover { background: #166534; }
 
-        .lucia-header-left img {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: #ffffff;
-            padding: 2px;
-            object-fit: contain;
-        }
-
-        .lucia-header-title strong {
-            display: block;
-            font-size: 0.96rem;
-            color: #ffffff !important;
-            line-height: 1.2;
-        }
-
-        .lucia-header-title small {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.74rem;
-            color: #38bdf8 !important;
-        }
-
-        .lucia-header-actions {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .lucia-icon-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: none;
-            color: #cbd5e1;
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
-        }
-
-        .lucia-icon-btn:hover {
-            background: rgba(255, 255, 255, 0.18);
-            color: #ffffff;
-        }
-
-        #lucia-messages {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background: #f8fafc;
-            scroll-behavior: smooth;
-        }
-
-        .lucia-bubble {
-            max-width: 88%;
-            padding: 11px 14px;
-            border-radius: 14px;
-            font-size: 0.86rem;
-            line-height: 1.5;
-            word-wrap: break-word;
-            position: relative;
-        }
-
-        .lucia-bubble.bot {
-            align-self: flex-start;
-            background: #ffffff;
-            color: #1e293b;
-            border: 1px solid #e2e8f0;
-            border-bottom-left-radius: 3px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
-        }
-
-        .lucia-bubble.user {
-            align-self: flex-end;
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-            color: #ffffff;
-            border-bottom-right-radius: 3px;
-            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
-        }
-
-        .lucia-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 10px;
-        }
-
-        .lucia-chip {
-            background: #f0f9ff;
-            color: #0369a1;
-            border: 1px solid #bae6fd;
-            border-radius: 20px;
-            padding: 5px 11px;
-            font-size: 0.76rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }
-
-        .lucia-chip:hover {
-            background: #0284c7;
-            color: #ffffff;
-            border-color: #0284c7;
-        }
-
-        .lucia-prod-card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 8px 10px;
-            margin-top: 8px;
-        }
-
-        .lucia-prod-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .lucia-prod-info strong {
-            display: block;
-            font-size: 0.8rem;
-            color: #0f172a;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .lucia-prod-info span {
-            font-size: 0.78rem;
-            color: #0284c7;
-            font-weight: 700;
-        }
-
-        .lucia-prod-btn {
-            background: #15803d;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 0.74rem;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .lucia-prod-btn:hover {
-            background: #166534;
-        }
-
-        .lucia-typing {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 10px 14px;
-        }
-
-        .lucia-typing span {
-            width: 6px;
-            height: 6px;
-            background: #64748b;
-            border-radius: 50%;
-            animation: luciaBounce 1.3s infinite ease-in-out;
-        }
-
+        .lucia-typing { display: inline-flex; align-items: center; gap: 4px; padding: 10px 14px; }
+        .lucia-typing span { width: 6px; height: 6px; background: #64748b; border-radius: 50%; animation: luciaBounce 1.3s infinite ease-in-out; }
         .lucia-typing span:nth-child(2) { animation-delay: 0.15s; }
         .lucia-typing span:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes luciaBounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
-        @keyframes luciaBounce {
-            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-            40% { transform: scale(1); opacity: 1; }
-        }
+        .lucia-footer { display: flex; align-items: center; padding: 10px 12px; background: #ffffff; border-top: 1px solid #e2e8f0; gap: 8px; }
+        #lucia-input { flex: 1; padding: 9px 14px; border: 1px solid #cbd5e1; border-radius: 22px; font-size: 0.85rem; outline: none; font-family: inherit; background: #f8fafc; color: #0f172a; }
+        #lucia-input:focus { border-color: #0284c7; background: #ffffff; }
+        #lucia-send { background: #0284c7; color: #ffffff; border: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem; transition: background 0.2s ease; }
+        #lucia-send:hover { background: #0369a1; }
 
-        .lucia-footer {
-            display: flex;
-            align-items: center;
-            padding: 10px 12px;
-            background: #ffffff;
-            border-top: 1px solid #e2e8f0;
-            gap: 8px;
-        }
-
-        #lucia-input {
-            flex: 1;
-            padding: 9px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 22px;
-            font-size: 0.85rem;
-            outline: none;
-            font-family: inherit;
-            background: #f8fafc;
-            color: #0f172a;
-        }
-
-        #lucia-input:focus {
-            border-color: #0284c7;
-            background: #ffffff;
-        }
-
-        #lucia-send {
-            background: #0284c7;
-            color: #ffffff;
-            border: none;
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: background 0.2s ease;
-        }
-
-        #lucia-send:hover {
-            background: #0369a1;
-        }
-
-        body.carrinho-aberto #lucia-fab,
-        body.carrinho-aberto #lucia-window {
-            display: none !important;
-        }
-
-        body.dark-mode #lucia-window {
-            background: #131d38 !important;
-            border-color: #1e293b !important;
-        }
-
-        body.dark-mode #lucia-messages {
-            background: #0b1329 !important;
-        }
-
-        body.dark-mode .lucia-bubble.bot {
-            background: #1e293b !important;
-            color: #f8fafc !important;
-            border-color: #334155 !important;
-        }
-
-        body.dark-mode .lucia-prod-card {
-            background: #0f172a !important;
-            border-color: #334155 !important;
-        }
-
-        body.dark-mode .lucia-prod-info strong {
-            color: #f8fafc !important;
-        }
-
-        body.dark-mode .lucia-chip {
-            background: #1e293b !important;
-            color: #38bdf8 !important;
-            border-color: #0284c7 !important;
-        }
-
-        body.dark-mode .lucia-chip:hover {
-            background: #0284c7 !important;
-            color: #ffffff !important;
-        }
-
-        body.dark-mode .lucia-footer {
-            background: #131d38 !important;
-            border-color: #1e293b !important;
-        }
-
-        body.dark-mode #lucia-input {
-            background: #0b1329 !important;
-            color: #ffffff !important;
-            border-color: #334155 !important;
-        }
+        body.carrinho-aberto #lucia-fab, body.carrinho-aberto #lucia-window { display: none !important; }
+        
+        /* Dark Mode */
+        body.dark-mode #lucia-window { background: #131d38 !important; border-color: #1e293b !important; }
+        body.dark-mode #lucia-messages { background: #0b1329 !important; }
+        body.dark-mode .lucia-bubble.bot { background: #1e293b !important; color: #f8fafc !important; border-color: #334155 !important; }
+        body.dark-mode .lucia-prod-card { background: #0f172a !important; border-color: #334155 !important; }
+        body.dark-mode .lucia-prod-info strong { color: #f8fafc !important; }
+        body.dark-mode .lucia-chip { background: #1e293b !important; color: #38bdf8 !important; border-color: #0284c7 !important; }
+        body.dark-mode .lucia-chip:hover { background: #0284c7 !important; color: #ffffff !important; }
+        body.dark-mode .lucia-footer { background: #131d38 !important; border-color: #1e293b !important; }
+        body.dark-mode #lucia-input { background: #0b1329 !important; color: #ffffff !important; border-color: #334155 !important; }
 
         @media (max-width: 600px) {
-            #lucia-fab {
-                bottom: 16px !important;
-                right: 14px !important;
-                padding: 8px 14px 8px 10px !important;
-                font-size: 0.82rem !important;
-            }
-            #lucia-window {
-                bottom: 74px !important;
-                right: 14px !important;
-                width: calc(100vw - 28px) !important;
-                height: 480px !important;
-            }
+            #lucia-fab { bottom: 16px !important; right: 14px !important; padding: 8px 14px 8px 10px !important; font-size: 0.82rem !important; }
+            #lucia-window { bottom: 74px !important; right: 14px !important; width: calc(100vw - 28px) !important; height: 480px !important; }
         }
     `;
     document.head.appendChild(style);
@@ -888,9 +539,7 @@ window.montarWidgetLucia = function() {
                     <button type="button" class="lucia-icon-btn" onclick="window.alternarChatLucia(event)" title="Fechar">✕</button>
                 </div>
             </div>
-
             <div id="lucia-messages"></div>
-
             <form class="lucia-footer" onsubmit="window.processarEnvioLucia(event)">
                 <input type="text" id="lucia-input" placeholder="Ex: fita led, meu pedido, cep 09010-000..." autocomplete="off">
                 <button type="submit" id="lucia-send" aria-label="Enviar mensagem">➤</button>
@@ -899,9 +548,11 @@ window.montarWidgetLucia = function() {
     `;
     document.body.appendChild(root);
 
+    // Renderiza a mensagem inicial
     window.renderizarBoasVindasLucia();
 };
 
+// 6. GATILHO SEGURO DE INICIALIZAÇÃO
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', window.montarWidgetLucia);
 } else {
