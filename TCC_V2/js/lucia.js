@@ -14,8 +14,13 @@ window.getUserLucia = function() {
     try {
         return JSON.parse(localStorage.getItem('jr_user') || 'null');
     } catch(e) {
-        return null; // Evita falhas se o navegador bloquear o LocalStorage
+        return null;
     }
+};
+
+// Função para fazer a Lúcia "pensar" por alguns milissegundos
+window.esperarLucia = function(ms) {
+    return new Promise(function(resolve) { setTimeout(resolve, ms); });
 };
 
 window.menuRapidoHTML = function() {
@@ -31,20 +36,25 @@ window.menuRapidoHTML = function() {
 };
 
 // 2. FUNÇÕES DE INTERAÇÃO DO CHAT
-window.renderizarBoasVindasLucia = function() {
+window.renderizarBoasVindasLucia = async function() {
     const msgContainer = document.getElementById('lucia-messages');
     if (!msgContainer) return;
+
+    // Limpa o chat para a mensagem inicial
+    msgContainer.innerHTML = '';
+
+    const typing = window.mostrarDigitandoLucia();
+    await window.esperarLucia(1000); // 1 segundo "a pensar" logo na abertura
+    if (typing) typing.remove();
 
     const user = window.getUserLucia();
     const saudacaoNome = (user && user.nome) ? `, <strong>${window.luciaEscape(user.nome.split(' ')[0])}</strong>` : '';
 
-    msgContainer.innerHTML = `
-        <div class="lucia-bubble bot">
-            Olá${saudacaoNome}! Sou a <strong>Lúcia</strong>, assistente virtual inteligente da <strong>JR Iluminação e Leds</strong>. 💡<br><br>
-            Consigo consultar o estoque em tempo real, rastrear seus pedidos, calcular a iluminação ideal para o seu ambiente ou estimar o prazo de entrega pelo CEP. Como posso te ajudar?
-            ${window.menuRapidoHTML()}
-        </div>
-    `;
+    window.adicionarBolhaLucia('bot', `
+        Olá${saudacaoNome}! Sou a <strong>Lúcia</strong>, assistente virtual inteligente da <strong>JR Iluminação e Leds</strong>. 💡<br><br>
+        Consigo consultar o estoque em tempo real, rastrear seus pedidos, calcular a iluminação ideal para o seu ambiente ou estimar o prazo de entrega pelo CEP. Como posso te ajudar?
+        ${window.menuRapidoHTML()}
+    `);
 };
 
 window.alternarChatLucia = function(event) {
@@ -61,6 +71,11 @@ window.alternarChatLucia = function(event) {
         win.classList.add('lucia-aberta');
         if (badge) badge.style.display = 'none';
         
+        const msgContainer = document.getElementById('lucia-messages');
+        if (msgContainer && msgContainer.children.length === 0) {
+            window.renderizarBoasVindasLucia();
+        }
+
         setTimeout(function() {
             const input = document.getElementById('lucia-input');
             if (input) input.focus();
@@ -69,6 +84,8 @@ window.alternarChatLucia = function(event) {
 };
 
 window.reiniciarChatLucia = function() {
+    const msgContainer = document.getElementById('lucia-messages');
+    if (msgContainer) msgContainer.innerHTML = '';
     window.renderizarBoasVindasLucia();
 };
 
@@ -108,10 +125,14 @@ window.navegarPelaLucia = function(rota) {
 window.comprarPelaLucia = function(idProduto) {
     const user = window.getUserLucia();
     if (!user) {
-        window.adicionarBolhaLucia('bot', `
-            Para adicionar produtos ao carrinho com segurança, você precisa entrar na sua conta primeiro. 🔐<br><br>
-            <button type="button" class="lucia-chip" onclick="window.navegarPelaLucia('login')">👉 Ir para a tela de Login</button>
-        `);
+        const typing = window.mostrarDigitandoLucia();
+        setTimeout(() => {
+            if (typing) typing.remove();
+            window.adicionarBolhaLucia('bot', `
+                Para adicionar produtos ao carrinho com segurança, você precisa entrar na sua conta primeiro. 🔐<br><br>
+                <button type="button" class="lucia-chip" onclick="window.navegarPelaLucia('login')">👉 Ir para a tela de Login</button>
+            `);
+        }, 600);
         return;
     }
     if (typeof adicionarAoCarrinho === 'function') {
@@ -130,9 +151,7 @@ window.obterProdutosParaLucia = async function() {
             window.produtosGlobais = json.dados;
             return json.dados;
         }
-    } catch (e) {
-        console.warn('Lúcia: falha ao buscar produtos.', e);
-    }
+    } catch (e) {}
     return [];
 };
 
@@ -141,6 +160,7 @@ window.acaoRapidaLucia = async function(acao) {
     if (acao === 'rastreio') {
         window.adicionarBolhaLucia('user', '📦 Quero rastrear meu pedido');
         const typing = window.mostrarDigitandoLucia();
+        await window.esperarLucia(1000); // Pensa por 1 segundo
 
         const user = window.getUserLucia();
         if (!user) {
@@ -193,6 +213,8 @@ window.acaoRapidaLucia = async function(acao) {
     else if (acao === 'catalogo') {
         window.adicionarBolhaLucia('user', '💡 Quero ver ofertas em estoque');
         const typing = window.mostrarDigitandoLucia();
+        await window.esperarLucia(1000);
+        
         const produtos = await window.obterProdutosParaLucia();
         if (typing) typing.remove();
 
@@ -231,6 +253,10 @@ window.acaoRapidaLucia = async function(acao) {
 
     else if (acao === 'calculadora') {
         window.adicionarBolhaLucia('user', '📐 Como calcular a iluminação ideal?');
+        const typing = window.mostrarDigitandoLucia();
+        await window.esperarLucia(1000);
+        if (typing) typing.remove();
+
         window.adicionarBolhaLucia('bot', `
             Eu faço o cálculo luminotécnico para você! 📏✨<br><br>
             Basta digitar aqui no chat a <strong>metragem do seu ambiente</strong> (por exemplo: <em>"12m2"</em> ou <em>"sala de 20 metros"</em>) que eu calculo quantos Lúmens e Watts você precisa!<br><br>
@@ -244,6 +270,10 @@ window.acaoRapidaLucia = async function(acao) {
 
     else if (acao === 'frete') {
         window.adicionarBolhaLucia('user', '🚚 Quero consultar prazo de entrega');
+        const typing = window.mostrarDigitandoLucia();
+        await window.esperarLucia(1000);
+        if (typing) typing.remove();
+
         window.adicionarBolhaLucia('bot', `
             Para consultar o prazo exato na hora, <strong>digite seu CEP</strong> aqui na conversa (ex: <code>09010-000</code>).<br><br>
             ⚡ <strong>Região do Grande ABC:</strong> Entrega expressa em 1 a 2 dias úteis!<br>
@@ -253,6 +283,10 @@ window.acaoRapidaLucia = async function(acao) {
 
     else if (acao === 'humano') {
         window.adicionarBolhaLucia('user', '💬 Falar com um especialista humano');
+        const typing = window.mostrarDigitandoLucia();
+        await window.esperarLucia(1000);
+        if (typing) typing.remove();
+
         window.adicionarBolhaLucia('bot', `
             Claro! Nossa equipe de atendimento em <strong>Santo André - SP</strong> está pronta para te atender:<br><br>
             📱 <strong>WhatsApp:</strong> (11) 9988-7766<br>
@@ -266,7 +300,7 @@ window.acaoRapidaLucia = async function(acao) {
 window.simularAmbienteLucia = async function(ambiente, metros) {
     window.adicionarBolhaLucia('user', 'Calcular para ' + ambiente + ' (' + metros + 'm²)');
     const typing = window.mostrarDigitandoLucia();
-    await new Promise(function(r) { setTimeout(r, 350); });
+    await window.esperarLucia(1200); // Simula o cálculo demorado
     if (typing) typing.remove();
 
     const lumensPorM2 = ambiente.indexOf('Cozinha') !== -1 ? 200 : 150;
@@ -297,7 +331,10 @@ window.processarEnvioLucia = async function(event) {
     window.adicionarBolhaLucia('user', window.luciaEscape(textoOriginal));
 
     const texto = textoOriginal.toLowerCase();
+    
+    // Mostra indicador e atrasa 1 segundo no mínimo para todas as respostas processadas via texto
     const typing = window.mostrarDigitandoLucia();
+    await window.esperarLucia(1000);
 
     // 4.1. Detecta CEP
     const cepMatch = texto.replace(/\D/g, '');
@@ -357,11 +394,11 @@ window.processarEnvioLucia = async function(event) {
 
     // 4.6. Busca no Catálogo
     const produtos = await window.obterProdutosParaLucia();
-    if (typing) typing.remove();
 
     if (texto.includes('barato') || texto.includes('menor preço') || texto.includes('promo')) {
         const disponiveis = produtos.filter(function(p) { return Number(p.quantidade) > 0; }).sort(function(a, b) { return Number(a.preco) - Number(b.preco); });
         if (disponiveis.length > 0) {
+            if (typing) typing.remove();
             const p = disponiveis[0];
             const preco = Number(p.preco).toFixed(2).replace('.', ',');
             window.adicionarBolhaLucia('bot', `
@@ -387,6 +424,7 @@ window.processarEnvioLucia = async function(event) {
         }).slice(0, 3);
 
         if (encontrados.length > 0) {
+            if (typing) typing.remove();
             const cardsHtml = encontrados.map(function(p) {
                 const preco = Number(p.preco).toFixed(2).replace('.', ',');
                 const disp = Number(p.quantidade) > 0;
@@ -413,6 +451,7 @@ window.processarEnvioLucia = async function(event) {
     }
 
     // Resposta padrão
+    if (typing) typing.remove();
     window.adicionarBolhaLucia('bot', `
         Posso te ajudar a encontrar qualquer item do nosso catálogo (experimente digitar <strong>"fita"</strong>, <strong>"lâmpada"</strong>, <strong>"painel"</strong> ou <strong>"spot"</strong>), consultar seu <strong>CEP</strong> ou calcular a iluminação ideal dizendo quantos <strong>m²</strong> tem seu espaço! 😊
         ${window.menuRapidoHTML()}
@@ -421,7 +460,7 @@ window.processarEnvioLucia = async function(event) {
 
 // 5. INICIALIZAÇÃO DA ESTRUTURA HTML DO WIDGET
 window.montarWidgetLucia = function() {
-    if (document.getElementById('lucia-widget-root')) return; // Evita duplicação
+    if (document.getElementById('lucia-widget-root')) return;
 
     const style = document.createElement('style');
     style.id = 'lucia-styles';
@@ -547,9 +586,6 @@ window.montarWidgetLucia = function() {
         </div>
     `;
     document.body.appendChild(root);
-
-    // Renderiza a mensagem inicial
-    window.renderizarBoasVindasLucia();
 };
 
 // 6. GATILHO SEGURO DE INICIALIZAÇÃO
