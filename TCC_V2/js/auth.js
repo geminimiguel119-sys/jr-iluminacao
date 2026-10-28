@@ -54,9 +54,9 @@ if (supabaseClient) {
                 const data = await res.json();
 
                 if (!data.sucesso) {
-                    // Limpa sessão pendente do Supabase e storage
                     await supabaseClient.auth.signOut();
                     localStorage.removeItem('jr_user');
+                    localStorage.removeItem('jr_token');
 
                     await Swal.fire({
                         title: 'Acesso em Análise',
@@ -70,7 +70,7 @@ if (supabaseClient) {
                     return;
                 }
 
-                // Usuário aprovado: grava dados validados pelo backend
+                // Utilizador aprovado: guarda dados e TOKEN
                 const usuarioFormatado = {
                     id: data.dados.id,
                     nome: data.dados.nome,
@@ -78,6 +78,7 @@ if (supabaseClient) {
                     role: data.dados.role
                 };
                 localStorage.setItem('jr_user', JSON.stringify(usuarioFormatado));
+                if (data.token) localStorage.setItem('jr_token', data.token);
 
                 await mostrarAlertaModerno('Acesso Confirmado!', `Bem-vindo(a) de volta, ${usuarioFormatado.nome}.`, 'success');
 
@@ -90,6 +91,7 @@ if (supabaseClient) {
             } catch (err) {
                 await supabaseClient.auth.signOut();
                 localStorage.removeItem('jr_user');
+                localStorage.removeItem('jr_token');
                 mostrarAlertaModerno('Erro de Conexão', 'Não foi possível validar o acesso Google.', 'error');
             }
         }
@@ -116,6 +118,7 @@ async function realizarLogin(event) {
         if (data.sucesso) {
             const user = { id: data.dados.id, nome: data.dados.nome, email: data.dados.email, role: data.dados.role };
             localStorage.setItem('jr_user', JSON.stringify(user));
+            if (data.token) localStorage.setItem('jr_token', data.token);
             
             await mostrarAlertaModerno('Acesso Confirmado!', `Bem-vindo(a) de volta, ${user.nome}.`, 'success');
             
@@ -134,6 +137,7 @@ async function realizarLogin(event) {
 async function fazerLogout() {
     if (supabaseClient) await supabaseClient.auth.signOut();
     localStorage.removeItem('jr_user');
+    localStorage.removeItem('jr_token'); // Limpa a chave de segurança
     
     await mostrarAlertaModerno('Desconectado', 'Sessão encerrada com segurança.', 'info');
     
