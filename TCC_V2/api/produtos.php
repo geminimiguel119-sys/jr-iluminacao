@@ -8,6 +8,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stmt = $pdo->query("SELECT * FROM produtos ORDER BY id DESC");
     echo json_encode(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+    // BLOQUEIO DE SEGURANÇA AQUI:
+    validarAdmin(); 
+
     $dados = json_decode(file_get_contents("php://input"), true);
     $acao = $dados['acao'] ?? '';
     
@@ -21,7 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $img = $dados['imagem'];
         
         if (!$id) {
-            // TESTE 6: Bloqueia duplicação pelo nome
             $check = $pdo->prepare("SELECT id FROM produtos WHERE LOWER(nome) = LOWER(?)");
             $check->execute([$nome]);
             if ($check->fetch()) {
