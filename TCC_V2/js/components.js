@@ -43,6 +43,9 @@ function renderHeader() {
   const header = document.querySelector('header');
   if (!header) return;
 
+  // Pega a primeira letra do nome para o Avatar
+  const inicial = user ? user.nome.charAt(0).toUpperCase() : '';
+
   header.innerHTML = `
     <div class="header-container">
       <button class="brand" onclick="fecharMenuMobile(); navegar('home');">
@@ -61,19 +64,20 @@ function renderHeader() {
             <a href="#" class="nav-link" onclick="fecharMenuMobile(); fazerLogout(); return false;" style="color: #f87171 !important;">🚪 Encerrar Sessão</a>
           </div>
           
-          <div class="desktop-user-dropdown" style="position: relative;">
-            <div class="user-chip" onclick="alternarUserMenu(event)" style="cursor: pointer; display: flex; align-items: center; gap: 8px; background: #dcfce7; padding: 6px 14px; border-radius: 20px; border: 1px solid #bbf7d0;">
-                <span style="color: #166534; font-size: 0.9em;">✅ Logado como:</span>
-                <strong style="color: #14532d;">${user.nome.split(' ')[0]}</strong>
-                <span style="font-size: 0.8rem; color: #14532d;">▼</span>
+          <div class="desktop-user-dropdown" style="position: relative; margin-left: 10px;">
+            <!-- AVATAR CIRCULAR -->
+            <div class="user-chip" onclick="alternarUserMenu(event)" style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; border-radius: 50%; font-weight: bold; font-size: 1.2rem; box-shadow: 0 3px 8px rgba(2,132,199,0.3); border: 2px solid #fff; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'" title="Conta: ${user.nome}">
+                ${inicial}
             </div>
-            <div id="user-menu" style="display: none; position: absolute; top: 115%; right: 0; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.18); border-radius: 8px; width: 220px; overflow: hidden; z-index: 100002;">
-                <div style="padding: 12px 15px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; color: #475569; word-break: break-all;">
-                    <strong style="color: #1e293b; display:block; margin-bottom: 4px;">Titular da Conta:</strong>
-                    ${user.email}
+            
+            <!-- MENU DROPDOWN -->
+            <div id="user-menu" style="display: none; position: absolute; top: 120%; right: 0; background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border-radius: 12px; width: 220px; overflow: hidden; z-index: 100002; border: 1px solid #e2e8f0;">
+                <div style="padding: 15px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; color: #475569; word-break: break-all;">
+                    <strong style="color: #1e293b; display:block; margin-bottom: 2px;">${user.nome}</strong>
+                    <span style="font-size: 0.75rem;">${user.email}</span>
                 </div>
-              <a href="#" onclick="fecharUserMenu(); navegar('perfil'); return false;" style="display: block; padding: 12px 15px; color: #1e293b; text-decoration: none; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem;">👤 Histórico de Compras</a>
-              <a href="#" onclick="fecharUserMenu(); fazerLogout(); return false;" style="display: block; padding: 12px 15px; color: #dc2626; text-decoration: none; font-size: 0.9rem;">🚪 Encerrar Sessão</a>
+              <a href="#" onclick="fecharUserMenu(); navegar('perfil'); return false;" style="display: block; padding: 12px 15px; color: #1e293b; text-decoration: none; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; transition: background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">👤 Meu Perfil</a>
+              <a href="#" onclick="fecharUserMenu(); fazerLogout(); return false;" style="display: block; padding: 12px 15px; color: #dc2626; text-decoration: none; font-size: 0.9rem; transition: background 0.2s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">🚪 Encerrar Sessão</a>
             </div>
           </div>
         ` : `<button class="btn btn-primary btn-login" onclick="fecharMenuMobile(); navegar('login');">Entrar na Loja</button>`}
