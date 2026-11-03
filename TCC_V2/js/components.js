@@ -271,80 +271,183 @@ async function realizarRegistro(event) {
   }
 }
 
-// === PERFIL DO CLIENTE ===
+// === PERFIL DO CLIENTE (REPAGINADO) ===
 window.renderPerfil = async function() {
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
     if (!user) return navegar('login');
     const main = document.querySelector('main');
     if (!main) return;
-    if (typeof mostrarLoading === 'function') mostrarLoading(true, "A carregar perfil...");
+    
+    if (typeof mostrarLoading === 'function') mostrarLoading(true, "Carregando o seu painel...");
 
     let pedidosHTML = '';
+    let totalGasto = 0;
+    let qtdPedidos = 0;
+
     try {
         const res = await apiFetch(`api/pedidos.php?email=${encodeURIComponent(user.email)}`);
         const pedidos = res.dados || [];
+        qtdPedidos = pedidos.length;
 
         if (pedidos.length === 0) {
-            pedidosHTML = '<p style="color: #64748b; padding: 15px 0;">Ainda não realizou nenhuma compra conosco.</p>';
+            pedidosHTML = `
+                <div style="text-align: center; padding: 40px 20px; background: #f8fafc; border-radius: 8px; border: 2px dashed #cbd5e1;">
+                    <span style="font-size: 3rem; opacity: 0.5;">🛒</span>
+                    <h4 style="color: #475569; margin: 10px 0;">Nenhuma compra encontrada</h4>
+                    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">Você ainda não realizou nenhum pedido em nossa loja.</p>
+                    <button class="btn btn-primary" onclick="navegar('produtos')">Explorar Produtos</button>
+                </div>
+            `;
         } else {
-            const getStatusColor = (status) => {
+            const getStatusInfo = (status) => {
                 switch(status) {
-                    case 'Pendente': return 'background: #fff3cd; color: #856404;';
-                    case 'Em processamento': return 'background: #cce5ff; color: #004085;';
-                    case 'Enviado': return 'background: #e2e3e5; color: #383d41;';
-                    case 'Concluído': return 'background: #d4edda; color: #155724;';
-                    case 'Entregue': return 'background: #d4edda; color: #155724;';
-                    default: return 'background: #e2e8f0; color: #475569;';
+                    case 'Pendente': return { bg: '#fffbeb', color: '#b45309', icon: '⏳', label: 'Aguardando Pagamento' };
+                    case 'Em processamento': return { bg: '#eff6ff', color: '#1d4ed8', icon: '⚙️', label: 'Preparando Envio' };
+                    case 'Enviado': return { bg: '#f3f4f6', color: '#374151', icon: '🚚', label: 'A Caminho' };
+                    case 'Concluído': 
+                    case 'Entregue': return { bg: '#dcfce7', color: '#15803d', icon: '✅', label: 'Entregue' };
+                    default: return { bg: '#f1f5f9', color: '#475569', icon: '📌', label: status };
                 }
             };
 
             pedidosHTML = `
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    ${pedidos.map(p => `
-                        <div style="border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; overflow: hidden;">
-                            <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
-                                <div>
-                                    <strong style="font-size: 1.1rem; color: #0f172a;">Pedido #${p.id}</strong>
-                                    <div style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">${new Date(p.data_pedido).toLocaleDateString('pt-BR')} • R$ ${parseFloat(p.total).toFixed(2).replace('.', ',')}</div>
-                                </div>
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    ${pedidos.map(p => {
+                        totalGasto += parseFloat(p.total);
+                        const s = getStatusInfo(p.status);
+                        
+                        return `
+                        <div style="border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.03); overflow: hidden; transition: all 0.2s;">
+                            <!-- Cabeçalho do Pedido (Clicável) -->
+                            <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #ffffff; border-bottom: 1px solid transparent;" 
+                                 onclick="const body = this.nextElementSibling; const isHidden = body.style.display === 'none'; body.style.display = isHidden ? 'block' : 'none'; this.style.borderBottomColor = isHidden ? '#e2e8f0' : 'transparent'; this.style.background = isHidden ? '#f8fafc' : '#ffffff';">
+                                
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <span style="padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; ${getStatusColor(p.status)}">${p.status}</span>
-                                    <span style="color: #94a3b8; font-size: 0.8rem;">Ver itens ▼</span>
+                                    <div style="background: ${s.bg}; color: ${s.color}; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                        ${s.icon}
+                                    </div>
+                                    <div>
+                                        <strong style="font-size: 1.05rem; color: #0f172a;">Pedido #${p.id}</strong>
+                                        <div style="color: #64748b; font-size: 0.85rem; margin-top: 2px;">Feito em ${new Date(p.data_pedido).toLocaleDateString('pt-BR')}</div>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; align-items: center; gap: 15px; text-align: right;">
+                                    <div style="display: none; @media(min-width: 600px){ display: block; }">
+                                        <strong style="display: block; color: #0f172a;">R$ ${parseFloat(p.total).toFixed(2).replace('.', ',')}</strong>
+                                        <span style="color: ${s.color}; font-size: 0.8rem; font-weight: 600;">${s.label}</span>
+                                    </div>
+                                    <span style="color: #94a3b8; font-size: 1.2rem;">⌄</span>
                                 </div>
                             </div>
-                            <div style="display: none; padding: 15px; border-top: 1px solid #e2e8f0;">
-                                <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #475569;">Produtos Comprados:</h4>
-                                <ul style="list-style: none; padding: 0; margin: 0;">
-                                    ${p.itens && p.itens.length > 0 ? p.itens.map(item => `
-                                        <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #cbd5e1; font-size: 0.9rem;">
-                                            <span style="color: #334155;">${item.quantidade}x ${escapeHtml(item.nome)}</span>
+                            
+                            <!-- Corpo do Pedido (Itens Ocultos) -->
+                            <div style="display: none; padding: 20px; background: #f8fafc;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <h4 style="margin: 0; font-size: 0.9rem; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Itens do Pedido</h4>
+                                    <span style="background: ${s.bg}; color: ${s.color}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;">Status: ${p.status}</span>
+                                </div>
+                                <ul style="list-style: none; padding: 0; margin: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                    ${p.itens && p.itens.length > 0 ? p.itens.map((item, idx) => `
+                                        <li style="display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: ${idx === p.itens.length - 1 ? 'none' : '1px solid #f1f5f9'}; font-size: 0.9rem;">
+                                            <span style="color: #334155;"><strong>${item.quantidade}x</strong> ${escapeHtml(item.nome)}</span>
                                             <strong style="color: #0f172a;">R$ ${parseFloat(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</strong>
                                         </li>
-                                    `).join('') : '<li style="font-size: 0.85rem; color: #94a3b8;">Nenhum detalhe de item encontrado.</li>'}
+                                    `).join('') : '<li style="padding: 15px; font-size: 0.85rem; color: #94a3b8;">Detalhes indisponíveis.</li>'}
                                 </ul>
+                                <div style="text-align: right; margin-top: 15px; font-size: 1.1rem; color: #0f172a;">
+                                    Total Pago: <strong>R$ ${parseFloat(p.total).toFixed(2).replace('.', ',')}</strong>
+                                </div>
                             </div>
                         </div>
-                    `).join('')}
+                    `;}).join('')}
                 </div>
             `;
         }
-    } catch (e) { pedidosHTML = '<p style="color: red;">Não foi possível carregar o histórico de compras.</p>'; } 
-    finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
+    } catch (e) { 
+        pedidosHTML = '<div style="padding: 20px; background: #fee2e2; color: #991b1b; border-radius: 8px;">Não foi possível carregar o histórico de compras no momento.</div>'; 
+    } 
+    finally { 
+        if (typeof mostrarLoading === 'function') mostrarLoading(false); 
+    }
+
+    // Inicial do nome para o Avatar
+    const inicial = user.nome.charAt(0).toUpperCase();
+    const totalGastoFmt = totalGasto.toFixed(2).replace('.', ',');
 
     main.innerHTML = `
-    <div class="container" style="max-width: 800px; margin: 30px auto; padding: 15px;">
-        <h2 style="margin-bottom: 20px; color: #1e293b;">Área do Cliente</h2>
-        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #e2e8f0;">
-            <h3 style="margin-top: 0; margin-bottom: 15px; color: #334155; border-bottom: 1px solid #eee; padding-bottom: 10px;">Dados Pessoais</h3>
-            <form onsubmit="atualizarMeuPerfil(event, ${user.id})">
-                <div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 5px; color: #64748b; font-size: 0.9rem;">Nome Completo</label><input type="text" id="perfil-nome" value="${user.nome}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;" required></div>
-                <div style="margin-bottom: 20px;"><label style="display: block; margin-bottom: 5px; color: #64748b; font-size: 0.9rem;">E-mail</label><input type="email" id="perfil-email" value="${user.email}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;" required></div>
-                <button type="submit" class="btn btn-primary" style="padding: 10px 20px; cursor: pointer; width: 100%; max-width: 220px;">Guardar Alterações</button>
-            </form>
+    <style>
+        #perfil-layout { display: grid; grid-template-columns: 320px 1fr; gap: 30px; align-items: start; }
+        @media (max-width: 850px) { #perfil-layout { grid-template-columns: 1fr; } }
+    </style>
+    
+    <div style="max-width: 1100px; margin: 40px auto; padding: 0 20px; font-family: 'Poppins', sans-serif;">
+        
+        <!-- Header do Perfil -->
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; box-shadow: 0 4px 10px rgba(2,132,199,0.3);">
+                ${inicial}
+            </div>
+            <div>
+                <h2 style="margin: 0 0 4px 0; color: #0f172a; font-size: 1.8rem;">Olá, ${escapeHtml(user.nome.split(' ')[0])}!</h2>
+                <p style="margin: 0; color: #64748b; font-size: 0.95rem;">Bem-vindo ao seu painel exclusivo de cliente.</p>
+            </div>
         </div>
-        <div style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-            <h3 style="margin-top: 0; margin-bottom: 15px; color: #334155; border-bottom: 1px solid #eee; padding-bottom: 10px;">O Meu Histórico de Compras</h3>
-            ${pedidosHTML}
+
+        <div id="perfil-layout">
+            <!-- COLUNA ESQUERDA: DADOS E RESUMO -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                
+                <!-- Card de Dados Pessoais -->
+                <div style="background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;">
+                    <h3 style="margin: 0 0 20px 0; color: #1e293b; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                        <span>👤</span> Meus Dados
+                    </h3>
+                    <form onsubmit="atualizarMeuPerfil(event, ${user.id})">
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 6px; color: #475569; font-size: 0.85rem; font-weight: 600;">Nome Completo</label>
+                            <input type="text" id="perfil-nome" value="${escapeHtml(user.nome)}" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'" required>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 6px; color: #475569; font-size: 0.85rem; font-weight: 600;">E-mail Cadastrado</label>
+                            <input type="email" id="perfil-email" value="${escapeHtml(user.email)}" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; transition: border 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'" required>
+                        </div>
+                        <button type="submit" style="width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; background: #0f172a; color: #fff; border: none; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">
+                            Atualizar Cadastro
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Botão de Sair (Logout rápido) -->
+                <button onclick="fazerLogout()" style="background: transparent; color: #ef4444; border: 1px solid #fca5a5; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
+                    🚪 Encerrar Sessão
+                </button>
+            </div>
+
+            <!-- COLUNA DIREITA: DASHBOARD E PEDIDOS -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                
+                <!-- Mini Dashboard de Métricas do Cliente -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 20px 25px; border-radius: 16px; box-shadow: 0 8px 20px rgba(2,132,199,0.25);">
+                        <p style="margin: 0; font-size: 0.9rem; font-weight: 500; opacity: 0.9;">Total de Pedidos</p>
+                        <h3 style="margin: 5px 0 0 0; font-size: 2.2rem; font-weight: 700;">${qtdPedidos}</h3>
+                    </div>
+                    <div style="background: #ffffff; color: #0f172a; padding: 20px 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;">
+                        <p style="margin: 0; font-size: 0.9rem; font-weight: 600; color: #64748b;">Valor Total Investido</p>
+                        <h3 style="margin: 5px 0 0 0; font-size: 1.8rem; font-weight: 700;">R$ ${totalGastoFmt}</h3>
+                    </div>
+                </div>
+
+                <!-- Lista de Pedidos Repaginada -->
+                <div style="background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;">
+                    <h3 style="margin: 0 0 20px 0; color: #1e293b; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
+                        <span>📦</span> Histórico de Compras
+                    </h3>
+                    ${pedidosHTML}
+                </div>
+
+            </div>
         </div>
     </div>`;
 };
