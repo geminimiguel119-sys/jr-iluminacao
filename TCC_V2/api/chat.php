@@ -9,7 +9,7 @@ $dados = json_decode($conteudo, true);
 $mensagem = $dados['mensagem'] ?? '';
 
 if (empty($mensagem)) {
-    echo json_encode(['sucesso' => false, 'resposta' => 'Pode repetir? Não percebi.']);
+    echo json_encode(['sucesso' => false, 'resposta' => 'Pode repetir? Não entendi.']);
     exit;
 }
 
@@ -54,16 +54,16 @@ if (!empty($geminiApiKey)) {
 // Respostas simuladas garantidas para não falhar na banca!
 // ==============================================================
 $msgLower = strtolower($mensagem);
-$resposta = "Como sou uma IA em fase de afinações para o TCC, ainda estou a aprender! Mas na JR Iluminação temos as melhores opções em LED para si. 💡";
+$resposta = "Como sou uma IA em fase de ajustes para o TCC, ainda estou aprendendo! Mas na JR Iluminação temos as melhores opções em LED para você. 💡";
 
 if (strpos($msgLower, 'lúmen') !== false || strpos($msgLower, 'calcul') !== false) {
-    $resposta = "Para calcular a iluminação, recomendamos entre **150 a 200 lúmens por metro quadrado** para salas e quartos. Quer espreitar os nossos Paineis LED? ✨";
+    $resposta = "Para calcular a iluminação, recomendamos entre **150 a 200 lúmens por metro quadrado** para salas e quartos. Quer dar uma olhada nos nossos Painéis LED? ✨";
 } elseif (strpos($msgLower, 'fita') !== false || strpos($msgLower, 'led') !== false) {
-    $resposta = "Temos excelentes **Fitas LED** no nosso catálogo! Trabalhamos com Branco Frio, Quente e RGB com controlo. Vá à nossa página de Produtos para ver os detalhes.";
+    $resposta = "Temos excelentes **Fitas LED** no nosso catálogo! Trabalhamos com Branco Frio, Quente e RGB com controle. Acesse nossa página de Produtos para ver os detalhes.";
 } elseif (strpos($msgLower, 'pedido') !== false || strpos($msgLower, 'status') !== false) {
-    $resposta = "Para ver o estado do seu pedido, basta entrar na sua **Área de Cliente** clicando em Histórico de Compras. Lá estão todas as informações! 📦";
+    $resposta = "Para ver o status do seu pedido, basta entrar na sua **Área do Cliente** clicando em Histórico de Compras. Lá estão todas as informações! 📦";
 } elseif (strpos($msgLower, 'olá') !== false || strpos($msgLower, 'oi') !== false || strpos($msgLower, 'bom dia') !== false) {
-    $resposta = "Olá! Seja muito bem-vindo à JR Iluminação. Como o posso ajudar a iluminar o seu ambiente hoje?";
+    $resposta = "Olá! Seja muito bem-vindo à JR Iluminação. Como posso te ajudar a iluminar o seu ambiente hoje?";
 }
 
 echo json_encode(['sucesso' => true, 'resposta' => $resposta]);
