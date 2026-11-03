@@ -135,10 +135,8 @@ function aplicarFiltrosCatalog() {
     
     const bateTexto = nome.includes(termo) || desc.includes(termo);
     
-    // Mostra tudo se a categoria ativa for 'todas'
     if (window.categoriaAtual === 'todas') return bateTexto;
     
-    // Filtro super robusto: Checa a categoria oficial, ou se o nome/descrição incluem a palavra chave do botão
     const bateCategoria = (categoriaDoBanco === window.categoriaAtual) || nome.includes(window.categoriaAtual) || desc.includes(window.categoriaAtual);
     
     return bateTexto && bateCategoria;
@@ -155,7 +153,6 @@ function aplicarFiltrosCatalog() {
         const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
         const disponivel = Number(p.quantidade || 0) > 0;
         
-        // Puxa a URL exata da base de dados (seja arquivo local da pasta uploads/ ou link)
         const imgUrl = (p.imagem && p.imagem.trim() !== '' && p.imagem !== 'placeholder.jpg') 
                        ? p.imagem 
                        : 'https://placehold.co/400x400/eeeeee/111827.jpg?text=Sem+Foto'; 
@@ -183,11 +180,11 @@ function aplicarFiltrosCatalog() {
 
 async function carregarProdutos() {
   try { const r = await apiFetch('api/produtos.php'); window.produtosGlobais = (r && r.dados) ? r.dados : []; aplicarFiltrosCatalog(); } 
-  catch(e) { const grid = document.getElementById('produtos-grid'); if (grid) grid.innerHTML = renderEmptyState('!', 'Erro', 'Confira a sua ligação.', "carregarProdutos()"); } 
+  catch(e) { const grid = document.getElementById('produtos-grid'); if (grid) grid.innerHTML = renderEmptyState('!', 'Erro', 'Verifique sua conexão.', "carregarProdutos()"); } 
   finally { if (typeof mostrarLoading === 'function') mostrarLoading(false); }
 }
 
-// === LOGIN E REGISTRO ===
+// === LOGIN E CADASTRO ===
 function renderLogin() {
   const app = document.getElementById('app');
   if (!app) return;
@@ -267,7 +264,7 @@ async function realizarRegistro(event) {
         if (typeof exibirMensagem === 'function') exibirMensagem("Erro: " + data.erro, "erro"); 
     }
   } catch(e) { 
-      if (typeof exibirMensagem === 'function') exibirMensagem("Erro de ligação ao servidor.", "erro"); 
+      if (typeof exibirMensagem === 'function') exibirMensagem("Erro de conexão com o servidor.", "erro"); 
   }
 }
 
@@ -278,7 +275,7 @@ window.renderPerfil = async function() {
     const main = document.querySelector('main');
     if (!main) return;
     
-    if (typeof mostrarLoading === 'function') mostrarLoading(true, "Carregando o seu painel...");
+    if (typeof mostrarLoading === 'function') mostrarLoading(true, "Carregando seu painel...");
 
     let pedidosHTML = '';
     let totalGasto = 0;
@@ -458,7 +455,7 @@ window.atualizarMeuPerfil = async function(event, id) {
     const email = document.getElementById('perfil-email').value;
     const user = JSON.parse(localStorage.getItem('jr_user'));
 
-    if (typeof mostrarLoading === 'function') mostrarLoading(true, "A guardar...");
+    if (typeof mostrarLoading === 'function') mostrarLoading(true, "Salvando...");
     try {
         const res = await apiFetch('api/perfil.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, nome: nome, email: email }) });
         if (res && res.sucesso) { user.nome = nome; user.email = email; localStorage.setItem('jr_user', JSON.stringify(user)); renderHeader(); if (typeof exibirMensagem === 'function') exibirMensagem("Perfil atualizado com sucesso!", "sucesso"); } 
@@ -472,7 +469,7 @@ function renderSkeletonGrid(n) { return Array.from({ length: n }, () => '<div cl
 // === CARRINHO ===
 function adicionarAoCarrinho(id) {
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
-  if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("Precisa de iniciar sessão para comprar.", "aviso"); return navegar('login'); }
+  if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("É necessário fazer login para comprar.", "aviso"); return navegar('login'); }
   if (!window.produtosGlobais || window.produtosGlobais.length === 0) return;
 
   const p = window.produtosGlobais.find(x => String(x.id) === String(id));
@@ -482,7 +479,7 @@ function adicionarAoCarrinho(id) {
   let item = carrinho.find(x => String(x.id) === String(p.id));
   let qtdAtual = item ? item.quantidade : 0;
 
-  if (qtdAtual + 1 > p.quantidade) { if (typeof exibirMensagem === 'function') exibirMensagem(`Limite atingido! Apenas ${p.quantidade} unidades em stock.`, "aviso"); return; }
+  if (qtdAtual + 1 > p.quantidade) { if (typeof exibirMensagem === 'function') exibirMensagem(`Limite atingido! Apenas ${p.quantidade} unidades em estoque.`, "aviso"); return; }
   
   if (item) item.quantidade += 1; else carrinho.push({ id: p.id, nome: p.nome, preco: Number(p.preco || 0), imagem: p.imagem, quantidade: 1 });
   localStorage.setItem('carrinho', JSON.stringify(carrinho)); renderHeader(); abrirCarrinho();
@@ -523,7 +520,7 @@ function renderizarItensCarrinho() {
   let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
   let total = 0;
 
-  let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h2 style="margin:0; font-size: 1.4rem;">🛒 O Seu Carrinho</h2><button onclick="fecharCarrinho()" style="background:none; border:none; font-size:28px; cursor:pointer; color: #888;">&times;</button></div><div style="flex:1; overflow-y:auto; padding-right:5px;">`;
+  let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h2 style="margin:0; font-size: 1.4rem;">🛒 Seu Carrinho</h2><button onclick="fecharCarrinho()" style="background:none; border:none; font-size:28px; cursor:pointer; color: #888;">&times;</button></div><div style="flex:1; overflow-y:auto; padding-right:5px;">`;
 
   if (carrinho.length === 0) html += `<p style="color:#666; text-align:center; margin-top:40px;">O seu carrinho está vazio.</p></div>`;
   else {
@@ -655,9 +652,9 @@ window.finalizarPedido = async function(btnElement) {
     
     if (!user) {
         if (typeof exibirMensagem === 'function') {
-            exibirMensagem("É obrigatório iniciar sessão (fazer login) para finalizar a compra e proteger os seus dados.", "aviso");
+            exibirMensagem("É obrigatório fazer login para finalizar a compra e proteger os seus dados.", "aviso");
         } else {
-            alert("⚠️ Segurança JR Iluminação:\n\nÉ obrigatório iniciar sessão (fazer login) para finalizar a compra.");
+            alert("⚠️ Segurança JR Iluminação:\n\nÉ obrigatório fazer login para finalizar a compra.");
         }
         fecharCarrinho();
         return navegar('login');
@@ -679,7 +676,7 @@ window.finalizarPedido = async function(btnElement) {
 
     if (!nome || !telefone || !cep || !cidade || !endereco) {
         if (typeof exibirMensagem === 'function') {
-            exibirMensagem("Preencha todos os campos do endereço e contacto.", "aviso");
+            exibirMensagem("Preencha todos os campos do endereço e contato.", "aviso");
         }
         return; 
     }
@@ -697,7 +694,7 @@ window.finalizarPedido = async function(btnElement) {
 
     if (btnElement) { 
         btnElement.disabled = true; 
-        btnElement.innerHTML = '⏳ A processar encomenda...'; 
+        btnElement.innerHTML = '⏳ Processando pedido...'; 
         btnElement.style.opacity = '0.7'; 
         btnElement.style.cursor = 'not-allowed'; 
     }
@@ -728,7 +725,7 @@ window.finalizarPedido = async function(btnElement) {
             exibirComprovantePedido(res.pedido_id, total, cidade, endereco, pagamento);
         } else {
             if (typeof exibirMensagem === 'function') {
-                exibirMensagem("Erro: " + (res.erro || "Falha ao gravar encomenda."), "erro");
+                exibirMensagem("Erro: " + (res.erro || "Falha ao salvar pedido."), "erro");
             }
             if (btnElement) { 
                 btnElement.disabled = false; 
@@ -740,7 +737,7 @@ window.finalizarPedido = async function(btnElement) {
     } catch (erro) {
         console.error("Erro no checkout mobile:", erro);
         if (typeof exibirMensagem === 'function') {
-            exibirMensagem("Erro ao comunicar com o servidor.", "erro");
+            exibirMensagem("Erro de conexão com o servidor.", "erro");
         }
         if (btnElement) { 
             btnElement.disabled = false; 
@@ -810,7 +807,7 @@ window.exibirComprovantePedido = function(pedidoId, total, cidade, endereco, pag
 
   modalRecibo.innerHTML = `
     <div style="background: #fff; border-radius: 12px; max-width: 440px; width: 100%; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; animation: fadeInToast 0.3s ease; margin: auto;">
-      <h2 style="margin: 0 0 10px 0; color: #0f172a; font-size: 1.5rem;">🎉 Pedido Registado!</h2>
+      <h2 style="margin: 0 0 10px 0; color: #0f172a; font-size: 1.5rem;">🎉 Pedido Registrado!</h2>
       <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;">Pedido <strong>#${pedidoId}</strong> gerado com sucesso.</p>
       
       ${infoPagamentoHTML}
@@ -822,7 +819,7 @@ window.exibirComprovantePedido = function(pedidoId, total, cidade, endereco, pag
 
       <div style="display: flex; gap: 10px;">
         <button class="btn btn-primary" style="flex: 1; padding: 12px;" onclick="document.getElementById('modal-recibo-pedido').remove(); navegar('perfil');">Ver no Perfil</button>
-        <button class="btn" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; background: #fff; color: #334155;" onclick="document.getElementById('modal-recibo-pedido').remove(); navegar('produtos');">Continuar a Comprar</button>
+        <button class="btn" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; background: #fff; color: #334155;" onclick="document.getElementById('modal-recibo-pedido').remove(); navegar('produtos');">Continuar Comprando</button>
       </div>
     </div>
   `;
@@ -851,7 +848,7 @@ window.simularAprovacaoPedido = async function(pedidoId, btnEl) {
 
 function feedbackCompra(botao, idProduto) {
     const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
-    if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("Inicie sessão para comprar", "aviso"); return navegar('login'); }
+    if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("Faça login para comprar", "aviso"); return navegar('login'); }
     adicionarAoCarrinho(idProduto);
     const textoOriginal = botao.innerHTML;
     botao.innerHTML = "✓ Adicionado"; botao.style.backgroundColor = "#15803d"; botao.style.color = "#ffffff"; botao.style.pointerEvents = "none";
@@ -888,3 +885,4 @@ window.exibirMensagem = function(msg, tipo = 'sucesso') {
         setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
     }, 3000); 
 };
+```eof
