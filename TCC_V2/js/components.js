@@ -885,4 +885,3 @@ window.exibirMensagem = function(msg, tipo = 'sucesso') {
         setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
     }, 3000); 
 };
-```eof
