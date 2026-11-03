@@ -15,9 +15,9 @@ if (empty($mensagem)) {
 
 // ==============================================================
 // 1. MODO INTELIGÊNCIA ARTIFICIAL REAL (GEMINI API)
-// Se já tiver a sua chave do Google AI Studio, cole-a aqui abaixo:
+// Sua chave foi inserida diretamente aqui:
 // ==============================================================
-$geminiApiKey = getenv('GEMINI_API_KEY') ?: ''; // Ex: 'AIzaSyA...'
+$geminiApiKey = 'AQ.Ab8RN6J7thAYH7hVYDJe6HO18aNe2E8tadHli7SIdq1FhaMIZg';
 
 if (!empty($geminiApiKey)) {
     $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $geminiApiKey;
@@ -50,8 +50,7 @@ if (!empty($geminiApiKey)) {
 }
 
 // ==============================================================
-// 2. MODO SALVA-VIDAS TCC (SEM API KEY OU OFF-LINE)
-// Respostas simuladas garantidas para não falhar na banca!
+// 2. MODO SALVA-VIDAS TCC (CASO A CHAVE FALHE)
 // ==============================================================
 $msgLower = strtolower($mensagem);
 $resposta = "Como sou uma IA em fase de ajustes para o TCC, ainda estou aprendendo! Mas na JR Iluminação temos as melhores opções em LED para você. 💡";
