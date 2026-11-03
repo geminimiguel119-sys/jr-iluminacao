@@ -1,25 +1,30 @@
 <?php
-// api/perfil.php
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/conexao.php';
 
-$host = "db.bfppcxnxqagpesuyjlhe.supabase.co";
-$dbName = "postgres";
-$usuario = "postgres";
-$senha = "An1bal_19691910@";
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
+
+$conteudo = file_get_contents("php://input");
+$dados = json_decode($conteudo, true);
+
+$id = intval($dados['id'] ?? 0);
+$nome = sanitizar($dados['nome'] ?? '');
+$email = sanitizar($dados['email'] ?? '');
+
+if ($id <= 0) erro('ID inválido ou sessão expirada.');
 
 try {
-    $pdo = new PDO("pgsql:host=$host;port=5432;dbname=$dbName", $usuario, $senha, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    $dados = json_decode(file_get_contents("php://input"), true);
+    // Verifica se o e-mail já pertence a outra conta
+    $stmtCheck = $pdo->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
+    $stmtCheck->execute([$email, $id]);
+    if ($stmtCheck->fetch()) erro('E-mail já está em uso.');
 
-    if (isset($dados['id']) && isset($dados['nome']) && isset($dados['email'])) {
-        $stmt = $pdo->prepare("UPDATE usuarios SET nome = ?, email = ? WHERE id = ?");
-        $stmt->execute([$dados['nome'], $dados['email'], $dados['id']]);
-        echo json_encode(['sucesso' => true]);
-    } else {
-        echo json_encode(['sucesso' => false, 'erro' => 'Dados incompletos.']);
-    }
-} catch (PDOException $e) {
-    echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()]);
+    // Salva as alterações
+    $stmt = $pdo->prepare("UPDATE usuarios SET nome = ?, email = ? WHERE id = ?");
+    $stmt->execute([$nome, $email, $id]);
+    
+    sucesso('Perfil atualizado com sucesso!');
+} catch(PDOException $e) {
+    erro('Erro BD: ' . $e->getMessage());
 }
 ?>
