@@ -3,9 +3,9 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // ==========================================
-// CREDENCIAIS EXATAMENTE COMO VOCÊ MANDOU
+// NOVA CHAVE - INVASOR EXPULSO
 // ==========================================
-$token = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
+$token = "8700166269:AAEgnRWKyNT8Uw8EppsNK7VVSmyHYF9YlYY";
 $chatIdAutorizado = "5034813131";
 
 $conteudo = file_get_contents("php://input");
@@ -117,7 +117,7 @@ if (isset($update['message'])) {
 }
 
 // ==========================================
-// 3. NÚCLEO DE FUNÇÕES (REPAGINADAS)
+// 3. NÚCLEO DE FUNÇÕES
 // ==========================================
 function processarComando($comando, $chatId, $pdo, $token, $partes = []) {
     switch ($comando) {
