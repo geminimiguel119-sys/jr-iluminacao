@@ -6,25 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JR Iluminação e Leds</title>
 
-    <!-- Favicon Oficial -->
     <link rel="icon" type="image/jpeg" href="img/logo.jpg">
-
-    <!-- SDK do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- Fonte Google Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- CSS Unificado Sem Conflitos -->
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/polished.css">
 
     <style>
-        /* ==========================================
-           RODAPÉ (SEU CÓDIGO ORIGINAL)
-           ========================================== */
+        /* Rodapé */
         .site-footer {
             background: #090e1f;
             color: #94a3b8;
@@ -60,9 +53,7 @@
             .site-footer { padding: 40px 16px 20px; }
         }
 
-        /* ==========================================
-           ESTILOS DO CHAT DA LÚCIA
-           ========================================== */
+        /* Estilos do Chat da Lúcia */
         #btn-abrir-chat {
             position: fixed;
             bottom: 20px;
@@ -134,7 +125,7 @@
         }
 
         .mensagem {
-            max-width: 80%;
+            max-width: 85%;
             padding: 10px 15px;
             border-radius: 15px;
             font-size: 14px;
@@ -153,6 +144,32 @@
             color: #333;
             align-self: flex-start;
             border-bottom-left-radius: 2px;
+        }
+
+        /* Botões de Opções Prontas */
+        .chat-sugestoes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-sugestao {
+            background-color: #ffffff;
+            color: #14213d;
+            border: 1px solid #14213d;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+        }
+
+        .btn-sugestao:hover {
+            background-color: #14213d;
+            color: #ffffff;
         }
 
         .chat-input {
@@ -217,17 +234,14 @@
         </div>
     </footer>
 
-    <!-- ==========================================
-         INTERFACE DO CHAT DA LÚCIA
-         ========================================== -->
+    <!-- INTERFACE DO CHAT DA LÚCIA -->
     <button id="btn-abrir-chat" onclick="toggleChat()">
-        <!-- Ícone simples pro botão -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 1.815.495 3.514 1.353 5.006L2 22l5.163-1.31A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18c-1.574 0-3.064-.366-4.385-1l-2.735.694.707-2.616C4.942 15.65 4.5 13.91 4.5 12 4.5 7.864 7.864 4.5 12 4.5s7.5 3.364 7.5 7.5-3.364 7.5-7.5 7.5z"/></svg>
         Falar com a Lúcia
     </button>
 
     <div id="chat-container">
-        <!-- Cabeçalho com a Logo -->
+        <!-- Cabeçalho -->
         <div class="chat-header">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40" height="40">
                 <circle cx="50" cy="50" r="50" fill="#fca311" />
@@ -242,10 +256,19 @@
             <button class="btn-fechar" onclick="toggleChat()">✖</button>
         </div>
 
+        <!-- Corpo das mensagens -->
         <div id="chat-mensagens" class="chat-corpo">
-            <div class="mensagem msg-bot">Olá! 👋 Sou a Lúcia, assistente da JR Iluminação. O que você procura hoje? (Ex: Fitas, Painéis, Spots)</div>
+            <div class="mensagem msg-bot">
+                Olá! 👋 Sou a Lúcia, assistente da JR Iluminação. Escolha uma opção abaixo ou digite sua dúvida:
+                <div class="chat-sugestoes">
+                    <button class="btn-sugestao" onclick="enviarMensagemPronta('Fitas LED')">Fitas LED</button>
+                    <button class="btn-sugestao" onclick="enviarMensagemPronta('Painéis Plafon')">Painéis</button>
+                    <button class="btn-sugestao" onclick="enviarMensagemPronta('Status do Pedido')">Meu Pedido</button>
+                </div>
+            </div>
         </div>
 
+        <!-- Input -->
         <div class="chat-input">
             <input type="text" id="mensagem-input" placeholder="Digite sua dúvida..." onkeypress="verificarEnter(event)">
             <button onclick="enviarMensagem()">Enviar</button>
@@ -256,17 +279,19 @@
     <script>
         function toggleChat() {
             const chat = document.getElementById('chat-container');
-            if (chat.style.display === 'none' || chat.style.display === '') {
-                chat.style.display = 'flex';
-            } else {
-                chat.style.display = 'none';
-            }
+            chat.style.display = (chat.style.display === 'none' || chat.style.display === '') ? 'flex' : 'none';
         }
 
         function verificarEnter(event) {
             if (event.key === 'Enter') {
                 enviarMensagem();
             }
+        }
+
+        // Função para os botões de opção rápida
+        function enviarMensagemPronta(texto) {
+            document.getElementById('mensagem-input').value = texto;
+            enviarMensagem();
         }
 
         async function enviarMensagem() {
@@ -323,11 +348,8 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Remove qualquer rastro de modo escuro que possa ter ficado no cache do navegador
             document.body.classList.remove('dark-mode');
             localStorage.removeItem('jr_dark_mode');
-
-            // Inicia o sistema
             if (typeof checkSessao === 'function') checkSessao();
         });
     </script>
