@@ -22,7 +22,9 @@
     <link rel="stylesheet" href="css/polished.css">
 
     <style>
-        /* Rodapé */
+        /* ==========================================
+           RODAPÉ (SEU CÓDIGO ORIGINAL)
+           ========================================== */
         .site-footer {
             background: #090e1f;
             color: #94a3b8;
@@ -56,6 +58,129 @@
         @media (max-width: 768px) {
             .footer-grid { grid-template-columns: 1fr; gap: 24px; }
             .site-footer { padding: 40px 16px 20px; }
+        }
+
+        /* ==========================================
+           ESTILOS DO CHAT DA LÚCIA
+           ========================================== */
+        #btn-abrir-chat {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #14213d;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+        }
+
+        #chat-container {
+            display: none;
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 350px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            overflow: hidden;
+            z-index: 1000;
+            flex-direction: column;
+            border: 1px solid #ddd;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #14213d;
+            color: white;
+            padding: 15px;
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .btn-fechar {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .chat-corpo {
+            height: 300px;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mensagem {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .msg-usuario {
+            background-color: #14213d;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .msg-bot {
+            background-color: #e5e5e5;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background-color: #ffffff;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .chat-input button {
+            background-color: #fca311;
+            color: #14213d;
+            border: none;
+            padding: 10px 15px;
+            margin-left: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
         }
     </style>
 </head>
@@ -92,6 +217,100 @@
         </div>
     </footer>
 
+    <!-- ==========================================
+         INTERFACE DO CHAT DA LÚCIA
+         ========================================== -->
+    <button id="btn-abrir-chat" onclick="toggleChat()">
+        <!-- Ícone simples pro botão -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 1.815.495 3.514 1.353 5.006L2 22l5.163-1.31A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18c-1.574 0-3.064-.366-4.385-1l-2.735.694.707-2.616C4.942 15.65 4.5 13.91 4.5 12 4.5 7.864 7.864 4.5 12 4.5s7.5 3.364 7.5 7.5-3.364 7.5-7.5 7.5z"/></svg>
+        Falar com a Lúcia
+    </button>
+
+    <div id="chat-container">
+        <!-- Cabeçalho com a Logo -->
+        <div class="chat-header">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40" height="40">
+                <circle cx="50" cy="50" r="50" fill="#fca311" />
+                <path d="M50 20 C35 20 25 32 25 45 C25 55 33 63 36 72 L64 72 C67 63 75 55 75 45 C75 32 65 20 50 20 Z" fill="#ffffff" />
+                <circle cx="40" cy="42" r="4" fill="#14213d" />
+                <circle cx="60" cy="42" r="4" fill="#14213d" />
+                <path d="M42 52 Q50 62 58 52" stroke="#14213d" stroke-width="3" fill="transparent" stroke-linecap="round" />
+                <path d="M40 74 L60 74 L58 84 L42 84 Z" fill="#e5e5e5" />
+                <path d="M44 86 L56 86 L54 92 L46 92 Z" fill="#cccccc" />
+            </svg>
+            <h3>Lúcia - JR Iluminação</h3>
+            <button class="btn-fechar" onclick="toggleChat()">✖</button>
+        </div>
+
+        <div id="chat-mensagens" class="chat-corpo">
+            <div class="mensagem msg-bot">Olá! 👋 Sou a Lúcia, assistente da JR Iluminação. O que você procura hoje? (Ex: Fitas, Painéis, Spots)</div>
+        </div>
+
+        <div class="chat-input">
+            <input type="text" id="mensagem-input" placeholder="Digite sua dúvida..." onkeypress="verificarEnter(event)">
+            <button onclick="enviarMensagem()">Enviar</button>
+        </div>
+    </div>
+
+    <!-- Lógica de Funcionamento do Chat -->
+    <script>
+        function toggleChat() {
+            const chat = document.getElementById('chat-container');
+            if (chat.style.display === 'none' || chat.style.display === '') {
+                chat.style.display = 'flex';
+            } else {
+                chat.style.display = 'none';
+            }
+        }
+
+        function verificarEnter(event) {
+            if (event.key === 'Enter') {
+                enviarMensagem();
+            }
+        }
+
+        async function enviarMensagem() {
+            const input = document.getElementById('mensagem-input');
+            const mensagemTexto = input.value.trim();
+            const areaMensagens = document.getElementById('chat-mensagens');
+
+            if (mensagemTexto === '') return;
+
+            areaMensagens.innerHTML += `<div class="mensagem msg-usuario">${mensagemTexto}</div>`;
+            input.value = '';
+            areaMensagens.scrollTop = areaMensagens.scrollHeight;
+
+            const idDigitando = "digitando-" + Date.now();
+            areaMensagens.innerHTML += `<div id="${idDigitando}" class="mensagem msg-bot">Digitando...</div>`;
+            areaMensagens.scrollTop = areaMensagens.scrollHeight;
+
+            try {
+                const resposta = await fetch('api/chat.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mensagem: mensagemTexto })
+                });
+
+                const dados = await resposta.json();
+                document.getElementById(idDigitando).remove();
+
+                if (dados.sucesso) {
+                    const textoFormatado = dados.resposta.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                    areaMensagens.innerHTML += `<div class="mensagem msg-bot">${textoFormatado}</div>`;
+                } else {
+                    areaMensagens.innerHTML += `<div class="mensagem msg-bot">Erro: Não consegui processar a resposta.</div>`;
+                }
+
+            } catch (erro) {
+                document.getElementById(idDigitando).remove();
+                areaMensagens.innerHTML += `<div class="mensagem msg-bot">Erro de conexão. Verifique sua internet.</div>`;
+                console.error("Erro no fetch:", erro);
+            }
+
+            areaMensagens.scrollTop = areaMensagens.scrollHeight;
+        }
+    </script>
+
     <!-- SCRIPTS ESSENCIAIS -->
     <script src="js/utils.js"></script>
     <script src="js/router.js"></script>
@@ -104,7 +323,7 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Remove qualquer rastro de modo escuro que possa ter ficado no cache do navegador de vocês
+            // Remove qualquer rastro de modo escuro que possa ter ficado no cache do navegador
             document.body.classList.remove('dark-mode');
             localStorage.removeItem('jr_dark_mode');
 
