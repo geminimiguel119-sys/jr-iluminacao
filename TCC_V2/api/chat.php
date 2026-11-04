@@ -5,66 +5,43 @@ header('Content-Type: application/json; charset=utf-8');
 
 $conteudo = file_get_contents("php://input");
 $dados = json_decode($conteudo, true);
-$mensagem = $dados['mensagem'] ?? '';
+$mensagem = strtolower(trim($dados['mensagem'] ?? ''));
 
+// Se o usuário mandar vazio
 if (empty($mensagem)) {
-    echo json_encode(['sucesso' => false, 'resposta' => 'Pode repetir? Não entendi.']);
+    echo json_encode(['sucesso' => true, 'resposta' => 'Desculpe, não entendi. Pode repetir?']);
     exit;
 }
 
-// Puxa a chave segura do Render
-$geminiApiKey = getenv('GEMINI_API_KEY') ?: ($_ENV['GEMINI_API_KEY'] ?? ($_SERVER['GEMINI_API_KEY'] ?? '')); 
-
-if (!empty($geminiApiKey)) {
-    // MUDANÇA MASTER: Usando o modelo universal gemini-pro (funciona em qualquer conta)
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" . $geminiApiKey;
-    
-    $payload = [
-        "contents" => [
-            [
-                "parts" => [
-                    ["text" => "Você é a Lúcia, uma assistente virtual simpática da loja de e-commerce JR Iluminação e Leds. Seja muito breve, educada e direta. O cliente perguntou: " . $mensagem]
-                ]
-            ]
-        ]
-    ];
-    
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
-    
-    $respostaAPI = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    $resultado = json_decode($respostaAPI, true);
-    
-    // Se a IA responder com sucesso, exibe a resposta real e encerra
-    if ($httpCode == 200 && isset($resultado['candidates'][0]['content']['parts'][0]['text'])) {
-        $textoBot = $resultado['candidates'][0]['content']['parts'][0]['text'];
-        echo json_encode(['sucesso' => true, 'resposta' => trim($textoBot)]);
-        exit;
-    }
-}
+// Resposta padrão caso ela não encontre a palavra-chave
+$resposta = "Não encontrei exatamente o que você procura. Mas fique à vontade para navegar pelo nosso catálogo de Produtos ou acessar sua Área do Cliente! 💡";
 
 // ==============================================================
-// MODO SALVA-VIDAS TCC (Fallback)
+// MOTOR DE BUSCA INTERNO DA LÚCIA (100% LOCAL E BLINDADO)
 // ==============================================================
-$msgLower = strtolower($mensagem);
-$resposta = "Como sou uma IA em fase de ajustes para o TCC, ainda estou aprendendo! Mas na JR Iluminação temos as melhores opções em LED para você. 💡";
 
-if (strpos($msgLower, 'lúmen') !== false || strpos($msgLower, 'calcul') !== false) {
-    $resposta = "Para calcular a iluminação, recomendamos entre **150 a 200 lúmens por metro quadrado** para salas e quartos. Quer dar uma olhada nos nossos Painéis LED? ✨";
-} elseif (strpos($msgLower, 'fita') !== false || strpos($msgLower, 'led') !== false) {
-    $resposta = "Temos excelentes **Fitas LED** no nosso catálogo! Trabalhamos com Branco Frio, Quente e RGB com controle. Acesse nossa página de Produtos para ver os detalhes.";
-} elseif (strpos($msgLower, 'pedido') !== false || strpos($msgLower, 'status') !== false) {
-    $resposta = "Para ver o status do seu pedido, basta entrar na sua **Área do Cliente** clicando em Histórico de Compras. Lá estão todas as informações! 📦";
-} elseif (strpos($msgLower, 'olá') !== false || strpos($msgLower, 'oi') !== false || strpos($msgLower, 'bom dia') !== false) {
-    $resposta = "Olá! Seja muito bem-vindo à JR Iluminação. Como posso te ajudar a iluminar o seu ambiente hoje?";
+if (strpos($mensagem, 'fita') !== false || strpos($mensagem, 'led') !== false) {
+    $resposta = "Temos excelentes opções de **Fitas LED** (Branco Frio, Quente e RGB)! Para ver todas, clique no menu **Produtos** e selecione o filtro 'Fitas LED'. ✨";
+} 
+elseif (strpos($mensagem, 'spot') !== false || strpos($mensagem, 'embutir') !== false || strpos($mensagem, 'embutido') !== false) {
+    $resposta = "Buscando por **Spots e Embutidos**? Nós temos modelos perfeitos para teto de gesso e sanca. Dê uma olhada na nossa aba de Produtos! 🎯";
+} 
+elseif (strpos($mensagem, 'lâmpada') !== false || strpos($mensagem, 'lampada') !== false) {
+    $resposta = "Temos **Lâmpadas LED** de várias potências, super econômicas e duráveis. Você pode conferir nosso estoque completo acessando o Catálogo. 💡";
+} 
+elseif (strpos($mensagem, 'painel') !== false || strpos($mensagem, 'plafon') !== false) {
+    $resposta = "Os **Painéis e Plafons LED** são ideais para iluminação geral e deixam o ambiente super moderno. Recomendo usar o filtro 'Painéis Plafon' na aba de Produtos! 🏢";
+} 
+elseif (strpos($mensagem, 'pedido') !== false || strpos($mensagem, 'status') !== false || strpos($mensagem, 'rastreio') !== false) {
+    $resposta = "Para acompanhar o status do seu pedido, faça login e acesse o seu **Histórico de Compras** no seu Perfil. Lá você encontra todas as atualizações! 📦";
+} 
+elseif (strpos($mensagem, 'pagamento') !== false || strpos($mensagem, 'pix') !== false || strpos($mensagem, 'cartão') !== false) {
+    $resposta = "Aceitamos pagamentos via **PIX (aprovação na hora)**, Boleto e Cartão de Crédito. Tudo com muita segurança para o seu projeto! 💳";
+} 
+elseif (strpos($mensagem, 'olá') !== false || strpos($mensagem, 'oi') !== false || strpos($mensagem, 'boa') !== false || strpos($mensagem, 'bom') !== false) {
+    $resposta = "Olá! 👋 Sou a Lúcia, assistente virtual da JR Iluminação. Posso te ajudar a encontrar algum produto ou tirar dúvidas sobre o seu pedido?";
 }
 
+// Retorna a resposta para a tela
 echo json_encode(['sucesso' => true, 'resposta' => $resposta]);
 ?>
