@@ -15,9 +15,9 @@ if (empty($mensagem)) {
 
 // ==============================================================
 // 1. MODO INTELIGÊNCIA ARTIFICIAL REAL (GEMINI API)
-// Sua chave foi inserida diretamente aqui:
+// Puxa a chave oculta e segura configurada no painel do Render
 // ==============================================================
-$geminiApiKey = 'AQ.Ab8RN6J7thAYH7hVYDJe6HO18aNe2E8tadHli7SIdq1FhaMIZg';
+$geminiApiKey = getenv('GEMINI_API_KEY') ?: ''; 
 
 if (!empty($geminiApiKey)) {
     $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $geminiApiKey;
@@ -39,18 +39,21 @@ if (!empty($geminiApiKey)) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     
     $respostaAPI = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
     
     $resultado = json_decode($respostaAPI, true);
-    if (isset($resultado['candidates'][0]['content']['parts'][0]['text'])) {
+    
+    // Se a API do Google responder com sucesso (código 200)
+    if ($httpCode == 200 && isset($resultado['candidates'][0]['content']['parts'][0]['text'])) {
         $textoBot = $resultado['candidates'][0]['content']['parts'][0]['text'];
         echo json_encode(['sucesso' => true, 'resposta' => trim($textoBot)]);
-        exit;
+        exit; // Encerra aqui se a IA funcionou perfeitamente
     }
 }
 
 // ==============================================================
-// 2. MODO SALVA-VIDAS TCC (CASO A CHAVE FALHE)
+// 2. MODO SALVA-VIDAS TCC (SEM CHAVE OU SE A API FALHAR)
 // ==============================================================
 $msgLower = strtolower($mensagem);
 $resposta = "Como sou uma IA em fase de ajustes para o TCC, ainda estou aprendendo! Mas na JR Iluminação temos as melhores opções em LED para você. 💡";
