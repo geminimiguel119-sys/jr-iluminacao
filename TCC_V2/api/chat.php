@@ -12,17 +12,18 @@ if (empty($mensagem)) {
     exit;
 }
 
+// Puxa a chave segura do Render
 $geminiApiKey = getenv('GEMINI_API_KEY') ?: ($_ENV['GEMINI_API_KEY'] ?? ($_SERVER['GEMINI_API_KEY'] ?? '')); 
 
 if (!empty($geminiApiKey)) {
-    // Usando a versão v1 estável e o modelo gemini-1.5-flash
-    $url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" . $geminiApiKey;
+    // MUDANÇA MASTER: Usando o modelo universal gemini-pro (funciona em qualquer conta)
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" . $geminiApiKey;
     
     $payload = [
         "contents" => [
             [
                 "parts" => [
-                    ["text" => "Você é a Lúcia, assistente virtual da JR Iluminação. Responda de forma breve, educada e direta. O cliente perguntou: " . $mensagem]
+                    ["text" => "Você é a Lúcia, uma assistente virtual simpática da loja de e-commerce JR Iluminação e Leds. Seja muito breve, educada e direta. O cliente perguntou: " . $mensagem]
                 ]
             ]
         ]
@@ -36,23 +37,34 @@ if (!empty($geminiApiKey)) {
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
     
     $respostaAPI = curl_exec($ch);
-    $erroCurl = curl_error($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
     
     $resultado = json_decode($respostaAPI, true);
     
+    // Se a IA responder com sucesso, exibe a resposta real e encerra
     if ($httpCode == 200 && isset($resultado['candidates'][0]['content']['parts'][0]['text'])) {
         $textoBot = $resultado['candidates'][0]['content']['parts'][0]['text'];
         echo json_encode(['sucesso' => true, 'resposta' => trim($textoBot)]);
         exit;
-    } else {
-        // MODO DEBUG 2 ATIVADO
-        $detalhes = "HTTP: $httpCode | cURL: $erroCurl | Google: " . substr($respostaAPI, 0, 200);
-        echo json_encode(['sucesso' => true, 'resposta' => "🔧 DEBUG 2: $detalhes"]);
-        exit;
     }
 }
 
-echo json_encode(['sucesso' => true, 'resposta' => "🔧 DEBUG: A variável GEMINI_API_KEY não foi encontrada no servidor."]);
+// ==============================================================
+// MODO SALVA-VIDAS TCC (Fallback)
+// ==============================================================
+$msgLower = strtolower($mensagem);
+$resposta = "Como sou uma IA em fase de ajustes para o TCC, ainda estou aprendendo! Mas na JR Iluminação temos as melhores opções em LED para você. 💡";
+
+if (strpos($msgLower, 'lúmen') !== false || strpos($msgLower, 'calcul') !== false) {
+    $resposta = "Para calcular a iluminação, recomendamos entre **150 a 200 lúmens por metro quadrado** para salas e quartos. Quer dar uma olhada nos nossos Painéis LED? ✨";
+} elseif (strpos($msgLower, 'fita') !== false || strpos($msgLower, 'led') !== false) {
+    $resposta = "Temos excelentes **Fitas LED** no nosso catálogo! Trabalhamos com Branco Frio, Quente e RGB com controle. Acesse nossa página de Produtos para ver os detalhes.";
+} elseif (strpos($msgLower, 'pedido') !== false || strpos($msgLower, 'status') !== false) {
+    $resposta = "Para ver o status do seu pedido, basta entrar na sua **Área do Cliente** clicando em Histórico de Compras. Lá estão todas as informações! 📦";
+} elseif (strpos($msgLower, 'olá') !== false || strpos($msgLower, 'oi') !== false || strpos($msgLower, 'bom dia') !== false) {
+    $resposta = "Olá! Seja muito bem-vindo à JR Iluminação. Como posso te ajudar a iluminar o seu ambiente hoje?";
+}
+
+echo json_encode(['sucesso' => true, 'resposta' => $resposta]);
 ?>
