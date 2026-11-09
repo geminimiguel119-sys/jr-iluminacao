@@ -39,29 +39,53 @@ if (preg_match('/(pedido|rastreio|status|compra)/i', $msgLower)) {
     exit;
 }
 
+// ==============================================================
 // 3. BUSCA INTELIGENTE DE PRODUTOS NO SUPABASE
+// ==============================================================
 $msgLimpa = preg_replace('/[^\p{L}\p{N}\s]/u', '', $msgLower);
 $palavras = explode(' ', $msgLimpa);
-$stopWords = ['oi', 'ola', 'olá', 'bom', 'dia', 'tarde', 'noite', 'tudo', 'bem', 'estou', 'procurando', 'quero', 'queria', 'gostaria', 'de', 'um', 'uma', 'uns', 'umas', 'tem', 'voces', 'vocês', 'comprar', 'ver', 'para', 'ajudar', 'qual', 'quais', 'sobre'];
+
+// Lista expandida de palavras que a busca deve ignorar
+$stopWords = ['oi', 'ola', 'olá', 'bom', 'dia', 'tarde', 'noite', 'tudo', 'bem', 'estou', 'procurando', 'quero', 'queria', 'gostaria', 'de', 'um', 'uma', 'uns', 'umas', 'tem', 'voces', 'vocês', 'comprar', 'ver', 'para', 'ajudar', 'qual', 'quais', 'sobre', 'preciso', 'precisamos', 'precisando', 'metros', 'metro', 'centimetros', 'tamanho', 'modelo', 'tipo', 'cor'];
+
 $palavrasBusca = array_diff($palavras, $stopWords);
 
-$termoPrincipal = '';
-foreach ($palavrasBusca as $palavra) {
-    if (strlen($palavra) > strlen($termoPrincipal)) { $termoPrincipal = $palavra; }
-}
+// Filtra as palavras que sobraram e que tenham mais de 2 letras
+$termosValidos = array_filter($palavrasBusca, function($p) { 
+    return strlen($p) > 2; 
+});
 
 $produtosEncontrados = [];
-if (strlen($termoPrincipal) > 2) {
-    $stmt = $pdo->prepare("SELECT id, nome, preco, imagem, quantidade FROM produtos WHERE nome ILIKE ? OR descricao ILIKE ? LIMIT 3");
-    $stmt->execute(["%{$termoPrincipal}%", "%{$termoPrincipal}%"]);
-    $produtosEncontrados = $stmt->fetchAll();
+
+// Se sobrou alguma palavra válida (ex: "fita", "led", "rgb"), faz a busca dinâmica
+if (!empty($termosValidos)) {
+    $condicoes = [];
+    $valores = [];
+    
+    foreach ($termosValidos as $termo) {
+        $condicoes[] = "(nome ILIKE ? OR descricao ILIKE ?)";
+        $valores[] = "%{$termo}%";
+        $valores[] = "%{$termo}%";
+    }
+    
+    // Junta tudo com OR (Pesquisa por qualquer uma das palavras úteis da frase)
+    $sql = "SELECT id, nome, preco, imagem, quantidade FROM produtos WHERE " . implode(" OR ", $condicoes) . " LIMIT 4";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($valores);
+    
+    // Pega os resultados e remove duplicados caso a mesma fita bata com "fita" e "rgb"
+    $produtosEncontrados = $stmt->fetchAll(PDO::FETCH_UNIQUE); 
+    // Reindexa o array após o FETCH_UNIQUE
+    $produtosEncontrados = array_values($produtosEncontrados); 
 }
 
 $contextoEstoque = "";
 if (count($produtosEncontrados) > 0) {
-    foreach ($produtosEncontrados as $p) { $contextoEstoque .= "- Produto: {$p['nome']} | Preço: R$ {$p['preco']}\n"; }
+    foreach ($produtosEncontrados as $p) {
+        $contextoEstoque .= "- Produto: {$p['nome']} | Preço: R$ {$p['preco']}\n";
+    }
 } else {
-    $contextoEstoque = "Nenhum produto específico foi solicitado ou encontrado.";
+    $contextoEstoque = "Nenhum produto específico foi solicitado ou encontrado no banco de dados.";
 }
 
 // 4. INTEGRAÇÃO COM LLM (GROQ - QWEN)
