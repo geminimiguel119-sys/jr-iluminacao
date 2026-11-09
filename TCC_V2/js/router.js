@@ -38,6 +38,10 @@ window.router = function() {
     else if (rota === 'produtos') {
         if (typeof renderProdutos === 'function') renderProdutos();
     }
+    // ---> NOVA ROTA ADICIONADA: PÁGINA EXCLUSIVA DO PRODUTO <---
+    else if (rota === 'produto') {
+        if (typeof renderProdutoDetalhes === 'function') renderProdutoDetalhes(params.id);
+    }
     else if (rota === 'login') {
         if (typeof renderLogin === 'function') renderLogin();
     }
