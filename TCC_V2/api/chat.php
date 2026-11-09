@@ -1,6 +1,6 @@
 <?php
 // api/chat.php
-error_reporting(0); // Esconde alertas do servidor que quebram o JSON
+error_reporting(0); // Esconde alertas do servidor
 header('Content-Type: application/json; charset=utf-8');
 
 $conteudo = file_get_contents("php://input");
@@ -13,10 +13,9 @@ if (empty($mensagem)) {
 }
 
 // ==============================================================
-// 1. CREDENCIAIS (SUPABASE E GEMINI)
+// 1. CREDENCIAIS (SUPABASE E GROQ)
 // ==============================================================
-// Coloque aqui a sua chave de API gerada no Google AI Studio
-$gemini_api_key = "AQ.Ab8RN6K6hQdo0GvO7jH-onj6c4DMpeiAAtEGtB4tQVdEt3c-tg"; 
+$groq_api_key = getenv('GROQ_API_KEY');
 
 $host = 'aws-0-us-west-2.pooler.supabase.com';
 $port = '5432';
@@ -30,7 +29,7 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 } catch (PDOException $e) {
-    echo json_encode(['sucesso' => false, 'resposta' => 'Desculpe, meu sistema de catálogo está passando por uma manutenção rápida. 🔌']);
+    echo json_encode(['sucesso' => false, 'resposta' => 'Desculpe, meu banco de dados está em manutenção. 🔌']);
     exit;
 }
 
@@ -81,33 +80,36 @@ foreach ($produtosEncontrados as $p) {
 }
 
 // ==============================================================
-// 4. INTEGRAÇÃO COM LLM (GEMINI API)
+// 4. INTEGRAÇÃO COM LLM (GROQ - LLaMA 3)
 // ==============================================================
 $prompt = "Você é a Lúcia, assistente virtual e especialista em iluminação da loja JR Iluminação e Leds.
 Sua personalidade é amigável, profissional e você usa emojis moderadamente.
 REGRAS OBRIGATÓRIAS:
-1. Responda em no máximo 2 ou 3 parágrafos curtos.
-2. O cliente perguntou: '{$mensagem}'.
-3. Baseie sua resposta técnica APENAS nestes produtos do nosso catálogo atual: \n{$contextoEstoque}.
-4. Se o cliente pedir indicações, recomende explicitamente os produtos acima, pois os cards deles aparecerão na tela.
-5. Se for uma dúvida técnica (temperatura de cor, IRC, lúmens), explique de forma fácil de entender.
-6. Nunca invente preços, promoções ou produtos que não estão na lista acima.";
+1. Responda em no máximo 2 ou 3 parágrafos curtos, em Português do Brasil.
+2. Baseie sua resposta técnica APENAS nestes produtos do nosso catálogo atual: \n{$contextoEstoque}.
+3. Se o cliente pedir indicações, recomende explicitamente os produtos acima, pois os cards deles aparecerão na tela.
+4. Nunca invente preços, promoções ou produtos que não estão na lista acima.";
 
-$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $gemini_api_key;
+$url = "https://api.groq.com/openai/v1/chat/completions";
+
+// Estrutura de mensagens no padrão OpenAI/Groq
 $data = [
-    "contents" => [
-        ["parts" => [["text" => $prompt]]]
+    "model" => "llama3-8b-8192", // Modelo incrivelmente rápido e eficiente
+    "messages" => [
+        ["role" => "system", "content" => $prompt],
+        ["role" => "user", "content" => $mensagem]
     ],
-    "generationConfig" => [
-        "temperature" => 0.4,
-        "maxOutputTokens" => 250
-    ]
+    "temperature" => 0.4,
+    "max_tokens" => 250
 ];
 
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'Authorization: Bearer ' . $groq_api_key
+]);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
 
@@ -120,19 +122,20 @@ curl_close($ch);
 // 5. DEBUG E TRATAMENTO DA RESPOSTA FINAL
 // ==============================================================
 if ($httpcode == 200 && $response) {
-    $resultadoGemini = json_decode($response, true);
-    if (isset($resultadoGemini['candidates'][0]['content']['parts'][0]['text'])) {
-        $respostaTexto = $resultadoGemini['candidates'][0]['content']['parts'][0]['text'];
+    $resultado = json_decode($response, true);
+    // Pega o conteúdo da resposta do modelo Groq
+    if (isset($resultado['choices'][0]['message']['content'])) {
+        $respostaTexto = $resultado['choices'][0]['message']['content'];
     } else {
-        $respostaTexto = "⚠️ A IA respondeu, mas num formato estranho: " . print_r($resultadoGemini, true);
+        $respostaTexto = "⚠️ A IA respondeu, mas num formato estranho: " . print_r($resultado, true);
     }
 } else {
-    // MODO DEBUG - Exibirá na tela exatamente por que falhou
-    $respostaTexto = "🚨 **ERRO DE COMUNICAÇÃO COM A IA**\n\n";
+    // MODO DEBUG
+    $respostaTexto = "🚨 **ERRO DE COMUNICAÇÃO COM O GROQ**\n\n";
     $respostaTexto .= "- **Código HTTP:** {$httpcode}\n";
     $respostaTexto .= "- **Erro do Servidor:** {$erroCurl}\n";
-    $respostaTexto .= "- **Resposta do Google:** {$response}\n\n";
-    $respostaTexto .= "Verifique se a sua Chave da API foi colada corretamente na linha 15 do código.";
+    $respostaTexto .= "- **Resposta do Groq:** {$response}\n\n";
+    $respostaTexto .= "Verifique se a chave que começa com 'gsk_' está colada na linha 16.";
 }
 
 echo json_encode([
