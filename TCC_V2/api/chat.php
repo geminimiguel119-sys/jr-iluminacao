@@ -16,7 +16,7 @@ if (empty($mensagem)) {
 // 1. CREDENCIAIS (SUPABASE E GEMINI)
 // ==============================================================
 // Coloque aqui a sua chave de API gerada no Google AI Studio
-$gemini_api_key = "AQ.Ab8RN6K_NEU0tM2xL0h_PSRfxpJTVpSEUqWlvo_r62mpCpRYnw"; 
+$gemini_api_key = "AQ.Ab8RN6K6hQdo0GvO7jH-onj6c4DMpeiAAtEGtB4tQVdEt3c-tg"; 
 
 $host = 'aws-0-us-west-2.pooler.supabase.com';
 $port = '5432';
