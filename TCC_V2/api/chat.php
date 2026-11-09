@@ -1,6 +1,6 @@
 <?php
 // api/chat.php
-error_reporting(0);
+error_reporting(0); // Esconde alertas do servidor em produção
 header('Content-Type: application/json; charset=utf-8');
 
 $conteudo = file_get_contents("php://input");
@@ -60,15 +60,27 @@ if (preg_match('/(pedido|rastreio|status|compra)/i', $msgLower)) {
 }
 
 // ==============================================================
-// 3. BUSCA INTELIGENTE DE PRODUTOS
+// 3. BUSCA INTELIGENTE DE PRODUTOS NO SUPABASE
 // ==============================================================
-// Ignora palavras comuns de saudação para não disparar buscas à toa
-$palavrasIgnoradas = ['oi', 'olá', 'ola', 'bom', 'dia', 'tarde', 'noite', 'tudo', 'bem', 'quem', 'você', 'ajudar'];
-$palavrasBusca = array_diff(explode(' ', $msgLower), $palavrasIgnoradas);
-$termoPrincipal = reset($palavrasBusca); 
+// Limpa pontuações para não atrapalhar a busca
+$msgLimpa = preg_replace('/[^\p{L}\p{N}\s]/u', '', $msgLower);
+$palavras = explode(' ', $msgLimpa);
 
-// Só busca no banco se sobrar uma palavra com mais de 2 letras
-if ($termoPrincipal && strlen($termoPrincipal) > 2) {
+// Dicionário de palavras a serem ignoradas na hora de pesquisar no banco
+$stopWords = ['oi', 'ola', 'olá', 'bom', 'dia', 'tarde', 'noite', 'tudo', 'bem', 'estou', 'procurando', 'quero', 'queria', 'gostaria', 'de', 'um', 'uma', 'uns', 'umas', 'tem', 'voces', 'vocês', 'comprar', 'ver', 'para', 'ajudar', 'qual', 'quais', 'sobre'];
+
+$palavrasBusca = array_diff($palavras, $stopWords);
+
+// Elege a palavra mais longa restante como o termo principal de busca (ex: "plafon")
+$termoPrincipal = '';
+foreach ($palavrasBusca as $palavra) {
+    if (strlen($palavra) > strlen($termoPrincipal)) {
+        $termoPrincipal = $palavra;
+    }
+}
+
+// Só faz a query no Supabase se encontrar uma palavra válida
+if (strlen($termoPrincipal) > 2) {
     $stmt = $pdo->prepare("SELECT id, nome, preco, imagem, quantidade FROM produtos WHERE nome ILIKE ? OR descricao ILIKE ? LIMIT 3");
     $stmt->execute(["%{$termoPrincipal}%", "%{$termoPrincipal}%"]);
     $produtosEncontrados = $stmt->fetchAll();
@@ -102,8 +114,8 @@ $data = [
         ["role" => "system", "content" => $prompt],
         ["role" => "user", "content" => $mensagem]
     ],
-    "temperature" => 0.3, // Deixa a IA menos "criativa" e mais direta
-    "max_tokens" => 120   // Limite físico de segurança (corta a resposta se passar disso)
+    "temperature" => 0.3,
+    "max_tokens" => 120
 ];
 
 $ch = curl_init($url);
@@ -137,6 +149,6 @@ if ($httpcode == 200 && $response) {
 echo json_encode([
     'sucesso' => true,
     'resposta' => $respostaTexto,
-    'produtos' => $produtosEncontrados // Só vai enviar cards se encontrar algo útil
+    'produtos' => $produtosEncontrados
 ]);
 ?>
