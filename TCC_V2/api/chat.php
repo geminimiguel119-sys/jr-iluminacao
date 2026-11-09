@@ -68,15 +68,12 @@ if (!empty($termosValidos)) {
         $valores[] = "%{$termo}%";
     }
     
-    // Junta tudo com OR (Pesquisa por qualquer uma das palavras úteis da frase)
-    $sql = "SELECT id, nome, preco, imagem, quantidade FROM produtos WHERE " . implode(" OR ", $condicoes) . " LIMIT 4";
+    // A MÁGICA ACONTECE AQUI: Usamos "AND" para que o produto possua TODAS as palavras úteis.
+    $sql = "SELECT id, nome, preco, imagem, quantidade FROM produtos WHERE " . implode(" AND ", $condicoes) . " LIMIT 4";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($valores);
     
-    // Pega os resultados e remove duplicados caso a mesma fita bata com "fita" e "rgb"
-    $produtosEncontrados = $stmt->fetchAll(PDO::FETCH_UNIQUE); 
-    // Reindexa o array após o FETCH_UNIQUE
-    $produtosEncontrados = array_values($produtosEncontrados); 
+    $produtosEncontrados = $stmt->fetchAll(PDO::FETCH_ASSOC); 
 }
 
 $contextoEstoque = "";
