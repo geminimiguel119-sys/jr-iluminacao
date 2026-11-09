@@ -80,7 +80,7 @@ foreach ($produtosEncontrados as $p) {
 }
 
 // ==============================================================
-// 4. INTEGRAÇÃO COM LLM (GROQ - LLaMA 3)
+// 4. INTEGRAÇÃO COM LLM
 // ==============================================================
 $prompt = "Você é a Lúcia, assistente virtual e especialista em iluminação da loja JR Iluminação e Leds.
 Sua personalidade é amigável, profissional e você usa emojis moderadamente.
@@ -92,9 +92,8 @@ REGRAS OBRIGATÓRIAS:
 
 $url = "https://api.groq.com/openai/v1/chat/completions";
 
-// Estrutura de mensagens no padrão OpenAI/Groq
 $data = [
-    "model" => "gemma2-9b-it", // Modelo incrivelmente rápido e eficiente
+    "model" => "qwen/qwen3.8-27b", // ID atualizado baseado no diagnóstico
     "messages" => [
         ["role" => "system", "content" => $prompt],
         ["role" => "user", "content" => $mensagem]
@@ -123,7 +122,6 @@ curl_close($ch);
 // ==============================================================
 if ($httpcode == 200 && $response) {
     $resultado = json_decode($response, true);
-    // Pega o conteúdo da resposta do modelo Groq
     if (isset($resultado['choices'][0]['message']['content'])) {
         $respostaTexto = $resultado['choices'][0]['message']['content'];
     } else {
@@ -134,8 +132,7 @@ if ($httpcode == 200 && $response) {
     $respostaTexto = "🚨 **ERRO DE COMUNICAÇÃO COM O GROQ**\n\n";
     $respostaTexto .= "- **Código HTTP:** {$httpcode}\n";
     $respostaTexto .= "- **Erro do Servidor:** {$erroCurl}\n";
-    $respostaTexto .= "- **Resposta do Groq:** {$response}\n\n";
-    $respostaTexto .= "Verifique se a chave que começa com 'gsk_' está colada na linha 16.";
+    $respostaTexto .= "- **Resposta da API:** {$response}\n\n";
 }
 
 echo json_encode([
