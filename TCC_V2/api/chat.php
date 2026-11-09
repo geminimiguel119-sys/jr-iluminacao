@@ -94,7 +94,7 @@ $url = "https://api.groq.com/openai/v1/chat/completions";
 
 // Estrutura de mensagens no padrão OpenAI/Groq
 $data = [
-    "model" => "llama-3.1-70b-versatile", // Modelo incrivelmente rápido e eficiente
+    "model" => "gemma2-9b-it", // Modelo incrivelmente rápido e eficiente
     "messages" => [
         ["role" => "system", "content" => $prompt],
         ["role" => "user", "content" => $mensagem]
