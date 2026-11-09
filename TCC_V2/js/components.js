@@ -43,7 +43,6 @@ function renderHeader() {
   const header = document.querySelector('header');
   if (!header) return;
 
-  // Pega a primeira letra do nome para o Avatar
   const inicial = user ? user.nome.charAt(0).toUpperCase() : '';
 
   header.innerHTML = `
@@ -65,12 +64,10 @@ function renderHeader() {
           </div>
           
           <div class="desktop-user-dropdown" style="position: relative; margin-left: 10px;">
-            <!-- AVATAR CIRCULAR -->
             <div class="user-chip" onclick="alternarUserMenu(event)" style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; border-radius: 50%; font-weight: bold; font-size: 1.2rem; box-shadow: 0 3px 8px rgba(2,132,199,0.3); border: 2px solid #fff; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'" title="Conta: ${user.nome}">
                 ${inicial}
             </div>
             
-            <!-- MENU DROPDOWN -->
             <div id="user-menu" style="display: none; position: absolute; top: 120%; right: 0; background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border-radius: 12px; width: 220px; overflow: hidden; z-index: 100002; border: 1px solid #e2e8f0;">
                 <div style="padding: 15px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem; color: #475569; word-break: break-all;">
                     <strong style="color: #1e293b; display:block; margin-bottom: 2px;">${user.nome}</strong>
@@ -162,19 +159,19 @@ function aplicarFiltrosCatalog() {
                        : 'https://placehold.co/400x400/eeeeee/111827.jpg?text=Sem+Foto'; 
                        
         return `
-        <article class="product-card" style="animation-delay:${i*45}ms; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
+        <article class="product-card" style="animation-delay:${i*45}ms; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; cursor: pointer; border: 1px solid #e2e8f0; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 24px rgba(0,0,0,0.08)'; this.style.borderColor='#bae6fd';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)'; this.style.borderColor='#e2e8f0';" onclick="navegar('produto', {id: '${p.id}'})">
           
-          <img src="${imgUrl}" alt="${escapeHtml(p.nome)}" style="width: 100%; height: 220px; object-fit: cover; border-bottom: 1px solid #eee;">
+          <img src="${imgUrl}" alt="${escapeHtml(p.nome)}" style="width: 100%; height: 220px; object-fit: cover; border-bottom: 1px solid #f1f5f9; background: #f8fafc;">
           
           <div class="product-body" style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
-            <div class="product-stock ${!disponivel || p.quantidade <= 5 ? 'low' : ''}" style="margin-bottom: 10px; font-size: 0.8rem; font-weight: 600;">
-                ${disponivel ? `✓ Em estoque (${p.quantidade} un.)` : '✕ Esgotado'}
+            <div class="product-stock ${!disponivel || p.quantidade <= 5 ? 'low' : ''}" style="margin-bottom: 10px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${disponivel ? '#059669' : '#dc2626'};">
+                ${disponivel ? `✓ Em estoque (${p.quantidade})` : '✕ Esgotado'}
             </div>
-            <h3 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #1e293b;">${escapeHtml(p.nome || 'Produto')}</h3>
-            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px; flex: 1;">${escapeHtml(p.descricao || 'Solução LED.')}</p>
+            <h3 style="margin: 0 0 8px 0; font-size: 1.05rem; color: #0f172a; font-weight: 600; line-height: 1.3;">${escapeHtml(p.nome || 'Produto')}</h3>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 20px; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(p.descricao || 'Solução LED de alta qualidade.')}</p>
             <div class="product-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 15px;">
-              <strong style="font-size: 1.25rem; color: #0f172a;">R$ ${preco}</strong>
-              ${disponivel ? `<button class="btn btn-primary btn-comprar" style="padding: 8px 16px; border: none;" onclick="feedbackCompra(this, '${p.id}')">Comprar</button>` : `<button class="btn btn-disabled" style="padding: 8px 16px;" disabled>Indisponível</button>`}
+              <strong style="font-size: 1.25rem; color: #0284c7; font-weight: 700;">R$ ${preco}</strong>
+              ${disponivel ? `<button class="btn btn-primary" style="padding: 8px 14px; border: none; border-radius: 8px; font-weight: 500; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2);" onclick="feedbackCompra(this, '${p.id}', event)">+ Carrinho</button>` : `<button class="btn" style="padding: 8px 14px; border-radius: 8px; background: #e2e8f0; color: #94a3b8; font-size: 0.85rem;" disabled>Falta</button>`}
             </div>
           </div>
         </article>`;
@@ -493,7 +490,7 @@ window.atualizarMeuPerfil = async function(event, id) {
 function renderEmptyState(icon, title, desc, action = null) { return `<div class="empty-state"><div class="empty-icon">${icon}</div><h3>${title}</h3><p>${desc}</p>${action ? `<button class="btn btn-primary" onclick="${action}">Tentar novamente</button>` : ''}</div>`; }
 function renderSkeletonGrid(n) { return Array.from({ length: n }, () => '<div class="skeleton-card"><div></div><span></span><span></span></div>').join(''); }
 
-// === CARRINHO ===
+// === CARRINHO E FEEDBACK ===
 function adicionarAoCarrinho(id) {
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
   if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("É necessário fazer login para comprar.", "aviso"); return navegar('login'); }
@@ -509,7 +506,31 @@ function adicionarAoCarrinho(id) {
   if (qtdAtual + 1 > p.quantidade) { if (typeof exibirMensagem === 'function') exibirMensagem(`Limite atingido! Apenas ${p.quantidade} unidades em estoque.`, "aviso"); return; }
   
   if (item) item.quantidade += 1; else carrinho.push({ id: p.id, nome: p.nome, preco: Number(p.preco || 0), imagem: p.imagem, quantidade: 1 });
-  localStorage.setItem('carrinho', JSON.stringify(carrinho)); renderHeader(); abrirCarrinho();
+  
+  localStorage.setItem('carrinho', JSON.stringify(carrinho)); 
+  renderHeader(); 
+  
+  if (typeof exibirMensagem === 'function') exibirMensagem("Item adicionado ao carrinho!", "sucesso");
+}
+
+function feedbackCompra(botao, idProduto, event) {
+    if(event) event.stopPropagation();
+    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
+    if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("Faça login para comprar", "aviso"); return navegar('login'); }
+    
+    adicionarAoCarrinho(idProduto);
+    
+    const textoOriginal = botao.innerHTML;
+    botao.innerHTML = "✓ Adicionado"; 
+    botao.style.backgroundColor = "#15803d"; 
+    botao.style.color = "#ffffff"; 
+    botao.style.pointerEvents = "none";
+    setTimeout(() => { 
+        botao.innerHTML = textoOriginal; 
+        botao.style.backgroundColor = ""; 
+        botao.style.color = ""; 
+        botao.style.pointerEvents = "auto"; 
+    }, 1500);
 }
 
 function alterarQtdCarrinho(index, delta) {
@@ -873,15 +894,6 @@ window.simularAprovacaoPedido = async function(pedidoId, btnEl) {
     }
 }
 
-function feedbackCompra(botao, idProduto) {
-    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
-    if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("Faça login para comprar", "aviso"); return navegar('login'); }
-    adicionarAoCarrinho(idProduto);
-    const textoOriginal = botao.innerHTML;
-    botao.innerHTML = "✓ Adicionado"; botao.style.backgroundColor = "#15803d"; botao.style.color = "#ffffff"; botao.style.pointerEvents = "none";
-    setTimeout(() => { botao.innerHTML = textoOriginal; botao.style.backgroundColor = ""; botao.style.color = ""; botao.style.pointerEvents = "auto"; }, 1500);
-}
-
 // MENSAGENS INLINE BLINDADAS A FALHAS
 window.exibirMensagem = function(msg, tipo = 'sucesso') {
     let container = document.getElementById('toast-container');
@@ -911,4 +923,147 @@ window.exibirMensagem = function(msg, tipo = 'sucesso') {
         toast.style.opacity = '0';
         setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
     }, 3000); 
+};
+
+// === PÁGINA EXCLUSIVA DO PRODUTO (CLEAN DESIGN) ===
+window.renderProdutoDetalhes = async function(id) {
+    const app = document.getElementById('app');
+    if (!app) return;
+    
+    if (typeof mostrarLoading === 'function') mostrarLoading(true, 'Preparando produto...');
+    
+    try {
+        if (!window.produtosGlobais || window.produtosGlobais.length === 0) {
+            const r = await apiFetch('api/produtos.php');
+            window.produtosGlobais = (r && r.dados) ? r.dados : [];
+        }
+        
+        const p = window.produtosGlobais.find(x => String(x.id) === String(id));
+        
+        if (!p) {
+            app.innerHTML = renderEmptyState('!', 'Produto não encontrado', 'Este item pode ter saído de linha.', "navegar('produtos')");
+            return;
+        }
+        
+        const preco = Number(p.preco || 0).toFixed(2).replace('.', ',');
+        const disponivel = Number(p.quantidade || 0) > 0;
+        const imgUrl = (p.imagem && p.imagem.trim() !== '') ? p.imagem : 'img/produto-padrao.jpg';
+        
+        // Gera dados fakes de avaliação para dar credibilidade
+        const numAvaliacoes = Math.floor(Math.random() * 80) + 12;
+        const nota = (Math.random() * (5.0 - 4.5) + 4.5).toFixed(1);
+        
+        app.className = 'page-shell';
+        app.innerHTML = `
+            <style>
+                .prod-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 10px; align-items: start; }
+                .prod-img-box { background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; }
+                .prod-detail-img { width: 100%; border-radius: 12px; object-fit: cover; aspect-ratio: 1/1; transition: transform 0.3s ease; cursor: zoom-in; }
+                .prod-detail-img:hover { transform: scale(1.03); }
+                .prod-info-box { display: flex; flex-direction: column; }
+                .prod-badge { display: inline-block; background: #e0f2fe; color: #0284c7; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; width: fit-content; }
+                .prod-title { font-size: 2.2rem; color: #0f172a; margin: 0 0 15px 0; font-weight: 700; line-height: 1.1; letter-spacing: -0.5px; }
+                .prod-reviews { display: flex; align-items: center; gap: 8px; margin-bottom: 25px; font-size: 0.9rem; color: #64748b; }
+                .stars { color: #fca311; letter-spacing: 2px; font-size: 1.1rem; }
+                .prod-price-box { background: #f8fafc; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 30px; }
+                .prod-price { font-size: 2.8rem; color: #0284c7; font-weight: 700; line-height: 1; margin: 0; }
+                .prod-pix { font-size: 0.9rem; color: #166534; font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 5px; }
+                .prod-desc { font-size: 1.05rem; color: #475569; line-height: 1.7; margin-bottom: 35px; }
+                .btn-add-giant { width: 100%; padding: 18px; font-size: 1.1rem; border-radius: 12px; background: #fca311; color: #14213d; border: none; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 8px 20px rgba(252, 163, 17, 0.25); text-transform: uppercase; letter-spacing: 0.5px; }
+                .btn-add-giant:hover { background: #0f172a; color: #ffffff; transform: translateY(-3px); box-shadow: 0 12px 25px rgba(15, 23, 42, 0.25); }
+                .btn-add-giant:disabled { background: #cbd5e1; color: #ffffff; cursor: not-allowed; transform: none; box-shadow: none; }
+                .prod-trust { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 30px; padding-top: 30px; border-top: 1px solid #e2e8f0; text-align: center; }
+                .trust-item { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 0.8rem; color: #64748b; font-weight: 500; }
+                .trust-item span { font-size: 1.8rem; }
+                @media(max-width: 850px) {
+                    .prod-detail-grid { grid-template-columns: 1fr; gap: 30px; }
+                    .prod-title { font-size: 1.8rem; }
+                    .prod-price { font-size: 2.2rem; }
+                    .prod-trust { grid-template-columns: 1fr; text-align: left; }
+                    .trust-item { flex-direction: row; text-align: left; }
+                }
+            </style>
+            
+            <div style="margin-bottom: 25px; padding-top: 10px;">
+                <button onclick="navegar('produtos')" style="background:none; border:none; color:#64748b; font-weight:600; cursor:pointer; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; transition: color 0.2s;" onmouseover="this.style.color='#0284c7'" onmouseout="this.style.color='#64748b'">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Voltar ao Catálogo
+                </button>
+            </div>
+            
+            <div class="prod-detail-grid">
+                <div class="prod-img-box">
+                    <img src="${imgUrl}" alt="${escapeHtml(p.nome)}" class="prod-detail-img">
+                </div>
+                
+                <div class="prod-info-box">
+                    <span class="prod-badge">Lançamento</span>
+                    <h1 class="prod-title">${escapeHtml(p.nome)}</h1>
+                    
+                    <div class="prod-reviews">
+                        <span class="stars">★★★★★</span>
+                        <span style="font-weight: 500; color: #0f172a;">${nota}</span>
+                        <span>(${numAvaliacoes} avaliações de clientes)</span>
+                    </div>
+                    
+                    <div class="prod-price-box">
+                        <h2 class="prod-price">R$ ${preco}</h2>
+                        <div class="prod-pix">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                            Desconto aplicado para pagamento via PIX
+                        </div>
+                    </div>
+                    
+                    <div class="prod-desc">
+                        <h3 style="font-size: 1rem; color: #0f172a; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Sobre o Produto</h3>
+                        ${escapeHtml(p.descricao || 'Detalhes não informados.')}
+                    </div>
+                    
+                    <button class="btn-add-giant" onclick="feedbackCompraGigante(this, '${p.id}', event)" ${!disponivel ? 'disabled' : ''}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                        ${disponivel ? 'Adicionar ao Carrinho' : 'Esgotado no Momento'}
+                    </button>
+                    
+                    <div class="prod-trust">
+                        <div class="trust-item">
+                            <span>🛡️</span>
+                            <div><strong>1 Ano de Garantia</strong><br>Direto com a JR Iluminação</div>
+                        </div>
+                        <div class="trust-item">
+                            <span>🚚</span>
+                            <div><strong>Entrega Segura</strong><br>Embalagem reforçada</div>
+                        </div>
+                        <div class="trust-item">
+                            <span>💳</span>
+                            <div><strong>Compra Protegida</strong><br>Criptografia de ponta a ponta</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        app.innerHTML = renderEmptyState('!', 'Erro', 'Não foi possível carregar os detalhes do produto.', "navegar('produtos')");
+    } finally {
+        if (typeof mostrarLoading === 'function') mostrarLoading(false);
+    }
+};
+
+window.feedbackCompraGigante = function(botao, idProduto, event) {
+    if(event) event.stopPropagation();
+    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
+    if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("Faça login para comprar", "aviso"); return navegar('login'); }
+    
+    adicionarAoCarrinho(idProduto); 
+    
+    const textoOriginal = botao.innerHTML;
+    botao.innerHTML = "✓ Adicionado com Sucesso!"; 
+    botao.style.backgroundColor = "#15803d"; 
+    botao.style.color = "#ffffff"; 
+    botao.style.pointerEvents = "none";
+    setTimeout(() => { 
+        botao.innerHTML = textoOriginal; 
+        botao.style.backgroundColor = ""; 
+        botao.style.color = ""; 
+        botao.style.pointerEvents = "auto"; 
+    }, 2000);
 };
