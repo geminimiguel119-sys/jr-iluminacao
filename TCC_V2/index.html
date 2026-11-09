@@ -17,7 +17,9 @@
     <link rel="stylesheet" href="css/polished.css">
 
     <style>
-        /* Rodapé */
+        /* =========================================
+           RODAPÉ DO SITE
+           ========================================= */
         .site-footer {
             background: #090e1f;
             color: #94a3b8;
@@ -55,11 +57,13 @@
     </style>
 </head>
 <body>
+    <!-- CABEÇALHO (Injetado via JS) -->
     <header></header>
     
+    <!-- CONTEÚDO PRINCIPAL (Telas injetadas via Router) -->
     <main id="app" class="container"></main>
     
-    <!-- RODAPÉ -->
+    <!-- RODAPÉ FIXO -->
     <footer id="site-footer" class="site-footer">
         <div class="footer-grid">
             <div>
@@ -87,7 +91,7 @@
         </div>
     </footer>
 
-    <!-- SCRIPTS ESSENCIAIS -->
+    <!-- SCRIPTS ESSENCIAIS DO SISTEMA -->
     <script src="js/utils.js"></script>
     <script src="js/router.js"></script>
     <script src="js/components.js?v=3"></script>
@@ -95,12 +99,18 @@
     <script src="js/auth.js"></script>
     <script src="js/filters.js"></script>
     <script src="js/validations.js"></script>
+    
+    <!-- MÓDULO DA INTELIGÊNCIA ARTIFICIAL (Injeta o chat e carrega a Lúcia) -->
     <script src="js/lucia.js"></script>
     
+    <!-- INICIALIZAÇÃO -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Força o modo claro e remove rastros do modo escuro
             document.body.classList.remove('dark-mode');
             localStorage.removeItem('jr_dark_mode');
+            
+            // Verifica sessão atual (Login)
             if (typeof checkSessao === 'function') checkSessao();
         });
     </script>
