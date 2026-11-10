@@ -477,3 +477,45 @@ header {
   /* Botão Modo Escuro no celular */
   #btn-dark-mode { bottom: 12px !important; right: 12px !important; padding: 7px 12px !important; font-size: 0.75rem !important; }
 }
+
+
+/* ==========================================================================
+   EFEITOS DE FLUIDEZ E ANIMAÇÕES GLOBAIS (UX PREMIUM)
+   ========================================================================== */
+
+/* 1. Rolagem Suave Global */
+html {
+  scroll-behavior: smooth !important;
+}
+
+/* 2. Efeito Tátil: Botões "afundam" ao serem clicados */
+.btn:active, button:active, .product-card:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.1s ease !important;
+}
+
+/* 3. Animação de Entrada de Páginas (Fade & Slide up) */
+.page-transition {
+  animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 4. Suavidade ao abrir modais (Carrinho, Recibo) */
+#modal-carrinho, .modal-content, #modal-recibo-pedido > div {
+  animation: fadeInModal 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInModal {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
