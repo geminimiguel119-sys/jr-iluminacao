@@ -13,8 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once 'config.php';
 require_once 'conexao.php';
 
+// Fuso horário de Brasília
 $pdo->exec("SET TIME ZONE 'America/Sao_Paulo'");
 
+// Credenciais do Bot do Telegram
 $telegramToken = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
 $telegramChatId = "5034813131";
 
@@ -40,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $email = $_GET['email'] ?? null;
     try {
         if ($email) {
+            // Busca os pedidos específicos do cliente logado
             $stmt = $pdo->prepare("
                 SELECT p.id, p.total, p.status, p.data_pedido 
                 FROM pedidos p 
@@ -51,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($pedidos as &$ped) {
+                // Busca os itens de cada pedido
                 $stmtItens = $pdo->prepare("
                     SELECT pr.nome, ip.quantidade, ip.preco_unitario as preco 
                     FROM itens_pedido ip 
@@ -62,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             }
             echo json_encode(['sucesso' => true, 'dados' => $pedidos], JSON_UNESCAPED_UNICODE);
         } else {
+            // Lista todos os pedidos para o painel admin
             $stmt = $pdo->query("
                 SELECT p.id, c.nome as cliente_nome, p.total, p.status, p.data_pedido 
                 FROM pedidos p 
@@ -87,12 +92,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $itens = $dados['itens'] ?? [];
 
         if (empty($email) || empty($itens)) {
-            erro('Dados da encomenda incompletos.', 400);
+            erro('Os dados do pedido estão incompletos.', 400);
         }
 
         try {
             $pdo->beginTransaction();
 
+            // 1. Verifica ou cria o cliente
             $stmtCli = $pdo->prepare("SELECT id FROM clientes WHERE LOWER(email) = LOWER(?)");
             $stmtCli->execute([$email]);
             $cliente_id = $stmtCli->fetchColumn();
@@ -106,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $stmtUpdCli->execute([$telefone, $cliente_id]);
             }
 
+            // 2. Validação de Estoque (Evita vender o que não tem)
             foreach ($itens as $item) {
                 $prodId = intval($item['id']);
                 $qtdPedida = intval($item['quantidade']);
@@ -115,38 +122,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $prodAtual = $stmtEstoque->fetch(PDO::FETCH_ASSOC);
 
                 if (!$prodAtual) {
-                    throw new Exception("Produto ID {$prodId} não encontrado no catálogo.");
+                    throw new Exception("O produto de ID {$prodId} não foi encontrado no catálogo.");
                 }
 
                 if ($prodAtual['quantidade'] < $qtdPedida) {
-                    throw new Exception("Stock insuficiente para '{$prodAtual['nome']}'. Disponível: {$prodAtual['quantidade']} un.");
+                    throw new Exception("Estoque insuficiente para '{$prodAtual['nome']}'. Disponível: {$prodAtual['quantidade']} unidades.");
                 }
 
+                // Dá baixa no estoque
                 $stmtBaixa = $pdo->prepare("UPDATE produtos SET quantidade = quantidade - ? WHERE id = ?");
                 $stmtBaixa->execute([$qtdPedida, $prodId]);
             }
 
+            // 3. Cria o pedido principal
             $stmtPed = $pdo->prepare("INSERT INTO pedidos (cliente_id, total, status) VALUES (?, ?, 'Pendente') RETURNING id");
             $stmtPed->execute([$cliente_id, $total]);
             $pedido_id = $stmtPed->fetchColumn();
 
+            // 4. Salva os itens do pedido
             $stmtItem = $pdo->prepare("INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)");
             $resumoItens = "";
             foreach ($itens as $item) {
                 $stmtItem->execute([$pedido_id, intval($item['id']), intval($item['quantidade']), floatval($item['preco'])]);
-                $resumoItens .= "• " . htmlspecialchars($item['quantidade']) . "x " . htmlspecialchars($item['nome']) . "\n";
+                $resumoItens .= "🛒 " . htmlspecialchars($item['quantidade']) . "x " . htmlspecialchars($item['nome']) . "\n";
             }
 
             $pdo->commit();
 
-            // Mensagem completa em formato HTML
-            $msgTG = "🛒 <b>Nova Encomenda Registada! (#{$pedido_id})</b>\n\n";
+            // 5. Notificação Elegante no Telegram (Administrador)
+            $msgTG = "🎉 <b>NOVO PEDIDO REGISTRADO! (#{$pedido_id})</b>\n";
+            $msgTG .= "━━━━━━━━━━━━━━━━━━━━━━\n";
             $msgTG .= "👤 <b>Cliente:</b> " . htmlspecialchars($nome) . "\n";
             $msgTG .= "📧 <b>E-mail:</b> " . htmlspecialchars($email) . "\n";
-            if (!empty($telefone)) $msgTG .= "📞 <b>Telefone:</b> " . htmlspecialchars($telefone) . "\n";
-            if (!empty($cidade)) $msgTG .= "📍 <b>Destino:</b> " . htmlspecialchars($cidade) . " - " . htmlspecialchars($endereco) . "\n";
+            if (!empty($telefone)) $msgTG .= "📞 <b>Contato:</b> " . htmlspecialchars($telefone) . "\n";
+            if (!empty($cidade)) {
+                $msgTG .= "📍 <b>Destino:</b> " . htmlspecialchars($cidade) . "\n";
+                $msgTG .= "🏠 <b>Endereço:</b> " . htmlspecialchars($endereco) . "\n";
+            }
+            $msgTG .= "━━━━━━━━━━━━━━━━━━━━━━\n";
             $msgTG .= "💰 <b>Valor Total:</b> R$ " . number_format($total, 2, ',', '.') . "\n\n";
-            $msgTG .= "<b>Itens Comprados:</b>\n" . $resumoItens;
+            $msgTG .= "<b>RESUMO DOS ITENS:</b>\n" . $resumoItens;
 
             notificarTelegramHTML($msgTG, $telegramToken, $telegramChatId);
 
@@ -156,6 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             erro($e->getMessage(), 400);
         }
     } elseif ($acao === 'atualizar_status') {
+        // Atualiza a etapa do pedido
         $id = intval($dados['id'] ?? 0);
         $status = sanitizar($dados['status'] ?? '');
         try {
@@ -166,6 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             erro($e->getMessage(), 400);
         }
     } elseif ($acao === 'excluir') {
+        // Apaga o pedido (Para o Admin)
         $id = intval($dados['id'] ?? 0);
         try {
             $pdo->beginTransaction();
