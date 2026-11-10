@@ -504,16 +504,28 @@ function adicionarAoCarrinho(id) {
   let item = carrinho.find(x => String(x.id) === String(p.id));
   let qtdAtual = item ? item.quantidade : 0;
 
-  if (qtdAtual + 1 > p.quantidade) { if (typeof exibirMensagem === 'function') exibirMensagem(`Limite atingido! Apenas ${p.quantidade} unidades em estoque.`, "aviso"); return; }
+  // CORREÇÃO: Forçando a conversão para número para evitar bugs de string
+  let estoqueDisponivel = Number(p.quantidade || 0);
+
+  if (qtdAtual + 1 > estoqueDisponivel) { 
+      if (typeof exibirMensagem === 'function') {
+          exibirMensagem(`Limite atingido! Temos apenas ${estoqueDisponivel} unidades disponíveis.`, "aviso");
+      }
+      return; 
+  }
   
-  if (item) item.quantidade += 1; else carrinho.push({ id: p.id, nome: p.nome, preco: Number(p.preco || 0), imagem: p.imagem, quantidade: 1 });
+  if (item) {
+      item.quantidade += 1; 
+  } else {
+      // Guardamos também o estoque total no carrinho para referência
+      carrinho.push({ id: p.id, nome: p.nome, preco: Number(p.preco || 0), imagem: p.imagem, quantidade: 1, estoque: estoqueDisponivel });
+  }
   
   localStorage.setItem('carrinho', JSON.stringify(carrinho)); 
   renderHeader(); 
   
   if (typeof exibirMensagem === 'function') exibirMensagem("Item adicionado ao carrinho!", "sucesso");
 }
-
 function feedbackCompra(botao, idProduto, event) {
     if(event) event.stopPropagation();
     
