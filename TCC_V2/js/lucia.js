@@ -172,11 +172,12 @@
         if (!mensagem) return;
 
         inputField.value = '';
-        chatBody.innerHTML += `<div class="msg-row msg-user"><div class="bubble">${mensagem}</div></div>`;
+        chatBody.innerHTML += `<div class="msg-row msg-user"><div class="bubble">${escapeHtml(mensagem)}</div></div>`;
         chatBody.scrollTop = chatBody.scrollHeight;
 
         const idDigitando = "digitando-" + Date.now();
-        chatBody.innerHTML += `<div id="${idDigitando}" class="msg-row msg-lucia"><div class="bubble">A pensar...</div></div>`;
+        // AQUI FOI CORRIGIDO: "A pensar..." agora é "Digitando..."
+        chatBody.innerHTML += `<div id="${idDigitando}" class="msg-row msg-lucia"><div class="bubble">Digitando...</div></div>`;
         chatBody.scrollTop = chatBody.scrollHeight;
 
         try {
@@ -197,12 +198,12 @@
                     let htmlProdutos = '<div class="lucia-produtos">';
                     dados.produtos.forEach(p => {
                         const precoReal = parseFloat(p.preco).toFixed(2).replace('.', ',');
-                        const imgSrc = p.imagem ? p.imagem : 'img/produto-padrao.jpg';
+                        const imgSrc = p.imagem && p.imagem.trim() !== '' ? p.imagem : 'img/produto-padrao.jpg';
                         htmlProdutos += `
                             <div class="lucia-card" onclick="window.location.hash='produtos'; window.toggleLucia();">
-                                <img src="${imgSrc}" alt="${p.nome}">
+                                <img src="${imgSrc}" alt="${escapeHtml(p.nome)}">
                                 <div class="lucia-card-info">
-                                    <h4>${p.nome}</h4>
+                                    <h4>${escapeHtml(p.nome)}</h4>
                                     <span>R$ ${precoReal}</span>
                                 </div>
                             </div>
@@ -215,9 +216,17 @@
                 chatBody.innerHTML += `<div class="msg-row msg-lucia"><div class="bubble">Ocorreu um erro de comunicação.</div></div>`;
             }
         } catch (erro) {
-            document.getElementById(idDigitando).remove();
-            chatBody.innerHTML += `<div class="msg-row msg-lucia"><div class="bubble">Erro de ligação. Verifique a internet.</div></div>`;
+            if (document.getElementById(idDigitando)) document.getElementById(idDigitando).remove();
+            // AQUI FOI CORRIGIDO: Erro formatado em PT-BR
+            chatBody.innerHTML += `<div class="msg-row msg-lucia"><div class="bubble">Erro de conexão. Verifique sua internet.</div></div>`;
         }
         chatBody.scrollTop = chatBody.scrollHeight;
     };
+    
+    // Função auxiliar para evitar injeção de código
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
 })();
