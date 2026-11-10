@@ -492,8 +492,6 @@ function renderSkeletonGrid(n) { return Array.from({ length: n }, () => '<div cl
 
 // === CARRINHO E FEEDBACK ===
 function adicionarAoCarrinho(id) {
-  const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
-  if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("É necessário fazer login para comprar.", "aviso"); return navegar('login'); }
   if (!window.produtosGlobais || window.produtosGlobais.length === 0) return;
 
   const p = window.produtosGlobais.find(x => String(x.id) === String(id));
@@ -515,8 +513,6 @@ function adicionarAoCarrinho(id) {
 
 function feedbackCompra(botao, idProduto, event) {
     if(event) event.stopPropagation();
-    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
-    if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("Faça login para comprar", "aviso"); return navegar('login'); }
     
     adicionarAoCarrinho(idProduto);
     
@@ -1050,8 +1046,6 @@ window.renderProdutoDetalhes = async function(id) {
 
 window.feedbackCompraGigante = function(botao, idProduto, event) {
     if(event) event.stopPropagation();
-    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
-    if (!user) { if (typeof exibirMensagem === 'function') exibirMensagem("Faça login para comprar", "aviso"); return navegar('login'); }
     
     adicionarAoCarrinho(idProduto); 
     
