@@ -12,7 +12,7 @@ if (!document.getElementById('swal-script')) {
 
 function mostrarAlertaModerno(titulo, texto, icone) {
     if (typeof Swal !== 'undefined') {
-        return Swal.fire({ title: titulo, text: texto, icon: icone, confirmButtonColor: '#000000' });
+        return Swal.fire({ title: titulo, text: texto, icon: icone, confirmButtonColor: '#0f172a' });
     } else {
         alert(titulo + "\n" + texto);
         return Promise.resolve();
@@ -27,10 +27,10 @@ const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_U
 }) : null;
 
 async function loginComGoogle() {
-    if (!supabaseClient) return mostrarAlertaModerno('Erro', 'SDK do Supabase não carregado.', 'error');
+    if (!supabaseClient) return mostrarAlertaModerno('Erro', 'O SDK do Supabase não foi carregado corretamente.', 'error');
     const redirectUrl = window.location.origin + window.location.pathname;
     const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectUrl } });
-    if (error) mostrarAlertaModerno('Aviso', 'Erro no login Google: ' + error.message, 'error');
+    if (error) mostrarAlertaModerno('Aviso', 'Erro ao fazer login com o Google: ' + error.message, 'error');
 }
 
 // Intercepta e valida via backend antes de permitir a sessão
@@ -60,9 +60,9 @@ if (supabaseClient) {
 
                     await Swal.fire({
                         title: 'Acesso em Análise',
-                        text: data.mensagem || 'A sua conta precisa ser aprovada pelo administrador antes do primeiro acesso.',
+                        text: data.mensagem || 'Sua conta precisa ser aprovada pelo administrador antes do primeiro acesso.',
                         icon: 'warning',
-                        confirmButtonColor: '#000000'
+                        confirmButtonColor: '#0f172a'
                     });
 
                     window.location.hash = '#home';
@@ -70,7 +70,7 @@ if (supabaseClient) {
                     return;
                 }
 
-                // Utilizador aprovado: guarda dados e TOKEN
+                // Usuário aprovado: guarda dados e TOKEN
                 const usuarioFormatado = {
                     id: data.dados.id,
                     nome: data.dados.nome,
@@ -80,7 +80,7 @@ if (supabaseClient) {
                 localStorage.setItem('jr_user', JSON.stringify(usuarioFormatado));
                 if (data.token) localStorage.setItem('jr_token', data.token);
 
-                await mostrarAlertaModerno('Acesso Confirmado!', `Bem-vindo(a) de volta, ${usuarioFormatado.nome}.`, 'success');
+                await mostrarAlertaModerno('Acesso Confirmado!', `Seja bem-vindo(a) de volta, ${usuarioFormatado.nome}.`, 'success');
 
                 if (typeof renderHeader === 'function') renderHeader();
                 if (window.location.hash.includes('login') || window.location.hash.includes('access_token')) {
@@ -92,7 +92,7 @@ if (supabaseClient) {
                 await supabaseClient.auth.signOut();
                 localStorage.removeItem('jr_user');
                 localStorage.removeItem('jr_token');
-                mostrarAlertaModerno('Erro de Conexão', 'Não foi possível validar o acesso Google.', 'error');
+                mostrarAlertaModerno('Erro de Conexão', 'Não foi possível validar o seu acesso via Google.', 'error');
             }
         }
     });
@@ -104,7 +104,7 @@ async function realizarLogin(event) {
     const email = document.getElementById('login-email').value.trim();
     const senha = document.getElementById('login-senha').value;
     
-    if (!email || !senha) return mostrarAlertaModerno('Atenção', 'Preencha e-mail e senha.', 'warning');
+    if (!email || !senha) return mostrarAlertaModerno('Atenção', 'Por favor, preencha o seu e-mail e a senha.', 'warning');
     
     if (typeof mostrarLoading === 'function') mostrarLoading(true, "Autenticando...");
     try {
@@ -120,7 +120,7 @@ async function realizarLogin(event) {
             localStorage.setItem('jr_user', JSON.stringify(user));
             if (data.token) localStorage.setItem('jr_token', data.token);
             
-            await mostrarAlertaModerno('Acesso Confirmado!', `Bem-vindo(a) de volta, ${user.nome}.`, 'success');
+            await mostrarAlertaModerno('Acesso Confirmado!', `Seja bem-vindo(a) de volta, ${user.nome}.`, 'success');
             
             if (typeof renderHeader === 'function') renderHeader();
             if (typeof navegar === 'function') navegar(user.role === 'admin' ? 'admin/dashboard' : 'home');
@@ -128,7 +128,7 @@ async function realizarLogin(event) {
             mostrarAlertaModerno('Erro de Acesso', data.erro || data.mensagem, 'error');
         }
     } catch(e) {
-        mostrarAlertaModerno('Erro', 'Erro de conexão ao servidor.', 'error');
+        mostrarAlertaModerno('Erro', 'Ocorreu um erro de conexão com o servidor.', 'error');
     } finally {
         if (typeof mostrarLoading === 'function') mostrarLoading(false);
     }
@@ -139,7 +139,7 @@ async function fazerLogout() {
     localStorage.removeItem('jr_user');
     localStorage.removeItem('jr_token'); // Limpa a chave de segurança
     
-    await mostrarAlertaModerno('Desconectado', 'Sessão encerrada com segurança.', 'info');
+    await mostrarAlertaModerno('Desconectado', 'Sua sessão foi encerrada com segurança.', 'info');
     
     if (typeof renderHeader === 'function') renderHeader();
     if (typeof navegar === 'function') navegar('home');
@@ -151,7 +151,7 @@ async function validarFinalizacaoCompra() {
     const user = userStr ? JSON.parse(userStr) : null;
     
     if (!user) {
-        await mostrarAlertaModerno('Segurança JR', 'É obrigatório iniciar sessão (fazer login) para finalizar a compra.', 'warning');
+        await mostrarAlertaModerno('Segurança JR', 'É obrigatório entrar na sua conta para finalizar a compra.', 'warning');
         if (typeof navegar === 'function') navegar('login');
         return false;
     }
@@ -159,16 +159,16 @@ async function validarFinalizacaoCompra() {
     if (typeof Swal !== 'undefined') {
         const result = await Swal.fire({
             title: '🔐 Verificação de Segurança',
-            html: `Confirmar pedido no nome de:<br><b>👤 ${user.nome}</b><br><b>✉️ ${user.email}</b>?`,
+            html: `Confirmar o pedido no nome de:<br><b>👤 ${user.nome}</b><br><b>✉️ ${user.email}</b>?`,
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#000000',
-            cancelButtonColor: '#71717a',
+            confirmButtonColor: '#16a34a',
+            cancelButtonColor: '#64748b',
             confirmButtonText: 'Sim, Confirmar',
             cancelButtonText: 'Cancelar'
         });
         return result.isConfirmed;
     } else {
-        return confirm(`Confirmar a finalização deste pedido para: ${user.nome}?`);
+        return confirm(`Deseja confirmar a finalização deste pedido para: ${user.nome}?`);
     }
 }
