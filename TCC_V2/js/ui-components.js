@@ -96,7 +96,7 @@ function mostrarConfirmacao(titulo, mensagem, onConfirm, onCancel) {
     document.body.appendChild(modal);
 }
 
-// ========== EMPTY STATE ==========
+// ========== EMPTY STATE (ESTADO VAZIO) ==========
 function renderEmptyState(icone, titulo, descricao, botao = null) {
     let html = `
         <div class="empty-state">
@@ -114,11 +114,11 @@ function renderEmptyState(icone, titulo, descricao, botao = null) {
 }
 
 // ========== LOADING PROFISSIONAL ==========
-function mostrarLoading(show = true, mensagem = 'A carregar...') {
+function mostrarLoading(show = true, mensagem = 'Carregando...') {
     let loader = document.getElementById('global-loader');
     
     if (show) {
-        // Se mandou mostrar e não existe, cria-o
+        // Se mandou mostrar e não existe, cria
         if (!loader) {
             loader = document.createElement('div');
             loader.id = 'global-loader';
@@ -142,6 +142,7 @@ function mostrarLoading(show = true, mensagem = 'A carregar...') {
         }
     }
 }
+
 // ========== TABELA COM PAGINAÇÃO ==========
 function renderTabelaPaginada(dados, colunas, onPaginaChange) {
     const itemsPorPagina = 10;
@@ -181,7 +182,7 @@ function renderTabelaPaginada(dados, colunas, onPaginaChange) {
     return renderizar(paginaAtual);
 }
 
-// ========== CARD COM HOVER EFFECT ==========
+// ========== CARD COM EFEITO HOVER ==========
 function renderCardProfissional(titulo, conteudo, rodape = null, acao = null) {
     return `
         <div class="card-profissional">
@@ -197,7 +198,7 @@ function renderCardProfissional(titulo, conteudo, rodape = null, acao = null) {
     `;
 }
 
-// ========== ALERT CUSTOMIZADO ==========
+// ========== ALERTA CUSTOMIZADO ==========
 function mostrarAlerta(tipo, titulo, mensagem) {
     const alerta = document.createElement('div');
     alerta.className = `alerta alerta-${tipo} fade-in`;
@@ -227,7 +228,7 @@ function renderBadgeComTooltip(texto, tipo, tooltip) {
     `;
 }
 
-// ========== PROGRESS BAR ==========
+// ========== BARRA DE PROGRESSO ==========
 function renderProgressBar(valor, maximo = 100, label = '') {
     const percentual = (valor / maximo) * 100;
     return `
