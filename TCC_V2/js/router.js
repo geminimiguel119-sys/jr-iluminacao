@@ -1,5 +1,5 @@
 // ==========================================
-// SISTEMA DE ROTAS (router.js)
+// SISTEMA DE ROTAS (router.js) - UX PREMIUM
 // ==========================================
 
 window.navegar = function(rota, params = {}) {
@@ -21,11 +21,30 @@ window.router = function() {
         params.id = urlParams.get('id');
     }
 
+    // === GATILHO DA ANIMAÇÃO DE FLUIDEZ & SCROLL TOP ===
+    const appElement = document.getElementById('app');
+    if (appElement) {
+        // Remove a classe para resetar a animação
+        appElement.classList.remove('page-transition');
+        
+        // Pequeno atraso para o navegador registrar a remoção e reaplicar a animação
+        setTimeout(() => {
+            appElement.classList.add('page-transition');
+        }, 10);
+    }
+    
+    // Leva a tela sempre para o topo de forma suave ao trocar de página
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     // === BARREIRA DE SEGURANÇA ADMIN ===
     if (rota.startsWith('admin')) {
         const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
         if (!user || user.role !== 'admin') {
-            alert("Acesso negado. Área restrita a administradores.");
+            if (typeof exibirMensagem === 'function') {
+                exibirMensagem("Acesso negado. Área restrita a administradores.", "erro");
+            } else {
+                alert("Acesso negado. Área restrita a administradores.");
+            }
             navegar('home'); 
             return;
         }
@@ -38,7 +57,7 @@ window.router = function() {
     else if (rota === 'produtos') {
         if (typeof renderProdutos === 'function') renderProdutos();
     }
-    // ---> NOVA ROTA ADICIONADA: PÁGINA EXCLUSIVA DO PRODUTO <---
+    // ---> ROTA EXCLUSIVA DO PRODUTO <---
     else if (rota === 'produto') {
         if (typeof renderProdutoDetalhes === 'function') renderProdutoDetalhes(params.id);
     }
@@ -68,7 +87,6 @@ window.router = function() {
     else if (rota === 'admin/pedidos') {
         if (typeof renderAdminPedidos === 'function') renderAdminPedidos();
     }
-    // ROTA DE RELATÓRIOS DO ADMIN (O SUCESSO ACONTECE AQUI)
     else if (rota === 'admin/relatorios') {
         if (typeof renderAdminRelatorios === 'function') renderAdminRelatorios();
     }
