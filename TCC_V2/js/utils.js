@@ -19,7 +19,7 @@ function checkSessao() {
 }
 
 async function apiFetch(url, options = {}) {
-  if (typeof mostrarLoading === 'function') mostrarLoading(true, 'A processar...');
+  if (typeof mostrarLoading === 'function') mostrarLoading(true, 'Processando...');
   
   // INJEÇÃO DO TOKEN DE SEGURANÇA (JWT)
   const token = localStorage.getItem('jr_token');
@@ -36,8 +36,8 @@ async function apiFetch(url, options = {}) {
     try {
       data = JSON.parse(text);
     } catch (jsonErr) {
-      console.error("O servidor PHP não devolveu um JSON válido. Devolveu isto:", text);
-      throw new Error("Erro de comunicação com o servidor. Verifique a Consola (F12).");
+      console.error("O servidor PHP não retornou um JSON válido. Retornou o seguinte:", text);
+      throw new Error("Erro de comunicação com o servidor. Verifique o console (F12).");
     }
     
     if (!r.ok) throw new Error(data.mensagem || data.erro || 'Erro na requisição');
