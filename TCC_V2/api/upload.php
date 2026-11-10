@@ -21,23 +21,19 @@ $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 $allowed = ['jpg', 'jpeg', 'png', 'webp'];
 
 if (!in_array($ext, $allowed)) {
-    erro('Formato inválido. Use JPG, PNG ou WEBP.', 400);
+    erro('Formato de arquivo inválido. Use JPG, PNG ou WEBP.', 400);
 }
 
-// Criar pasta 'uploads' na raiz do projeto, caso não exista
-$uploadDir = '../uploads/';
-if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
-}
+// =========================================================================
+// SOLUÇÃO PARA O RENDER (Disco Efêmero):
+// Transformamos a imagem em Base64. Assim, ela será salva como TEXTO 
+// direto no Supabase. A imagem nunca mais some quando o Render reiniciar!
+// =========================================================================
+$conteudoArquivo = file_get_contents($file['tmp_name']);
+$base64 = base64_encode($conteudoArquivo);
+$tipoMime = mime_content_type($file['tmp_name']);
 
-// Gera um nome único para a imagem para não sobrepor outras
-$novoNome = uniqid('prod_') . '.' . $ext;
-$caminhoCompleto = $uploadDir . $novoNome;
-$caminhoRelativo = 'uploads/' . $novoNome;
+$caminhoBase64 = 'data:' . $tipoMime . ';base64,' . $base64;
 
-if (move_uploaded_file($file['tmp_name'], $caminhoCompleto)) {
-    sucesso('Upload realizado.', ['caminho' => $caminhoRelativo]);
-} else {
-    erro('Erro ao guardar o ficheiro no servidor.', 500);
-}
+sucesso('Upload realizado com sucesso.', ['caminho' => $caminhoBase64]);
 ?>
