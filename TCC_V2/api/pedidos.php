@@ -16,26 +16,32 @@ require_once 'conexao.php';
 // Fuso horário de Brasília
 $pdo->exec("SET TIME ZONE 'America/Sao_Paulo'");
 
-// Credenciais do Bot do Telegram
-$telegramToken = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
+// Credenciais do Bot do Telegram (Atualizado com o novo Token)
+$telegramToken = "8700166269:AAEgnRWKyNT8Uw8EppsNK7VVSmyHYF9YlYY";
 $telegramChatId = "5034813131";
 
+// Função blindada usando cURL (padrão da indústria e aceito pelo Render)
 function notificarTelegramHTML($msg, $token, $chatId) {
-    if (empty($token)) return;
+    if (empty($token) || empty($chatId)) return false;
+    
     $url = "https://api.telegram.org/bot{$token}/sendMessage";
-    $context = stream_context_create([
-        'http' => [
-            'method'  => 'POST',
-            'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
-            'content' => http_build_query([
-                'chat_id'    => $chatId,
-                'text'       => $msg,
-                'parse_mode' => 'HTML'
-            ]),
-            'timeout' => 4
-        ]
-    ]);
-    @file_get_contents($url, false, $context);
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'chat_id'    => $chatId,
+        'text'       => $msg,
+        'parse_mode' => 'HTML'
+    ]));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Evita erros de certificado HTTPS no Render
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    
+    $resultado = curl_exec($ch);
+    curl_close($ch);
+    
+    return $resultado ? true : false;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
