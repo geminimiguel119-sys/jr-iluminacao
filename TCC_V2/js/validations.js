@@ -136,8 +136,8 @@ function validarCampo(input) {
                 'cep': 'CEP inválido',
                 'numero': 'Deve ser um número',
                 'numeroPositivo': 'Deve ser um número positivo',
-                'textoMinimo': `Mínimo ${input.getAttribute('data-minimo') || 3} caracteres`,
-                'senha': 'Mínimo 6 caracteres com pelo menos 1 número',
+                'textoMinimo': `Mínimo de ${input.getAttribute('data-minimo') || 3} caracteres`,
+                'senha': 'Mínimo de 6 caracteres com pelo menos 1 número',
                 'url': 'URL inválida'
             };
             
@@ -149,14 +149,14 @@ function validarCampo(input) {
     // Validar comprimento mínimo
     const minimo = input.getAttribute('data-minimo');
     if (minimo && valor.length < minimo) {
-        adicionarErro(input, `Mínimo ${minimo} caracteres`);
+        adicionarErro(input, `Mínimo de ${minimo} caracteres`);
         return false;
     }
     
     // Validar comprimento máximo
     const maximo = input.getAttribute('data-maximo');
     if (maximo && valor.length > maximo) {
-        adicionarErro(input, `Máximo ${maximo} caracteres`);
+        adicionarErro(input, `Máximo de ${maximo} caracteres`);
         return false;
     }
     
