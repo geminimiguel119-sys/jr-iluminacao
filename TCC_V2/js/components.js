@@ -36,6 +36,7 @@ function fecharUserMenu() { const menu = document.getElementById('user-menu'); i
 document.addEventListener('click', (e) => { const userMenu = document.getElementById('user-menu'); const userChip = document.querySelector('.user-chip'); if (userMenu && userChip && !userChip.contains(e.target) && !userMenu.contains(e.target)) { userMenu.style.display = 'none'; } });
 
 // === CABEÇALHO ===
+// === CABEÇALHO ===
 function renderHeader() {
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
   const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
@@ -53,7 +54,10 @@ function renderHeader() {
       <nav class="main-nav">
         <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('home'); return false;">Início</a>
         <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('produtos'); return false;">Produtos</a>
-        ${user ? `<a href="#" class="nav-link" onclick="fecharMenuMobile(); abrirCarrinho(); return false;" style="color: #38bdf8; font-weight: 600;">🛒 Carrinho (<span id="cart-count">${qtdCarrinho}</span>)</a>` : ''}
+        
+        <!-- AQUI ESTÁ A CORREÇÃO: O carrinho agora aparece para TODOS! -->
+        <a href="#" class="nav-link" onclick="fecharMenuMobile(); abrirCarrinho(); return false;" style="color: #38bdf8; font-weight: 600;">🛒 Carrinho (<span id="cart-count">${qtdCarrinho}</span>)</a>
+        
         ${user?.role === 'admin' ? `<a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('admin/dashboard'); return false;">Painel Admin</a>` : ''}
         
         ${user ? `
@@ -83,7 +87,6 @@ function renderHeader() {
     </div>
   `;
 }
-
 function renderHome() { 
     const app = document.getElementById('app'); 
     if (!app) return; 
