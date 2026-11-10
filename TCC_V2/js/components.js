@@ -884,7 +884,9 @@ window.simularAprovacaoPedido = async function(pedidoId, btnEl) {
             btnEl.innerHTML = "✅ Aprovado na Hora!";
             btnEl.style.background = "#22c55e";
             btnEl.style.color = "#fff";
-            if (typeof exibirMensagem === 'function') exibirMensagem("Webhook recebido: Pedido aprovado!", "sucesso");
+            
+            // CORREÇÃO 1: Texto mais limpo
+            if (typeof exibirMensagem === 'function') exibirMensagem("Pedido aprovado!", "sucesso");
         } else {
             btnEl.innerHTML = "❌ Erro ao Aprovar";
         }
@@ -908,19 +910,32 @@ window.exibirMensagem = function(msg, tipo = 'sucesso') {
     let corBorda = tipo === 'sucesso' ? '#052e16' : (tipo === 'erro' ? '#450a0a' : '#451a03');
 
     const toast = document.createElement('div');
+    
+    // CORREÇÃO 2: Aplicação de CSS com transformações suaves (Cubic Bezier) para um efeito "deslizante"
     toast.style.cssText = `
         min-width: 250px; max-width: 400px; padding: 14px 18px; border-radius: 8px; 
-        box-shadow: 0 4px 14px rgba(0,0,0,0.3); color: #fff; display: flex; align-items: center; 
-        gap: 12px; font-size: 0.95rem; font-family: sans-serif; pointer-events: auto;
-        background-color: ${corFundo}; border-left: 5px solid ${corBorda};
-        transition: opacity 0.3s ease-out; opacity: 1;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12); color: #fff; display: flex; align-items: center; 
+        gap: 12px; font-size: 0.95rem; font-family: 'Poppins', sans-serif; pointer-events: auto;
+        background-color: ${corFundo}; border-left: 4px solid ${corBorda};
+        opacity: 0; transform: translateY(-15px) scale(0.95);
+        transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     `;
-    toast.innerHTML = `<strong>${icone}</strong> <div>${msg}</div>`;
+    toast.innerHTML = `<strong style="font-size: 1.1rem;">${icone}</strong> <div>${msg}</div>`;
     container.appendChild(toast);
 
+    // Dispara a animação sutil de entrada
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+
+    // Saída sutil após 3 segundos
     setTimeout(() => {
         toast.style.opacity = '0';
-        setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
+        toast.style.transform = 'translateY(-10px) scale(0.95)';
+        setTimeout(() => { if (toast.parentNode) toast.remove(); }, 400);
     }, 3000); 
 };
 
