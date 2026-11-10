@@ -547,11 +547,33 @@ function feedbackCompra(botao, idProduto, event) {
 function alterarQtdCarrinho(index, delta) {
   let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
   if (!carrinho[index]) return;
+  
   const p = window.produtosGlobais.find(x => String(x.id) === String(carrinho[index].id));
-  if (delta > 0 && p && (carrinho[index].quantidade + delta > p.quantidade)) { if (typeof exibirMensagem === 'function') exibirMensagem(`Limite atingido!`, "aviso"); return; }
-  carrinho[index].quantidade += delta;
-  if (carrinho[index].quantidade <= 0) carrinho.splice(index, 1);
-  localStorage.setItem('carrinho', JSON.stringify(carrinho)); renderHeader(); renderizarItensCarrinho();
+  
+  // CORREÇÃO: Converter estoques e quantidades para Números reais para evitar falhas matemáticas
+  const estoqueDisponivel = p ? Number(p.quantidade || 0) : Number(carrinho[index].estoque || 0);
+  const quantidadeAtual = Number(carrinho[index].quantidade);
+  
+  // Se o utilizador clicar em "+" e a quantidade for ultrapassar o limite, bloqueamos a ação
+  if (delta > 0 && (quantidadeAtual + delta > estoqueDisponivel)) { 
+      if (typeof exibirMensagem === 'function') {
+          exibirMensagem(`Limite atingido! Temos apenas ${estoqueDisponivel} unidades em estoque.`, "aviso"); 
+      }
+      return; 
+  }
+  
+  // Atualizamos a quantidade no carrinho
+  carrinho[index].quantidade = quantidadeAtual + delta;
+  
+  // Se a quantidade chegar a zero ou menos, removemos o produto do carrinho
+  if (carrinho[index].quantidade <= 0) {
+      carrinho.splice(index, 1);
+  }
+  
+  // Guardamos as alterações, atualizamos o menu de cima e redesenhamos o carrinho aberto
+  localStorage.setItem('carrinho', JSON.stringify(carrinho)); 
+  renderHeader(); 
+  renderizarItensCarrinho();
 }
 
 function abrirCarrinho() {
