@@ -65,7 +65,7 @@ if (!empty($termosValidos)) {
     $condicoes = [];
     $valores = [];
     
-    // Busca tipo OR (mais amigável para o cliente que digita termos amplos)
+    // Busca restrita (AND) para não puxar produtos aleatórios
     foreach ($termosValidos as $termo) {
         $condicoes[] = "(nome ILIKE ? OR descricao ILIKE ? OR categoria ILIKE ?)";
         $valores[] = "%{$termo}%";
@@ -73,7 +73,8 @@ if (!empty($termosValidos)) {
         $valores[] = "%{$termo}%";
     }
     
-    $sql = "SELECT id, nome, preco, imagem, quantidade FROM produtos WHERE " . implode(" OR ", $condicoes) . " LIMIT 4";
+    // AQUI ESTÁ A CORREÇÃO: implode(" AND ", $condicoes)
+    $sql = "SELECT id, nome, preco, imagem, quantidade FROM produtos WHERE " . implode(" AND ", $condicoes) . " LIMIT 4";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($valores);
     
