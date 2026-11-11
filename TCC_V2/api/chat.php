@@ -59,21 +59,29 @@ $stopWords = ['oi', 'ola', 'olá', 'bom', 'dia', 'tarde', 'noite', 'tudo', 'bem'
 
 $palavrasBusca = array_diff($palavras, $stopWords);
 $termosValidos = array_filter($palavrasBusca, function($p) { return strlen($p) > 2; });
+
+// A MÁGICA: Converte Plural para Singular automaticamente (ex: fitas -> fita, leds -> led)
+$termosTratados = array_map(function($termo) {
+    if (strlen($termo) > 3 && substr($termo, -1) === 's') {
+        return substr($termo, 0, -1);
+    }
+    return $termo;
+}, $termosValidos);
+
 $produtosEncontrados = [];
 
-if (!empty($termosValidos)) {
+if (!empty($termosTratados)) {
     $condicoes = [];
     $valores = [];
     
-    // Busca restrita (AND) para não puxar produtos aleatórios
-    foreach ($termosValidos as $termo) {
+    // Busca restrita (AND) com os termos já convertidos para singular
+    foreach ($termosTratados as $termo) {
         $condicoes[] = "(nome ILIKE ? OR descricao ILIKE ? OR categoria ILIKE ?)";
         $valores[] = "%{$termo}%";
         $valores[] = "%{$termo}%";
         $valores[] = "%{$termo}%";
     }
     
-    // AQUI ESTÁ A CORREÇÃO: implode(" AND ", $condicoes)
     $sql = "SELECT id, nome, preco, imagem, quantidade FROM produtos WHERE " . implode(" AND ", $condicoes) . " LIMIT 4";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($valores);
