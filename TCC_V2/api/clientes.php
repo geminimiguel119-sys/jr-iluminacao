@@ -14,7 +14,10 @@ require_once 'config.php';
 require_once 'conexao.php';
 $pdo->exec("SET TIME ZONE 'America/Sao_Paulo'");
 
-$telegramToken = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
+// ==========================================
+// CREDENCIAIS ATUALIZADAS DO TELEGRAM
+// ==========================================
+$telegramToken = "8700166269:AAHKR_tCjYaNsL95UdTPw5b5f_ZjjmpD-jc";
 $telegramChatId = "5034813131";
 
 function notificarTelegram($msg, $token, $chatId) {
