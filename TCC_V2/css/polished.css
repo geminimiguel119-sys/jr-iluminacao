@@ -519,3 +519,83 @@ html {
   0% { opacity: 0; transform: scale(0.95); }
   100% { opacity: 1; transform: scale(1); }
 }
+
+
+/* ==========================================================================
+   MELHORIAS DE RESPONSIVIDADE MOBILE (TCC - UX PREMIUM)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* 1. Espaçamento Global (Mais "respiro" nas laterais) */
+    body {
+        font-size: 16px; /* Evita que o iPhone dê zoom automático nos inputs */
+    }
+    .container, .page-shell, #app {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    /* 2. Grid de Produtos (1 coluna espaçosa e elegante no celular) */
+    .product-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 24px !important;
+        margin-top: 15px;
+    }
+
+    /* 3. Botões e Inputs (Área de toque à prova de "dedos grandes" - Mínimo 48px) */
+    .btn, button, select, input, .lucia-chip {
+        min-height: 48px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    input, select {
+        font-size: 1rem !important; /* Texto legível sem forçar a visão */
+        padding: 12px 15px !important;
+    }
+
+    /* 4. Carrinho de Compras (Ocupando a tela toda como um App) */
+    #modal-carrinho {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100vh !important;
+        padding: 20px 16px !important;
+        border-radius: 0 !important;
+    }
+
+    /* 5. Menu de Filtros (Scroll horizontal mais suave e espaçado) */
+    .catalog-controls {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    
+    .catalog-controls > div:first-child {
+        padding-bottom: 12px !important;
+        gap: 12px !important;
+    }
+    
+    .btn-filtro {
+        white-space: nowrap; /* Não deixa o texto quebrar em duas linhas */
+        padding: 0 20px !important;
+    }
+
+    /* 6. Home e Textos Gigantes (Ajuste de proporção) */
+    .hero h1 {
+        font-size: 2.2rem !important;
+        line-height: 1.2 !important;
+    }
+    .hero-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    .hero-actions .btn {
+        width: 100%;
+    }
+    
+    /* 7. Perfil do Cliente (Ajuste dos cards de pedidos) */
+    #perfil-layout {
+        gap: 20px !important;
+    }
+}
