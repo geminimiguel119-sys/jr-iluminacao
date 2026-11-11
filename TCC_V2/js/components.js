@@ -10,6 +10,8 @@ window.prazoEntregaAtual = 'A combinar';
   const style = document.createElement('style');
   style.id = 'jr-btn-fix-styles';
   style.innerHTML = `
+    a, button, input, select { touch-action: manipulation; }
+
     .btn, button.btn, button.brand { transition: all 0.2s ease-in-out !important; }
     .btn-primary { background-color: #0284c7 !important; color: #ffffff !important; border: 1px solid #0284c7 !important; }
     .btn-primary:hover, button.btn-primary:hover, .btn-comprar:hover { background-color: #0369a1 !important; color: #ffffff !important; filter: brightness(1.05); cursor: pointer; }
@@ -17,67 +19,72 @@ window.prazoEntregaAtual = 'A combinar';
     .btn-ghost:hover { background-color: rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; }
     .btn-qtd { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; width: 30px; height: 30px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; }
     .btn-qtd:active { background: #cbd5e1; transform: scale(0.95); }
-    
+
     .desktop-user-dropdown { display: inline-block; }
     .mobile-user-links { display: none; }
-    
+
     #mobile-overlay {
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
-        z-index: 99998; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important;
+        background: rgba(15, 23, 42, 0.6) !important; backdrop-filter: blur(4px) !important;
+        z-index: 99998 !important; opacity: 0; pointer-events: none; transition: opacity 0.3s ease !important;
     }
-    #mobile-overlay.open { opacity: 1; pointer-events: auto; }
-    
+    #mobile-overlay.open { opacity: 1 !important; pointer-events: auto !important; }
+
     @media (max-width: 768px) {
       .desktop-user-dropdown { display: none !important; }
-      
-      /* Efeito Gaveta no Menu */
-      .main-nav { 
-          position: fixed; top: 0; right: -100%; width: 280px; height: 100vh; 
-          background: #ffffff; box-shadow: -10px 0 30px rgba(0,0,0,0.2); 
-          flex-direction: column !important; align-items: flex-start !important; 
-          padding: 80px 25px 30px; transition: right 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-          z-index: 99999; display: flex !important; overflow-y: auto;
+
+      /* Efeito Gaveta Blindado contra o CSS antigo */
+      header .main-nav, .main-nav {
+          position: fixed !important; top: 0 !important; right: -110% !important; left: auto !important; bottom: auto !important;
+          width: 280px !important; height: 100vh !important;
+          background: #ffffff !important; box-shadow: -10px 0 30px rgba(0,0,0,0.2) !important;
+          flex-direction: column !important; align-items: flex-start !important;
+          padding: 80px 25px 30px !important; transition: right 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+          z-index: 99999 !important; display: flex !important; overflow-y: auto !important;
       }
-      .main-nav.open { right: 0; }
-      .main-nav .nav-link { font-size: 1.15rem; padding: 15px 0; border-bottom: 1px solid #f1f5f9; width: 100%; display: block; color: #1e293b; font-weight: 500; }
-      
-      .mobile-user-links { display: flex !important; flex-direction: column !important; gap: 8px !important; padding-top: 20px !important; margin-top: 10px !important; border-top: 2px solid #e2e8f0 !important; width: 100%; }
-      .mobile-user-links a { font-size: 1.05rem !important; }
-      
-      .mobile-menu { z-index: 100000; position: relative; border: none; background: none; font-size: 28px; color: #0f172a; cursor: pointer; padding: 10px; transition: transform 0.2s; }
-      
+      header .main-nav.open, .main-nav.open { right: 0 !important; }
+
+      header .main-nav .nav-link, .main-nav .nav-link {
+          font-size: 1.15rem !important; padding: 15px 0 !important; border-bottom: 1px solid #f1f5f9 !important;
+          width: 100% !important; display: block !important; color: #1e293b !important; font-weight: 500 !important;
+      }
+
+      .mobile-user-links { display: flex !important; flex-direction: column !important; gap: 8px !important; padding-top: 20px !important; margin-top: 10px !important; border-top: 2px solid #e2e8f0 !important; width: 100% !important; }
+      .mobile-user-links a { font-size: 1.05rem !important; color: #334155 !important; }
+
+      header .mobile-menu, .mobile-menu { z-index: 100000 !important; position: relative !important; border: none !important; background: transparent !important; font-size: 28px !important; padding: 10px !important; cursor: pointer !important; }
+
       #modal-carrinho { max-width: 100% !important; padding: 20px 15px !important; }
       #modal-carrinho .btn-primary { padding: 18px !important; font-size: 1.1rem !important; border-radius: 12px !important; }
     }
   `;
-  document.head.appendChild(style);
+  if (document.head) document.head.appendChild(style);
 })();
 
 // === FUNÇÕES DE CONTROLE DO MENU MOBILE (EFEITO GAVETA) ===
 function alternarMenuMobile() { 
     const nav = document.querySelector('.main-nav'); 
     
-    // Cria o overlay apenas no clique, garantindo que a página já carregou e evitando erros de JS
+    // Cria a sombra dinamicamente apenas após o click, evitando crash no carregamento da página
     let overlay = document.getElementById('mobile-overlay');
-    if (!overlay) {
+    if (!overlay && document.body) {
         overlay = document.createElement('div');
         overlay.id = 'mobile-overlay';
         overlay.onclick = fecharMenuMobile; 
         document.body.appendChild(overlay);
     }
-
+    
     const btn = document.querySelector('.mobile-menu');
     
     if (nav) nav.classList.toggle('open'); 
     if (overlay) overlay.classList.toggle('open');
     
-    // Transforma o hambúrguer num "X" e trava a tela de fundo
+    // Troca a cor do botão para escuro para não sumir no fundo branco da gaveta
     if (nav && nav.classList.contains('open')) {
-        if(btn) btn.innerHTML = '✕';
+        if(btn) { btn.innerHTML = '✕'; btn.style.color = '#0f172a'; }
         document.body.style.overflow = 'hidden';
     } else {
-        if(btn) btn.innerHTML = '☰';
+        if(btn) { btn.innerHTML = '☰'; btn.style.color = ''; }
         document.body.style.overflow = '';
     }
 }
@@ -89,7 +96,7 @@ function fecharMenuMobile() {
     
     if (nav) nav.classList.remove('open'); 
     if (overlay) overlay.classList.remove('open');
-    if (btn) btn.innerHTML = '☰';
+    if (btn) { btn.innerHTML = '☰'; btn.style.color = ''; }
     document.body.style.overflow = ''; 
 }
 
@@ -642,22 +649,30 @@ function abrirCarrinho() {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'modal-carrinho';
-    modal.style.cssText = 'position:fixed; top:0; right:-100%; width:100%; max-width:420px; height:100%; background:#fff; box-shadow:-5px 0 25px rgba(0,0,0,0.3); z-index:9999999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: right 0.3s ease;';
+    // O carrinho agora nasce fora da tela (right: -100%) e desliza
+    modal.style.cssText = 'position:fixed; top:0; right:-100%; width:100%; max-width:420px; height:100%; background:#fff; box-shadow:-5px 0 25px rgba(0,0,0,0.3); z-index:9999999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: right 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);';
+    
+    // Força tela inteira no celular
+    const style = document.createElement('style');
+    style.innerHTML = `@media (max-width: 768px) { #modal-carrinho { max-width: 100% !important; padding: 20px 15px !important; } }`;
+    if (document.head) document.head.appendChild(style);
+    
     document.body.appendChild(modal);
   }
   
-  document.body.style.overflow = 'hidden'; 
+  document.body.style.overflow = 'hidden'; // Trava o scroll da loja no fundo
   renderizarItensCarrinho(); 
   
+  // Pequeno delay para a animação CSS acontecer na hora certa
   setTimeout(() => { modal.style.right = '0'; }, 10);
 }
 
 function fecharCarrinho() { 
   const modal = document.getElementById('modal-carrinho'); 
   if (modal) {
-      modal.style.right = '-100%'; 
+      modal.style.right = '-100%'; // Desliza o carrinho para fora da tela
   }
-  document.body.style.overflow = ''; 
+  document.body.style.overflow = ''; // Destrava o scroll da loja
 }
 
 function renderizarItensCarrinho() {
