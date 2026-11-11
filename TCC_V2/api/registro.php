@@ -89,7 +89,7 @@ try {
     $telegramToken = "8700166269:AAE43sggx-efi75G0N97-ZHHrJf0xMye4m4";
     $telegramChatId = "5034813131";
 
-    if (!empty($telegramToken)) {
+   if (!empty($telegramToken)) {
         $msg = "🚨 <b>Novo Cliente Cadastrado!</b>\n\n";
         $msg .= "🆔 <b>ID:</b> {$usuario_id}\n";
         $msg .= "👤 <b>Nome:</b> " . htmlspecialchars($nome, ENT_QUOTES, 'UTF-8') . "\n";
@@ -106,29 +106,31 @@ try {
             ]
         ];
 
-        $urlTG = "https://api.telegram.org/bot{$telegramToken}/sendMessage";
-        
-        $opcoesContexto = [
-            'http' => [
-                'method'  => 'POST',
-                'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
-                'content' => http_build_query([
-                    'chat_id'      => $telegramChatId,
-                    'text'         => $msg,
-                    'parse_mode'   => 'HTML',
-                    'reply_markup' => json_encode($teclado)
-                ]),
-                'timeout' => 4 // Impede que o site trave se o Telegram estiver fora do ar
-            ]
+        $dadosTelegram = [
+            'chat_id' => $telegramChatId,
+            'text' => $msg,
+            'parse_mode' => 'HTML',
+            'reply_markup' => json_encode($teclado)
         ];
-        @file_get_contents($urlTG, false, stream_context_create($opcoesContexto));
+
+        $ch = curl_init("https://api.telegram.org/bot{$telegramToken}/sendMessage");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($dadosTelegram));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5); // Impede que o site trave se o Telegram demorar
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
+        
+        // Executa o disparo blindado via cURL
+        curl_exec($ch);
+        curl_close($ch);
     }
 
     sucesso("Conta criada com sucesso! O seu cadastro está em análise. Aguarde a aprovação do administrador para fazer o login.");
 
 } catch (Exception $e) {
     // Em caso de qualquer erro (ex: e-mail duplicado), desfaz tudo que tentou salvar (Rollback)
-    if ($pdo->inTransaction()) {
+    if (isset($pdo) && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
     erro($e->getMessage(), 400);
