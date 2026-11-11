@@ -4,33 +4,101 @@ window.categoriaAtual = 'todas';
 window.ordemAtual = 'padrao';
 window.prazoEntregaAtual = 'A combinar';
 
-// === INJEÇÃO DE ESTILOS CSS AUXILIARES ===
+// === INJEÇÃO DE ESTILOS CSS AUXILIARES (FOCO EM MOBILE E APP FEEL) ===
 (function injetarEstilosBotoes() {
   if (document.getElementById('jr-btn-fix-styles')) return;
   const style = document.createElement('style');
   style.id = 'jr-btn-fix-styles';
   style.innerHTML = `
+    /* Otimização de Toque (Remove atraso de 300ms no celular) */
+    a, button, input, select { touch-action: manipulation; }
+
     .btn, button.btn, button.brand { transition: all 0.2s ease-in-out !important; }
     .btn-primary { background-color: #0284c7 !important; color: #ffffff !important; border: 1px solid #0284c7 !important; }
     .btn-primary:hover, button.btn-primary:hover, .btn-comprar:hover { background-color: #0369a1 !important; color: #ffffff !important; filter: brightness(1.05); cursor: pointer; }
     .btn-disabled { background-color: #94a3b8 !important; color: #ffffff !important; border: 1px solid #94a3b8 !important; cursor: not-allowed !important; opacity: 0.7; }
     .btn-ghost:hover { background-color: rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; }
-    .btn-qtd { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; width: 26px; height: 26px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-    .btn-qtd:hover { background: #e2e8f0; }
-    .mobile-user-links { display: none; }
+    .btn-qtd { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; width: 32px; height: 32px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .btn-qtd:active { background: #cbd5e1; transform: scale(0.95); }
+    
     .desktop-user-dropdown { display: inline-block; }
+    .mobile-user-links { display: none; }
+    
+    /* OVERLAY ESCURO PARA O MENU MOBILE */
+    #mobile-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+        z-index: 99998; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    #mobile-overlay.open { opacity: 1; pointer-events: auto; }
+    
+    /* ESTILO APLICATIVO NATIVO PARA CELULAR */
     @media (max-width: 768px) {
       .desktop-user-dropdown { display: none !important; }
-      .mobile-user-links { display: flex !important; flex-direction: column !important; gap: 10px !important; padding-top: 12px !important; margin-top: 8px !important; border-top: 1px solid rgba(255, 255, 255, 0.15) !important; }
-      .mobile-user-links a { font-size: 1rem !important; font-weight: 500 !important; }
+      
+      /* O Menu vira uma gaveta lateral igual de APP */
+      .main-nav { 
+          position: fixed; top: 0; right: -100%; width: 280px; height: 100vh; 
+          background: #ffffff; box-shadow: -10px 0 30px rgba(0,0,0,0.2); 
+          flex-direction: column !important; align-items: flex-start !important; 
+          padding: 80px 25px 30px; transition: right 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+          z-index: 99999; display: flex !important; overflow-y: auto;
+      }
+      .main-nav.open { right: 0; }
+      
+      .main-nav .nav-link { font-size: 1.15rem; padding: 15px 0; border-bottom: 1px solid #f1f5f9; width: 100%; display: block; color: #1e293b; font-weight: 500; }
+      
+      .mobile-user-links { display: flex !important; flex-direction: column !important; gap: 8px !important; padding-top: 20px !important; margin-top: 10px !important; border-top: 2px solid #e2e8f0 !important; width: 100%; }
+      .mobile-user-links a { font-size: 1.05rem !important; }
+      
+      /* O botão de menu fica flutuando acima da gaveta */
+      .mobile-menu { z-index: 100000; position: relative; border: none; background: none; font-size: 28px; color: #0f172a; cursor: pointer; padding: 10px; transition: transform 0.2s; }
+      
+      /* Botão gigante do carrinho para o dedo não errar */
+      #modal-carrinho .btn-primary { padding: 18px !important; font-size: 1.1rem !important; border-radius: 12px !important; }
     }
   `;
   document.head.appendChild(style);
+
+  // Adiciona o overlay do menu de forma dinâmica
+  if (!document.getElementById('mobile-overlay')) {
+      const overlay = document.createElement('div');
+      overlay.id = 'mobile-overlay';
+      overlay.onclick = fecharMenuMobile; // Clicar fora fecha a gaveta
+      document.body.appendChild(overlay);
+  }
 })();
 
-// === FUNÇÕES DE CONTROLE DO MENU MOBILE ===
-function alternarMenuMobile() { const nav = document.querySelector('.main-nav'); if (nav) nav.classList.toggle('open'); }
-function fecharMenuMobile() { const nav = document.querySelector('.main-nav'); if (nav) nav.classList.remove('open'); }
+// === FUNÇÕES DE CONTROLE DO MENU MOBILE (EFEITO GAVETA) ===
+function alternarMenuMobile() { 
+    const nav = document.querySelector('.main-nav'); 
+    const overlay = document.getElementById('mobile-overlay');
+    const btn = document.querySelector('.mobile-menu');
+    
+    if (nav) nav.classList.toggle('open'); 
+    if (overlay) overlay.classList.toggle('open');
+    
+    // Transforma o hambúrguer num "X" e trava a tela de fundo
+    if (nav && nav.classList.contains('open')) {
+        if(btn) btn.innerHTML = '✕';
+        document.body.style.overflow = 'hidden';
+    } else {
+        if(btn) btn.innerHTML = '☰';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function fecharMenuMobile() { 
+    const nav = document.querySelector('.main-nav'); 
+    const overlay = document.getElementById('mobile-overlay');
+    const btn = document.querySelector('.mobile-menu');
+    
+    if (nav) nav.classList.remove('open'); 
+    if (overlay) overlay.classList.remove('open');
+    if (btn) btn.innerHTML = '☰';
+    document.body.style.overflow = 'auto'; 
+}
+
 function alternarUserMenu(e) { if (e) e.stopPropagation(); const menu = document.getElementById('user-menu'); if (menu) menu.style.display = (menu.style.display === 'block') ? 'none' : 'block'; }
 function fecharUserMenu() { const menu = document.getElementById('user-menu'); if (menu) menu.style.display = 'none'; }
 document.addEventListener('click', (e) => { const userMenu = document.getElementById('user-menu'); const userChip = document.querySelector('.user-chip'); if (userMenu && userChip && !userChip.contains(e.target) && !userMenu.contains(e.target)) { userMenu.style.display = 'none'; } });
@@ -579,18 +647,30 @@ function abrirCarrinho() {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'modal-carrinho';
-    modal.style.cssText = 'position:fixed; top:0; right:0; width:100%; max-width:420px; height:100%; background:#fff; box-shadow:-5px 0 25px rgba(0,0,0,0.3); z-index:9999999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: 0.3s;';
+    // O carrinho agora nasce fora da tela (right: -100%) e desliza
+    modal.style.cssText = 'position:fixed; top:0; right:-100%; width:100%; max-width:420px; height:100%; background:#fff; box-shadow:-5px 0 25px rgba(0,0,0,0.3); z-index:9999999; padding:25px; overflow-y:auto; display:flex; flex-direction:column; font-family:inherit; transition: right 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);';
+    
+    // Força tela inteira no celular
+    const style = document.createElement('style');
+    style.innerHTML = `@media (max-width: 768px) { #modal-carrinho { max-width: 100% !important; padding: 20px 15px !important; } }`;
+    document.head.appendChild(style);
+    
     document.body.appendChild(modal);
   }
-  document.body.classList.add('carrinho-aberto');
+  
+  document.body.style.overflow = 'hidden'; // Trava o scroll da loja no fundo
   renderizarItensCarrinho(); 
-  modal.style.display = 'flex';
+  
+  // Pequeno delay para a animação CSS acontecer na hora certa
+  setTimeout(() => { modal.style.right = '0'; }, 10);
 }
 
 function fecharCarrinho() { 
   const modal = document.getElementById('modal-carrinho'); 
-  if (modal) modal.style.display = 'none'; 
-  document.body.classList.remove('carrinho-aberto');
+  if (modal) {
+      modal.style.right = '-100%'; // Desliza o carrinho para fora da tela
+  }
+  document.body.style.overflow = 'auto'; // Destrava o scroll da loja
 }
 
 function renderizarItensCarrinho() {
