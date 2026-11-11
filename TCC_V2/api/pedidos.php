@@ -17,7 +17,7 @@ require_once 'conexao.php';
 $pdo->exec("SET TIME ZONE 'America/Sao_Paulo'");
 
 // Credenciais do Bot do Telegram (Atualizado com o novo Token)
-$telegramToken = "8700166269:AAEgnRWKyNT8Uw8EppsNK7VVSmyHYF9YlYY";
+$telegramToken = "8700166269:AAHKR_tCjYaNsL95UdTPw5b5f_ZjjmpD-jc";
 $telegramChatId = "5034813131";
 
 // Função blindada usando cURL (padrão da indústria e aceito pelo Render)
