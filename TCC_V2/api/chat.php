@@ -13,8 +13,12 @@ if (empty($mensagem)) {
     exit;
 }
 
-// 1. CREDENCIAIS
-$groq_api_key = getenv('GROQ_API_KEY');
+// ==========================================
+// 1. CREDENCIAIS - BLINDADO PARA O TCC
+// ==========================================
+// Insira a sua chave do Groq aqui dentro das aspas (ex: "gsk_XyZ...")
+$groq_api_key = "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";
+
 $host = 'aws-0-us-west-2.pooler.supabase.com';
 $port = '5432';
 $dbName = 'postgres';
@@ -88,8 +92,7 @@ if (count($produtosEncontrados) > 0) {
 // ==============================================================
 // 4. INTEGRAÇÃO BLINDADA COM LLM (GROQ)
 // ==============================================================
-if (empty($groq_api_key)) {
-    // Se esquecer a chave no Render, a Lúcia não quebra
+if (empty($groq_api_key) || $groq_api_key === "COLOQUE_AQUI_A_SUA_CHAVE_DO_GROQ") {
     if (count($produtosEncontrados) > 0) {
         echo json_encode(['sucesso' => true, 'resposta' => "Encontrei estas opções no nosso catálogo para você! Pode clicar no card abaixo para ver na loja:", 'produtos' => $produtosEncontrados]);
     } else {
@@ -98,32 +101,31 @@ if (empty($groq_api_key)) {
     exit;
 }
 
+// PROMPT REFORÇADO PARA O TCC
 $prompt = "Você é Lúcia, vendedora especialista da JR Iluminação e Leds. 
-Você é amigável, direta e cirúrgica. Você NÃO É UMA IA GENÉRICA, você é funcionária da loja.
-SEU OBJETIVO: Ajudar o cliente a encontrar o produto certo.
+O SEU OBJETIVO: Ajudar o cliente a encontrar o produto certo baseado exclusivamente no stock fornecido.
 
-REGRAS DE OURO:
-1. SEJA EXTREMAMENTE CONCISA. Máximo de 2 frases curtas. NUNCA faça textos longos.
-2. FALE SEMPRE EM PORTUGUÊS DO BRASIL (PT-BR). Use 'você' em vez de 'tu' ou 'si'. Nunca use gírias de Portugal.
-3. NUNCA MENCIONE as palavras 'LLM', 'IA', 'Prompt', 'Groq', 'Inteligência Artificial' ou 'Sistema'.
-4. O cliente perguntou algo. Abaixo está o resultado da busca no banco de dados da loja. 
-   -> SE O RESULTADO LISTA PRODUTOS: Diga algo como 'Encontrei estas opções perfeitas para você!' e cite o nome/preço de apenas 1 deles para incentivar a compra.
-   -> SE O RESULTADO FOR [NENHUM PRODUTO ENCONTRADO PARA ESTA BUSCA]: Diga educadamente que não temos esse item no momento, mas ofereça visitar nossa seção de Produtos.
-5. NUNCA invente um produto ou um preço que não esteja na lista abaixo.
+REGRAS DE OURO (ESTRITAMENTE OBRIGATÓRIAS):
+1. RESPONDA EXCLUSIVAMENTE EM PORTUGUÊS DO BRASIL. NUNCA responda em inglês ou espanhol, mesmo que o utilizador pergunte nesses idiomas.
+2. SEJA MUITO CURTA E DIRETA. Máximo de 2 frases.
+3. Não use a palavra 'Olá' se for apenas para mostrar o produto.
+4. O utilizador perguntou algo. Veja o stock abaixo:
+   -> SE O STOCK TIVER PRODUTOS: Diga algo como 'Tenho estas opções perfeitas para o seu projeto!' e cite o preço de apenas UM deles.
+   -> SE O STOCK FOR [NENHUM PRODUTO ENCONTRADO PARA ESTA BUSCA]: Diga educadamente que não temos esse item no momento, mas convide-o a ver a secção de Produtos.
+5. NÃO invente informações, preços ou produtos que não estejam no stock abaixo.
 
 ESTOQUE RETORNADO PELO SISTEMA:
 {$contextoEstoque}";
 
-// Usando o Mixtral ou Llama que são extremamente rápidos
 $url = "https://api.groq.com/openai/v1/chat/completions";
 $data = [
-    "model" => "llama3-8b-8192", // Modelo mais rápido, ideal para chats curtos de TCC
+    "model" => "llama3-8b-8192", 
     "messages" => [
         ["role" => "system", "content" => $prompt],
         ["role" => "user", "content" => $mensagem]
     ],
-    "temperature" => 0.2, // Baixa criatividade para não alucinar produtos
-    "max_tokens" => 80    // Respostas bem curtinhas
+    "temperature" => 0.1, // Quase zero criatividade para evitar inglês ou alucinações
+    "max_tokens" => 80
 ];
 
 $ch = curl_init($url);
@@ -132,7 +134,7 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Authorization: Bearer ' . $groq_api_key]);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
-curl_setopt($ch, CURLOPT_TIMEOUT, 6); // Timeout de 6 segundos para a apresentação não travar
+curl_setopt($ch, CURLOPT_TIMEOUT, 6); 
 $response = curl_exec($ch);
 $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
@@ -142,7 +144,7 @@ if ($httpcode == 200 && $response) {
     $resultado = json_decode($response, true);
     $respostaTexto = trim($resultado['choices'][0]['message']['content']);
 } else {
-    // Fallback 100% PT-BR
+    // Fallback 100% PT-BR de segurança
     if (count($produtosEncontrados) > 0) {
         $respostaTexto = "Achei estas opções incríveis aqui no nosso estoque para você!";
     } else {
