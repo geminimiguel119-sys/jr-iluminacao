@@ -36,7 +36,6 @@ function fecharUserMenu() { const menu = document.getElementById('user-menu'); i
 document.addEventListener('click', (e) => { const userMenu = document.getElementById('user-menu'); const userChip = document.querySelector('.user-chip'); if (userMenu && userChip && !userChip.contains(e.target) && !userMenu.contains(e.target)) { userMenu.style.display = 'none'; } });
 
 // === CABEÇALHO ===
-// === CABEÇALHO ===
 function renderHeader() {
   const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
   const carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
@@ -55,7 +54,6 @@ function renderHeader() {
         <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('home'); return false;">Início</a>
         <a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('produtos'); return false;">Produtos</a>
         
-        <!-- AQUI ESTÁ A CORREÇÃO: O carrinho agora aparece para TODOS! -->
         <a href="#" class="nav-link" onclick="fecharMenuMobile(); abrirCarrinho(); return false;" style="color: #38bdf8; font-weight: 600;">🛒 Carrinho (<span id="cart-count">${qtdCarrinho}</span>)</a>
         
         ${user?.role === 'admin' ? `<a href="#" class="nav-link" onclick="fecharMenuMobile(); navegar('admin/dashboard'); return false;">Painel Admin</a>` : ''}
@@ -468,8 +466,15 @@ window.renderPerfil = async function() {
                 </div>
 
                 <div style="background: transparent;">
-                    <h3 style="margin: 10px 0 20px 0; color: #1e293b; font-size: 1.2rem;">📦 Histórico e Rastreio</h3>
-                    ${pedidosHTML}
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #1e293b; font-size: 1.2rem;">📦 Histórico e Rastreio</h3>
+                        <button id="btnAtualizarStatus" onclick="atualizarLinhaDoTempo()" style="background: #004aad; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; gap: 8px; font-weight: bold; align-items: center; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(0,74,173,0.2);">
+                            <span id="iconeAtualizar">🔄</span> Atualizar Status
+                        </button>
+                    </div>
+                    <div id="container-linha-tempo">
+                        ${pedidosHTML}
+                    </div>
                 </div>
             </div>
         </div>
@@ -504,7 +509,6 @@ function adicionarAoCarrinho(id) {
   let item = carrinho.find(x => String(x.id) === String(p.id));
   let qtdAtual = item ? item.quantidade : 0;
 
-  // CORREÇÃO: Forçando a conversão para número para evitar bugs de string
   let estoqueDisponivel = Number(p.quantidade || 0);
 
   if (qtdAtual + 1 > estoqueDisponivel) { 
@@ -517,7 +521,6 @@ function adicionarAoCarrinho(id) {
   if (item) {
       item.quantidade += 1; 
   } else {
-      // Guardamos também o estoque total no carrinho para referência
       carrinho.push({ id: p.id, nome: p.nome, preco: Number(p.preco || 0), imagem: p.imagem, quantidade: 1, estoque: estoqueDisponivel });
   }
   
@@ -550,11 +553,9 @@ function alterarQtdCarrinho(index, delta) {
   
   const p = window.produtosGlobais.find(x => String(x.id) === String(carrinho[index].id));
   
-  // CORREÇÃO: Converter estoques e quantidades para Números reais para evitar falhas matemáticas
   const estoqueDisponivel = p ? Number(p.quantidade || 0) : Number(carrinho[index].estoque || 0);
   const quantidadeAtual = Number(carrinho[index].quantidade);
   
-  // Se o utilizador clicar em "+" e a quantidade for ultrapassar o limite, bloqueamos a ação
   if (delta > 0 && (quantidadeAtual + delta > estoqueDisponivel)) { 
       if (typeof exibirMensagem === 'function') {
           exibirMensagem(`Limite atingido! Temos apenas ${estoqueDisponivel} unidades em estoque.`, "aviso"); 
@@ -562,15 +563,12 @@ function alterarQtdCarrinho(index, delta) {
       return; 
   }
   
-  // Atualizamos a quantidade no carrinho
   carrinho[index].quantidade = quantidadeAtual + delta;
   
-  // Se a quantidade chegar a zero ou menos, removemos o produto do carrinho
   if (carrinho[index].quantidade <= 0) {
       carrinho.splice(index, 1);
   }
   
-  // Guardamos as alterações, atualizamos o menu de cima e redesenhamos o carrinho aberto
   localStorage.setItem('carrinho', JSON.stringify(carrinho)); 
   renderHeader(); 
   renderizarItensCarrinho();
@@ -919,7 +917,6 @@ window.simularAprovacaoPedido = async function(pedidoId, btnEl) {
             btnEl.style.background = "#22c55e";
             btnEl.style.color = "#fff";
             
-            // CORREÇÃO 1: Texto mais limpo
             if (typeof exibirMensagem === 'function') exibirMensagem("Pedido aprovado!", "sucesso");
         } else {
             btnEl.innerHTML = "❌ Erro ao Aprovar";
@@ -945,7 +942,6 @@ window.exibirMensagem = function(msg, tipo = 'sucesso') {
 
     const toast = document.createElement('div');
     
-    // CORREÇÃO 2: Aplicação de CSS com transformações suaves (Cubic Bezier) para um efeito "deslizante"
     toast.style.cssText = `
         min-width: 250px; max-width: 400px; padding: 14px 18px; border-radius: 8px; 
         box-shadow: 0 8px 24px rgba(0,0,0,0.12); color: #fff; display: flex; align-items: center; 
@@ -957,7 +953,6 @@ window.exibirMensagem = function(msg, tipo = 'sucesso') {
     toast.innerHTML = `<strong style="font-size: 1.1rem;">${icone}</strong> <div>${msg}</div>`;
     container.appendChild(toast);
 
-    // Dispara a animação sutil de entrada
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             toast.style.opacity = '1';
@@ -965,7 +960,6 @@ window.exibirMensagem = function(msg, tipo = 'sucesso') {
         });
     });
 
-    // Saída sutil após 3 segundos
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(-10px) scale(0.95)';
@@ -997,7 +991,6 @@ window.renderProdutoDetalhes = async function(id) {
         const disponivel = Number(p.quantidade || 0) > 0;
         const imgUrl = (p.imagem && p.imagem.trim() !== '') ? p.imagem : 'img/produto-padrao.jpg';
         
-        // Gera dados fakes de avaliação para dar credibilidade
         const numAvaliacoes = Math.floor(Math.random() * 80) + 12;
         const nota = (Math.random() * (5.0 - 4.5) + 4.5).toFixed(1);
         
@@ -1112,4 +1105,117 @@ window.feedbackCompraGigante = function(botao, idProduto, event) {
         botao.style.color = ""; 
         botao.style.pointerEvents = "auto"; 
     }, 2000);
+};
+
+// === ATUALIZAÇÃO DINÂMICA DA LINHA DO TEMPO (RASTREIO) ===
+window.atualizarLinhaDoTempo = async function() {
+    const btn = document.getElementById('btnAtualizarStatus');
+    const icone = document.getElementById('iconeAtualizar');
+    const container = document.getElementById('container-linha-tempo');
+    
+    const user = JSON.parse(localStorage.getItem('jr_user') || 'null');
+    if (!user || !user.email) return;
+
+    if (!document.getElementById('animacao-spin')) {
+        const style = document.createElement('style');
+        style.id = 'animacao-spin';
+        style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
+        document.head.appendChild(style);
+    }
+
+    btn.style.pointerEvents = "none";
+    btn.style.opacity = "0.8";
+    icone.style.display = "inline-block";
+    icone.style.animation = "spin 1s linear infinite";
+    btn.innerHTML = '<span id="iconeAtualizar" style="display:inline-block; animation: spin 1s linear infinite;">🔄</span> Buscando...';
+
+    try {
+        const res = await apiFetch(`api/pedidos.php?email=${encodeURIComponent(user.email)}`);
+        const pedidos = res.dados || [];
+
+        if (pedidos.length === 0) {
+            container.innerHTML = `<p style="color: #64748b; font-size: 0.9rem;">Nenhuma compra encontrada.</p>`;
+            return;
+        }
+
+        let pedidosHTML = '<div style="display: flex; flex-direction: column; gap: 20px;">';
+        
+        pedidos.forEach(p => {
+            let nivelStatus = 0;
+            if (p.status === 'Pendente') nivelStatus = 1;
+            if (p.status === 'Em processamento') nivelStatus = 2;
+            if (p.status === 'Enviado') nivelStatus = 3;
+            if (p.status === 'Concluído' || p.status === 'Entregue') nivelStatus = 4;
+            if (p.status === 'Cancelado') nivelStatus = -1;
+
+            const corEtapa = (etapa) => nivelStatus >= etapa ? '#16a34a' : '#cbd5e1';
+            const corTexto = (etapa) => nivelStatus >= etapa ? '#15803d' : '#94a3b8';
+            const iconeEtapa = (etapa, iconOn, iconOff) => nivelStatus >= etapa ? iconOn : iconOff;
+
+            pedidosHTML += `
+            <div style="border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.03); overflow: hidden;">
+                <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <div>
+                        <strong style="font-size: 1.1rem; color: #0f172a;">Pedido #${p.id}</strong>
+                        <div style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">Data: ${new Date(p.data_pedido).toLocaleDateString('pt-BR')}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong style="display: block; color: #0f172a; font-size: 1.1rem;">R$ ${parseFloat(p.total).toFixed(2).replace('.', ',')}</strong>
+                        <span style="font-size: 0.85rem; font-weight: 600; color: ${nivelStatus === -1 ? '#dc2626' : '#0284c7'}">${p.status}</span>
+                    </div>
+                </div>
+                
+                ${nivelStatus !== -1 ? `
+                <div style="padding: 25px 20px; background: #ffffff;">
+                    <h4 style="margin: 0 0 15px 0; font-size: 0.9rem; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Rastreamento do Pedido</h4>
+                    <div style="display: flex; align-items: center; justify-content: space-between; position: relative;">
+                        <div style="position: absolute; top: 15px; left: 10%; right: 10%; height: 3px; background: #cbd5e1; z-index: 1;"></div>
+                        <div style="position: absolute; top: 15px; left: 10%; height: 3px; background: #16a34a; z-index: 2; width: ${((nivelStatus - 1) / 3) * 80}%; transition: width 0.5s ease;"></div>
+                        
+                        <div style="position: relative; z-index: 3; text-align: center; width: 25%;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: ${corEtapa(1)}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; box-shadow: 0 0 0 4px #ffffff;">${iconeEtapa(1, '📋', '○')}</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: ${corTexto(1)};">Recebido</div>
+                        </div>
+                        <div style="position: relative; z-index: 3; text-align: center; width: 25%;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: ${corEtapa(2)}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; box-shadow: 0 0 0 4px #ffffff;">${iconeEtapa(2, '📦', '○')}</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: ${corTexto(2)};">Em Separação</div>
+                        </div>
+                        <div style="position: relative; z-index: 3; text-align: center; width: 25%;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: ${corEtapa(3)}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; box-shadow: 0 0 0 4px #ffffff;">${iconeEtapa(3, '🚚', '○')}</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: ${corTexto(3)};">Em Trânsito</div>
+                        </div>
+                        <div style="position: relative; z-index: 3; text-align: center; width: 25%;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: ${corEtapa(4)}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; box-shadow: 0 0 0 4px #ffffff;">${iconeEtapa(4, '✅', '○')}</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: ${corTexto(4)};">Entregue</div>
+                        </div>
+                    </div>
+                </div>
+                ` : `<div style="padding: 15px 20px; background: #fef2f2; color: #991b1b; font-size: 0.9rem; text-align: center;">Este pedido foi cancelado.</div>`}
+                
+                <div style="padding: 0; border-top: 1px solid #e2e8f0;">
+                    <ul style="list-style: none; padding: 0; margin: 0; background: #fafafa;">
+                        ${p.itens && p.itens.length > 0 ? p.itens.map((item, idx) => `
+                            <li style="display: flex; justify-content: space-between; padding: 12px 20px; border-bottom: ${idx === p.itens.length - 1 ? 'none' : '1px solid #e2e8f0'}; font-size: 0.85rem;">
+                                <span style="color: #475569;"><strong>${item.quantidade}x</strong> ${item.nome}</span>
+                                <strong style="color: #0f172a;">R$ ${parseFloat(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</strong>
+                            </li>
+                        `).join('') : '<li style="padding: 15px; font-size: 0.85rem; color: #94a3b8; text-align: center;">Detalhes indisponíveis.</li>'}
+                    </ul>
+                </div>
+            </div>`;
+        });
+        
+        pedidosHTML += '</div>';
+        
+        container.innerHTML = pedidosHTML;
+        if (typeof exibirMensagem === 'function') exibirMensagem("Status atualizado com sucesso!", "sucesso");
+        
+    } catch (erro) {
+        console.error("Erro na atualização do rastreio:", erro);
+        if (typeof exibirMensagem === 'function') exibirMensagem("Erro ao buscar atualizações.", "erro");
+    } finally {
+        btn.style.pointerEvents = "auto";
+        btn.style.opacity = "1";
+        btn.innerHTML = '<span id="iconeAtualizar">🔄</span> Atualizar Status';
+    }
 };
